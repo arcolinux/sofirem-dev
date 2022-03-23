@@ -1,45 +1,8 @@
-- name: "Utilities for Timeshift and Btrfs"
-  description: "Utility software"
-  packages:
-    - grub-btrfs
-    - timeshift
-    - timeshift-autosnap
-- name: "Utilities for Snapper and Btrfs"
-  description: "Utility software"
-  packages:
-    - btrfs-assistant
-    - grub-btrfs
-    - snap-pac
-    - snapper
-    - snapper-gui-git
-    - snapper-support
-- name: "Utilities for Android"
-  description: "Utility software android"
-  packages:
-    - airdroid-nativefier
-    - android-tools
-    - android-file-transfer
-    - android-sdk-platform-tools
-    - droidcam
-    - qtscrcpy
-    - scrcpy
-    - waydroid
-- name: "Utilities for IOS"
-  description: "Utility software ios"
-  packages:
-    - ifuse
-    - shairport-sync
-- name: "Utilities for benchmarking"
-  description: "Utility software benchmarking"
-  packages:
-    - blender-benchmark
-    - geekbench
-    - gputest
-    - phoronix-test-suite
-- name: "Application installers or launchers"
+- name: "Application installers/launchers"
   description: "Application installers or launchers"
   packages:
     - albert
+    - arcolinux-pamac-all
     - appimagelauncher
     - bauh
     - flatpak
@@ -54,48 +17,7 @@
     - ulauncher
     - xlunch-git
     - yay-bin
-- name: "Power Management"
-  description: "Power Management"
-  packages:
-    - upower
-    - system76-power
-- name: "Backlight"
-  description: "Backlight"
-  packages:
-    - acpilight
-    - brightnessctl
-    - gummy
-    - light
-- name: "Utilities for hardware discovery"
-  description: "Utility software for hardware discovery"
-  packages:
-    - alsi
-    - archey3
-    - bottom
-    - btop
-    - cpufetch-git
-    - cpu-x
-    - dmidecode
-    - glances
-    - gotop-bin
-    - gsmartcontrol
-    - gtop
-    - hddtemp
-    - htop
-    - lm_sensors
-    - lshw
-    - nvtop
-    - nvtop-git
-    - ookla-speedtest-bin
-    - pfetch
-    - powertop
-    - screenfetch
-    - slurm
-    - speedtest-cli-git
-    - s-tui
-    - sysprof
-    - ufetch-git
-- name: "Utilities"
+- name: "General utilities"
   description: "Utility software"
   packages:
     - auto-cpufreq
@@ -104,14 +26,12 @@
     - caffeine
     - caffeine-ng
     - catfish
-    - deja-dup
     - fancontrol-gui-git
     - galculator
     - gammy
     - google-earth-pro
     - grsync
     - gufw
-    - kbackup
     - linux-wifi-hotspot
     - mullvad-vpn-bin
     - noisetorch
@@ -137,3 +57,8 @@
     - workrave
     - wttr
     - yin-yang-git
+- name: "Ios"
+  description: "Utility software ios"
+  packages:
+    - ifuse
+    - shairport-sync

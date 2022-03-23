@@ -1,4 +1,4 @@
-- name: "Login Manager: Sddm"
+- name: "Sddm"
   description: "Installed by default - choose more themes"
   packages:
     - sddm
@@ -12,7 +12,7 @@
     - arcolinux-sddm-sugar-candy-git
     - arcolinux-sddm-urbanlifestyle-git
     - simplicity-sddm-theme-git
-- name: "Login Manager: Lightdm"
+- name: "Lightdm"
   description: "Installs lightdm"
   packages:
     - lightdm
@@ -22,17 +22,17 @@
     - lightdm-webkit2-theme-reactive
     - arcolinux-wallpapers-git
     - lightdm-slick-greeter
-- name: "Login Manager: Gdm"
+- name: "Gdm"
   description: "Installs gdm"
   packages:
     - gdm
     - arcolinux-wallpapers-git
-- name: "Login Manager: Lxdm"
+- name: "Lxdm"
   description: "Installs lxdm"
   packages:
     - lxdm
     - arcolinux-wallpapers-git
-- name: "Login Manager: Ly"
+- name: "Ly"
   description: "Installs ly"
   packages:
     - ly
