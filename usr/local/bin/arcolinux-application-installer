@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-pkexec '/usr/share/arcolinux-tweak-tool/arcolinux-application-installer.py'
+pkexec '/usr/share/archlinux-tweak-tool/arcolinux-application-installer.py'
