@@ -126,7 +126,7 @@ def obtain_pkg_description(package):
     pkg=package.strip("\n")
     #create the query
     #We could use pacman for this, but there's two issues; 1) pacman ALWAYS outputs, and 2) it's MUCH slower
-    query_str = "pacman -Si " + pkg + " --noconfirm"
+    query_str = "pacman -Si " + pkg + " --noconfirm" #This is a bit slower, but seems to return much more consistently.
     #run the query - using Popen because it actually suits this use case a bit better.
     process = subprocess.Popen(query_str.split(" "),
                                shell=False,
@@ -142,6 +142,5 @@ def obtain_pkg_description(package):
         #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
         #and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
         return desc[19:-1]
-    print(query_str + "returns: "+ str(output))
     return "No Description Found"
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!

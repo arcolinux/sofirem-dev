@@ -94,7 +94,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     stack_item = 0
 
     #8 threads
-    for x in range (64):
+    for x in range (8):
         worker = GUI_Worker(self.queue)
         #Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
