@@ -137,11 +137,6 @@ def obtain_pkg_description(package):
     #split the output at line breaks. split 0 = package name/location, split 1 = description.
     split = output.splitlines()
     #Return description or advise unable to locate
-    #if len(output)>0:
-    #    desc = str(split[1])
-        #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 6th character)
-        #and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
-    #    return desc[6:-1]
     if len(output)>0:
         desc = str(split[3])
         #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)

@@ -106,6 +106,7 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
                     #grid.attach_next_to(switch, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
                     grid.attach(switch, 2, i, 1, 1)
 
+                #pack the grid to the page.
                 page.pack_start(grid, False, False, 0)
                 #save the page - put it back (now populated)
                 vboxStacks.append(page)
