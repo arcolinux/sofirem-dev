@@ -1,7 +1,6 @@
 - name: "Development"
   description: "Development software"
   packages:
-    - anjuta
     - arduino
     - atom
     - bluefish
