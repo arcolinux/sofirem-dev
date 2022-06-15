@@ -120,10 +120,11 @@ def query_pkg(package):
         return True
     return False
 
-#TODO Make this run multithreaded to improve performance.
-def obtain_pkg_description(package):
+def cache(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg=package.strip("\n")
+    #Determine whether we need to re-create the "cache", or not.
+
     #create the query
     #We could use pacman for this, but there's two issues; 1) pacman ALWAYS outputs, and 2) it's MUCH slower
     query_str = "pacman -Si " + pkg + " --noconfirm" #This is a bit slower, but seems to return much more consistently.
@@ -136,11 +137,45 @@ def obtain_pkg_description(package):
     output = process.communicate()[0]
     #split the output at line breaks. split 0 = package name/location, split 1 = description.
     split = output.splitlines()
+    #print(split)
     #Return description or advise unable to locate
+
     if len(output)>0:
         desc = str(split[3])
         #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
         #and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
-        return desc[19:-1]
+        description = desc[19:-1]
+        #writing to a caching file with filename matching the package name
+        filename = path+pkg
+        file = open(filename, "w")
+        file.write(description)
+        file.close()
+        return description
     return "No Description Found"
+
+# This is really poor coding practice, but need to get this moving along. Will refactor later to make it better
+def file_lookup(package, path):
+    #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
+    pkg=package.strip("\n")
+    output = ""
+    filename = path+pkg
+    file = open(filename, "r")
+    output = file.read()
+    file.close()
+    if len(output)>0:
+        return output
+    return "No Description Found"
+
+def obtain_pkg_description(package):
+    #This is a pretty simple function now, decide how to get the information, then get it.
+    #processing variables.
+    output = ""
+    path = "cache/"
+    #First we need to determine whether to pull from cache or pacman.
+    if os.path.exists(path+package.strip("\n")):
+        output = file_lookup(package, path)
+    #file doesn't exist, so create a blank copy
+    else:
+        output = cache(package, path)
+    return output
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
