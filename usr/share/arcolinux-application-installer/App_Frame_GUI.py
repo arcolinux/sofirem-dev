@@ -85,23 +85,33 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
                 lblDesc.set_markup("Description: <i>"+ description +"</i>")
                 page.pack_start(lblDesc, False, False, 0)
                 #packages
+                sep_text = "     "
                 for i in range(len(packages)):
                     grid.insert_row(i)
                     #hbox_pkg = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+                    lblSep1 = Gtk.Label(xalign=0, yalign=0)
+                    lblSep1.set_text(sep_text)
+                    grid.attach(lblSep1, 0, i, 1, 1 )
                     lblPkg = Gtk.Label(xalign=0, yalign=0) # was in for loop
                     lblPkg.set_text(packages[i])   # was in for loop
                     #hbox_pkg.pack_start(lblPkg, False, False, 100)
-                    grid.attach(lblPkg, 0, i, 1, 1 )
+                    grid.attach_next_to(lblPkg, lblSep1, Gtk.PositionType.RIGHT, 1, 1)
+                    lblSep2 = Gtk.Label(xalign=0, yalign=0)
+                    lblSep2.set_text(sep_text)
+                    grid.attach_next_to(lblSep2, lblPkg, Gtk.PositionType.RIGHT, 1, 1)
                     lbl_pkg_desc = Gtk.Label(xalign=0, yalign=0)
                     lbl_pkg_desc.set_text(Functions.obtain_pkg_description(packages[i]))
                     #hbox_pkg.pack_start(lbl_pkg_desc, False, False, 0)
-                    grid.attach_next_to(lbl_pkg_desc, lblPkg, Gtk.PositionType.RIGHT, 1, 1)
+                    grid.attach_next_to(lbl_pkg_desc, lblSep2, Gtk.PositionType.RIGHT, 1, 1)
                     #grid.attach(lbl_pkg_desc, 1, i, 1, 1)
+                    lblSep3 = Gtk.Label(xalign=0, yalign=0)
+                    lblSep3.set_text(sep_text)
+                    grid.attach_next_to(lblSep3, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
                     switch = Gtk.Switch()
                     switch.set_active(Functions.query_pkg(packages[i]))
                     switch.connect("notify::active", self.app_toggle, packages[i])
                     #hbox_pkg.pack_end(switch, False, False, 500)
-                    grid.attach_next_to(switch, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
+                    grid.attach_next_to(switch, lblSep3, Gtk.PositionType.RIGHT, 1, 1)
                     #grid.attach(switch, 2, i, 1, 1)
 
                 #pack the grid to the page.
