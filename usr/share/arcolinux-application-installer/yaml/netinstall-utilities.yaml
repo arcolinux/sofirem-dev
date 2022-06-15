@@ -1,13 +1,12 @@
 - name: "Application installers/launchers"
   description: "Application installers or launchers"
   packages:
-    - albert
+    - albert   
     - arcolinux-pamac-all
     - appimagelauncher
     - bauh
     - flatpak
     - octopi
-    - pamac-all
     - pace
     - paru-bin
     - pikaur-git
