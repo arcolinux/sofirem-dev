@@ -96,8 +96,7 @@ def uninstall(package):
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT)
-
-
+    
 # =====================================================
 #               APP QUERY
 # =====================================================
@@ -153,7 +152,6 @@ def cache(package, path):
         return description
     return "No Description Found"
 
-# This is really poor coding practice, but need to get this moving along. Will refactor later to make it better
 def file_lookup(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg=package.strip("\n")

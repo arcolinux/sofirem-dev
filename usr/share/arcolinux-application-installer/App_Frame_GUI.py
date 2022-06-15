@@ -88,23 +88,21 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
                 for i in range(len(packages)):
                     grid.insert_row(i)
                     #hbox_pkg = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-                    lblPkg = Gtk.Label(xalign=0) # was in for loop
+                    lblPkg = Gtk.Label(xalign=0, yalign=0) # was in for loop
                     lblPkg.set_text(packages[i])   # was in for loop
                     #hbox_pkg.pack_start(lblPkg, False, False, 100)
                     grid.attach(lblPkg, 0, i, 1, 1 )
-                    #TODO: Make this run multithreaded to improve performance
-                    lbl_pkg_desc = Gtk.Label(xalign=0)
+                    lbl_pkg_desc = Gtk.Label(xalign=0, yalign=0)
                     lbl_pkg_desc.set_text(Functions.obtain_pkg_description(packages[i]))
                     #hbox_pkg.pack_start(lbl_pkg_desc, False, False, 0)
-                    #grid.attach_next_to(lbl_pkg_desc, lblPkg, Gtk.PositionType.RIGHT, 1, 1)
-                    grid.attach(lbl_pkg_desc, 1, i, 1, 1)
+                    grid.attach_next_to(lbl_pkg_desc, lblPkg, Gtk.PositionType.RIGHT, 1, 1)
+                    #grid.attach(lbl_pkg_desc, 1, i, 1, 1)
                     switch = Gtk.Switch()
-                    #TODO: Compare the speed of checking ALL items activity at start up, vs only checking the ones that are active.
                     switch.set_active(Functions.query_pkg(packages[i]))
                     switch.connect("notify::active", self.app_toggle, packages[i])
                     #hbox_pkg.pack_end(switch, False, False, 500)
-                    #grid.attach_next_to(switch, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
-                    grid.attach(switch, 2, i, 1, 1)
+                    grid.attach_next_to(switch, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
+                    #grid.attach(switch, 2, i, 1, 1)
 
                 #pack the grid to the page.
                 page.pack_start(grid, False, False, 0)
