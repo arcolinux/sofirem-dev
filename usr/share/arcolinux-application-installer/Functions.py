@@ -101,6 +101,7 @@ def uninstall(package):
 # =====================================================
 #               APP QUERY
 # =====================================================
+
 def get_current_installed(path):
     query_str = "pacman -Q > " + path
     #run the query - using Popen because it actually suits this use case a bit better.
@@ -197,7 +198,16 @@ def obtain_pkg_description(package):
     path = "cache/"
     #First we need to determine whether to pull from cache or pacman.
     if os.path.exists(path+package.strip("\n")):
-        output = file_lookup(package, path)
+        now = datetime.now()
+        #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
+        staleDateTime = now - timedelta(days=14)
+        #we need to obtain currently installed list, if it hasn't been created recently or at all
+        fileCreated = datetime.fromtimestamp(os.path.getctime(path+package.strip("\n")))
+        #file is older than the time delta identified above
+        if fileCreated < staleDateTime:
+            output = cache(package, path)
+        else:
+            output = file_lookup(package, path)
     #file doesn't exist, so create a blank copy
     else:
         output = cache(package, path)
