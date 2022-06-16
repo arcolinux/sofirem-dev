@@ -8,6 +8,7 @@ import sys
 import shutil
 import psutil
 import datetime
+from datetime import datetime, timedelta
 # import time
 import subprocess
 import threading  # noqa
@@ -96,28 +97,53 @@ def uninstall(package):
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT)
-    
+
 # =====================================================
 #               APP QUERY
 # =====================================================
-def query_pkg(package):
-    #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
-    pkg=package.strip("\n")
-    #create the query
-    #We could use pacman for this, but there's two issues; 1) pacman ALWAYS outputs, and 2) it's MUCH slower
-    #query_str = "pacman -Qs " + pkg + " --noconfirm"
-    query_str = "which " + pkg
+def get_current_installed(path):
+    query_str = "pacman -Q > " + path
     #run the query - using Popen because it actually suits this use case a bit better.
     process = subprocess.Popen(query_str.split(" "),
                                shell=False,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    #capture output, if any
-    output = process.communicate()[0]
-    #With which, if there is an output, it means the package is installed
-    if len(output)>0:
-        return True
+
+def query_pkg(package):
+    path = "cache/installed.lst"
+    #first, lets obtain the datetime of the day that we determine data to be "stale"
+    now = datetime.now()
+    #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
+    staleDateTime = now - timedelta(minutes=5)
+    #we need to obtain currently installed list, if it hasn't been created recently or at all
+    if os.path.exists(path):
+        #if the file exists, when was it made?
+        fileCreated = datetime.fromtimestamp(os.path.getctime(path))
+        #file is older than the time delta identified above
+        if fileCreated < staleDateTime:
+            get_current_installed(path)
+    #file does NOT exist;
+    else:
+        get_current_installed(path)
+    #then, open the resulting list in read mode
+    file = open(path, "r")
+    #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
+    pkg=package.strip("\n")
+
+    #If the pkg name appears in the list, then it is installed
+    for line in file:
+        installed = line.split(" ")
+        #We only compare against the name of the package, NOT the version number.
+        if pkg == installed[0]:
+            file.close()
+            return True
+    #We will only hit here, if the pkg does not match anything in the file.
+    file.close()
     return False
+
+# =====================================================
+#        PACKAGE DESCRIPTION CACHE AND SEARCH
+# =====================================================
 
 def cache(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome

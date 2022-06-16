@@ -24,6 +24,8 @@ class GUI_Worker(Thread):
                 self.queue.task_done()
 
 def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
+    #lets quickly create the latest installed list.
+    Functions.get_current_installed("cache/installed.lst")
     process = Functions.subprocess.run(["sh", "-c", "echo \"$SHELL\""],
                              stdout=Functions.subprocess.PIPE)
 
