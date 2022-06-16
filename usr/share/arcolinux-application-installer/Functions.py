@@ -53,6 +53,20 @@ def _get_position(lists, value):
     position = lists.index(data[0])
     return position
 
+def isfileStale(filepath, staleDays, staleHours, staleMinutes):
+    #first, lets obtain the datetime of the day that we determine data to be "stale"
+    now = datetime.now()
+    #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
+    staleDateTime = now - timedelta(days=staleDays, hours=staleHours, minutes=staleMinutes)
+    #we need to obtain currently installed list, if it hasn't been created recently or at all
+    if os.path.exists(filepath):
+        #if the file exists, when was it made?
+        fileCreated = datetime.fromtimestamp(os.path.getctime(filepath))
+        #file is older than the time delta identified above
+        if fileCreated < staleDateTime:
+            return True
+    return False
+
 # =====================================================
 #               PERMISSIONS
 # =====================================================
@@ -112,16 +126,9 @@ def get_current_installed(path):
 
 def query_pkg(package):
     path = "cache/installed.lst"
-    #first, lets obtain the datetime of the day that we determine data to be "stale"
-    now = datetime.now()
-    #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
-    staleDateTime = now - timedelta(minutes=5)
-    #we need to obtain currently installed list, if it hasn't been created recently or at all
+
     if os.path.exists(path):
-        #if the file exists, when was it made?
-        fileCreated = datetime.fromtimestamp(os.path.getctime(path))
-        #file is older than the time delta identified above
-        if fileCreated < staleDateTime:
+        if isfileStale(path, 0, 0, 30):
             get_current_installed(path)
     #file does NOT exist;
     else:
@@ -198,13 +205,7 @@ def obtain_pkg_description(package):
     path = "cache/"
     #First we need to determine whether to pull from cache or pacman.
     if os.path.exists(path+package.strip("\n")):
-        now = datetime.now()
-        #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
-        staleDateTime = now - timedelta(days=14)
-        #we need to obtain currently installed list, if it hasn't been created recently or at all
-        fileCreated = datetime.fromtimestamp(os.path.getctime(path+package.strip("\n")))
-        #file is older than the time delta identified above
-        if fileCreated < staleDateTime:
+        if isfileStale(path, 14, 0, 0):
             output = cache(package, path)
         else:
             output = file_lookup(package, path)
