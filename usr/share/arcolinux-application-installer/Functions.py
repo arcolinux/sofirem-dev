@@ -58,7 +58,7 @@ def isfileStale(filepath, staleDays, staleHours, staleMinutes):
     now = datetime.now()
     #For the purposes of this, we are assuming that one would have the app open longer than 5 minutes if installing.
     staleDateTime = now - timedelta(days=staleDays, hours=staleHours, minutes=staleMinutes)
-    #we need to obtain currently installed list, if it hasn't been created recently or at all
+    #Check to see if the file path is in existence.
     if os.path.exists(filepath):
         #if the file exists, when was it made?
         fileCreated = datetime.fromtimestamp(os.path.getctime(filepath))
@@ -117,12 +117,17 @@ def uninstall(package):
 # =====================================================
 
 def get_current_installed(path):
-    query_str = "pacman -Q > " + path
+    #query_str = "pacman -Q > " + path
+    query_str = ["pacman", "-Q"]
     #run the query - using Popen because it actually suits this use case a bit better.
-    process = subprocess.Popen(query_str.split(" "),
+    process = subprocess.Popen(query_str,
                                shell=False,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+                               stdout=subprocess.PIPE)
+    out, err = process.communicate()
+    file = open(path, "w")
+    for line in out.decode("utf-8"):
+        file.write(line)
+    file.close()
 
 def query_pkg(package):
     path = "cache/installed.lst"
@@ -153,6 +158,8 @@ def query_pkg(package):
 #        PACKAGE DESCRIPTION CACHE AND SEARCH
 # =====================================================
 
+#If I had my time over again, I would do this very differently. The way I did the
+#output handling in the get_current_installed function is MUCH better (and written later).
 def cache(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg=package.strip("\n")
