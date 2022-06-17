@@ -163,11 +163,8 @@ def query_pkg(package):
 def cache(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg=package.strip("\n")
-    #Determine whether we need to re-create the "cache", or not.
-
     #create the query
-    #We could use pacman for this, but there's two issues; 1) pacman ALWAYS outputs, and 2) it's MUCH slower
-    query_str = "pacman -Si " + pkg + " --noconfirm" #This is a bit slower, but seems to return much more consistently.
+    query_str = "pacman -Si " + pkg + " --noconfirm"
     #run the query - using Popen because it actually suits this use case a bit better.
     process = subprocess.Popen(query_str.split(" "),
                                shell=False,
@@ -175,10 +172,7 @@ def cache(package, path):
                                stderr=subprocess.PIPE)
     #capture output, if any
     output = process.communicate()[0]
-    #split the output at line breaks. split 0 = package name/location, split 1 = description.
     split = output.splitlines()
-    #print(split)
-    #Return description or advise unable to locate
 
     if len(output)>0:
         desc = str(split[3])
