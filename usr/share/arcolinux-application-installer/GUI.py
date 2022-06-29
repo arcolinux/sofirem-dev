@@ -24,12 +24,13 @@ class GUI_Worker(Thread):
                 self.queue.task_done()
 
 def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
-    #lets quickly create the latest installed list.
-    Functions.get_current_installed("cache/installed.lst")
     process = Functions.subprocess.run(["sh", "-c", "echo \"$SHELL\""],
                              stdout=Functions.subprocess.PIPE)
 
     output = process.stdout.decode().strip()
+
+    #lets quickly create the latest installed list.
+    Functions.get_current_installed("cache/installed.lst")
 
     # =======================================================
     #                       App Notifications
@@ -95,8 +96,8 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     vboxStack = [ ]
     stack_item = 0
 
-    #8 threads
-    for x in range (8):
+    #6 threads
+    for x in range(6):
         worker = GUI_Worker(self.queue)
         #Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
@@ -112,20 +113,6 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #Multithreading!
         self.queue.put((self, Gtk, vboxStack[stack_item], Functions, name, path+yaml_files[stack_item]))
         stack_item+=1
-    #TODO: REWRITE THIS CODE TO WORK WITH NEW FILE STRUCTURE
-    #for item in conf_files:
-    #    with open(path+item, "r") as f:
-    #            content = f.readlines()
-    #            f.close()
-    #    pos = Functions._get_position(content, "title: ")
-    #    # Okay, this is a little odd at first look. Strip whitespace, THEN strip title,
-    #    # then strip whitespace, then strip quotation marks. (Each strip only removes front and end character matches)
-    #    name = content[pos].strip().strip("title:").strip().strip('"')
-    #    vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
-    #    stack.add_titled(vboxStack[stack_item], str("stack"+str(len(vboxStack))), name)
-    #    #Multithreading!
-    #    self.queue.put((self, Gtk, vboxStack[stack_item], Functions, name, path+yaml_files[stack_item]))
-    #    stack_item+=1
 
     #safety to ensure that we finish threading before we continue on.
     self.queue.join()
@@ -144,36 +131,37 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
 
     # =====================================================
-    #               RESTART BUTTON
+    #               RECACHE BUTTON
     # =====================================================
 
-    #btnReStartAtt = Gtk.Button(label="Restart ATT")
-    #btnReStartAtt.connect('clicked', self.on_refresh_att_clicked)
-    #btnReStartAtt.set_property("has-tooltip", True)
-    #btnReStartAtt.connect("query-tooltip", self.tooltip_callback,
-    #           "Restart the ArcoLinux Tweak Tool")
+    btnReCache = Gtk.Button(label="Recache Applications")
+    btnReCache.connect('clicked', self.recache_clicked)
+    #btnReCache.set_property("has-tooltip", True)
+    #btnReCache.connect("query-tooltip", self.tooltip_callback,
+    #           "Refresh the application cache")
 
     # =====================================================
     #                      PACKS
     # =====================================================
 
-    hbox1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
-    hbox2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
-    hbox3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+    #hbox1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+    #hbox2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+    #hbox3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
 
-    #hbox3.pack_start(btnReStartAtt, False, False, 0)
-
+    #hbox3.pack_start(btnReCache, False, False, 0)
+    
     ivbox.pack_start(image, False, False, 0)
     ivbox.pack_start(stack_switcher, True, True, 0)
 
-    ivbox.pack_start(hbox2, False, False, 0)
-    ivbox.pack_start(hbox3, False, False, 0)
+    #ivbox.pack_start(hbox2, False, False, 0)
+    ivbox.pack_start(btnReCache, False, False, 0)
 
     vbox1.pack_start(hbox0, False, False, 0)
     vbox1.pack_start(stack, True, True, 0)
-
+    
     hbox.pack_start(ivbox, False, True, 0)
     hbox.pack_start(vbox1, True, True, 0)
 
     stack.set_hhomogeneous(False)
     stack.set_vhomogeneous(False)
+    

@@ -1,6 +1,8 @@
 # =================================================================
 # =                 Author: Cameron Percival                      =
 # =================================================================
+from socket import TIPC_ADDR_NAME
+from urllib.parse import scheme_chars
 import Functions
 
 def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
@@ -31,6 +33,10 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
     #We will need a vbox later for storing the stack and stack switcher together at the end
     vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
+    #create scroller for when/if these items go "off the page"
+    scrolledSwitch = Gtk.ScrolledWindow()
+    scrolledSwitch.add(stack_switcher)
+    
     #These lists will ensure that we can keep track of the individual windows and their names
     #stack of vboxes
     vboxStacks = [ ]
@@ -109,13 +115,17 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
                     grid.attach_next_to(lblSep3, lbl_pkg_desc, Gtk.PositionType.RIGHT, 1, 1)
                     switch = Gtk.Switch()
                     switch.set_active(Functions.query_pkg(packages[i]))
-                    switch.connect("notify::active", self.app_toggle, packages[i])
+                    switch.connect("notify::active", self.app_toggle, packages[i], Gtk, vboxStack1, Functions, category, packages)
                     #hbox_pkg.pack_end(switch, False, False, 500)
                     grid.attach_next_to(switch, lblSep3, Gtk.PositionType.RIGHT, 1, 1)
                     #grid.attach(switch, 2, i, 1, 1)
 
+                #make the page scrollable
+                grid_sc = Gtk.ScrolledWindow()
+                grid_sc.add(grid)
+                grid_sc.set_propagate_natural_height(True)
                 #pack the grid to the page.
-                page.pack_start(grid, False, False, 0)
+                page.pack_start(grid_sc, False, False, 0)
                 #save the page - put it back (now populated)
                 vboxStacks.append(page)
                 #reset the things that we need to.
@@ -133,11 +143,13 @@ def GUI(self, Gtk, vboxStack1, Functions, category, package_file):
     for item in vboxStacks:
         stack.add_titled(item, "stack"+str(item_num), vboxStackNames[item_num])
         item_num+=1
+
     #Place the stack switcher and the stack together into a vbox
-    vbox.pack_start(stack_switcher, False, False, 0)
+    vbox.pack_start(scrolledSwitch, False, False, 0)
     vbox.pack_start(stack, True, True, 0)
 
     #Stuff the vbox with the title and seperator to create the page
     vboxStack1.pack_start(cat_name, False, False, 0)
     vboxStack1.pack_start(seperator, False, False, 0)
     vboxStack1.pack_start(vbox, False, False, 0)
+

@@ -16,13 +16,16 @@ import gi
 # import configparser
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gtk  # noqa
+from queue import Queue #Multithreading the caching
+from threading import Thread 
+from ProgressBarWindow import ProgressBarWindow
 
 # =====================================================
 #               Global Variables
 # =====================================================
 sudo_username = os.getlogin()
 home = "/home/" + str(sudo_username)
-
+packages = [ ]
 # =====================================================
 #               Create log file
 # =====================================================
@@ -92,25 +95,28 @@ def permissions(dst):
 #               APP INSTALLATION
 # =====================================================
 def install(package):
+    path = "cache/installed.lst"
     pkg=package.strip("\n")
-    inst_str = "pacman -S " + pkg + " --needed --noconfirm"
+    inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
-    subprocess.call(inst_str.split(" "),
+    subprocess.call(inst_str,
                     shell=False,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT)
+                    stderr=subprocess.STDOUT)    
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(package):
+    path = "cache/installed.lst"
     pkg=package.strip("\n")
-    uninst_str = "pacman -Rs " + pkg + " --noconfirm"
+    uninst_str = ["pacman", "-Rs", pkg,"--noconfirm"]
 
-    subprocess.call(uninst_str.split(" "),
+    subprocess.call(uninst_str,
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT)
+    
 
 # =====================================================
 #               APP QUERY
@@ -158,27 +164,27 @@ def query_pkg(package):
 #        PACKAGE DESCRIPTION CACHE AND SEARCH
 # =====================================================
 
-#If I had my time over again, I would do this very differently. The way I did the
-#output handling in the get_current_installed function is MUCH better (and written later).
 def cache(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg=package.strip("\n")
     #create the query
-    query_str = "pacman -Si " + pkg + " --noconfirm"
+    query_str = ["pacman", "-Si", pkg, " --noconfirm"]
     #run the query - using Popen because it actually suits this use case a bit better.
-    process = subprocess.Popen(query_str.split(" "),
+    process = subprocess.Popen(query_str,
                                shell=False,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
-    #capture output, if any
-    output = process.communicate()[0]
+    out, err = process.communicate()
+    
+    output = out.decode("utf-8")
     split = output.splitlines()
 
     if len(output)>0:
+        #Currently the output of the pacman command above always puts the description on the 4th line.
         desc = str(split[3])
         #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
         #and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
-        description = desc[19:-1]
+        description = desc[18:-1]
         #writing to a caching file with filename matching the package name
         filename = path+pkg
         file = open(filename, "w")
@@ -186,6 +192,21 @@ def cache(package, path):
         file.close()
         return description
     return "No Description Found"
+
+#Creating an over-load so that we can use the same function, with slightly different code to get the results we need
+def cache_btn(path, progressbar):
+    fraction = 1/len(packages)
+    #Non Multithreaded version.
+    for pkg in packages:
+        cache(pkg, path)
+        progressbar.timeout_id = GLib.timeout_add(50, progressbar.update, fraction)
+        
+
+    #This will need to be coded to be running multiple processes eventually, since it will be manually invoked.
+    #process the file list
+    #for each file in the list, open the file
+    #process the file ignoring what is not what we need
+    #for each file line processed, we need to invoke the cache function that is not over-ridden.
 
 def file_lookup(package, path):
     #first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
@@ -206,12 +227,34 @@ def obtain_pkg_description(package):
     path = "cache/"
     #First we need to determine whether to pull from cache or pacman.
     if os.path.exists(path+package.strip("\n")):
-        if isfileStale(path, 14, 0, 0):
-            output = cache(package, path)
-        else:
-            output = file_lookup(package, path)
+        output = file_lookup(package, path)
     #file doesn't exist, so create a blank copy
     else:
         output = cache(package, path)
+    #Add the package in question to the global variable, in case recache is needed
+    packages.append(package)
     return output
+
+def restart_program():
+    os.unlink("/tmp/aai.lock")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+# =====================================================
+#               CHECK RUNNING PROCESS
+# =====================================================
+
+
+def checkIfProcessRunning(processName):
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time'])
+            if processName == pinfo['pid']:
+                return True
+        except (psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess):
+            pass
+    return False
+
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!

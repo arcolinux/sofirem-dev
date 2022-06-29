@@ -2,11 +2,13 @@
 import Splash
 import gi
 import Functions
+from ProgressBarWindow import ProgressBarWindow
 import signal
 import GUI
 import subprocess
 from Functions import os
 from queue import Queue
+import App_Frame_GUI
 #from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
@@ -73,8 +75,8 @@ class Main(Gtk.Window):
             Functions.permissions(Functions.home + "/.config/arcolinux-application-installer")
             print("Fix arcolinux-application-installer permissions...")
 
-        GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-
+        gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+        
         if not os.path.isfile("/tmp/aai.lock"):
             with open("/tmp/aai.lock", "w") as f:
                 f.write("")
@@ -88,13 +90,33 @@ class Main(Gtk.Window):
 # ====================================================================
 # Given what this function does, it might be worth considering making it a
 # thread so that the app doesn't block while installing/uninstalling is happening.
-    def app_toggle(self, widget, active, package):
+    def app_toggle(self, widget, active, package, Gtk, vboxStack1, Functions, category, packages):
+        path = "cache/installed.lst"
         if widget.get_active():
             #Install the package
-            Functions.install(package)
+            Functions.install(package)            
         else:
             #Uninstall the package
             Functions.uninstall(package)
+        Functions.get_current_installed(path)
+        #App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
+        #widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
+        self.gui.hide()
+        self.gui.queue_redraw()
+        self.gui.show_all()
+        
+        
+        
+        
+
+    def recache_clicked(self, widget):
+        #Check if cache is out of date. If so, run the re-cache, if not, don't.
+        pb = ProgressBarWindow()
+        pb.show_all()
+        #pb.set_text("Updating Cache")
+        #pb.reset_timer()
+        Functions.cache_btn("cache/", pb)
+
 
 
 # ====================================================================
@@ -123,7 +145,7 @@ if __name__ == "__main__":
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
         w = Main()
-        w.show_all()
+        w.show_all()        
         Gtk.main()
     else:
         md = Gtk.MessageDialog(parent=Main(),
