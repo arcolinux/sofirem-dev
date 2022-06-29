@@ -13,12 +13,17 @@ from datetime import datetime, timedelta
 import subprocess
 import threading  # noqa
 import gi
+import requests
+import time
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
 # import configparser
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gtk  # noqa
 from queue import Queue #Multithreading the caching
 from threading import Thread 
 from ProgressBarWindow import ProgressBarWindow
+
 
 # =====================================================
 #               Global Variables
@@ -239,6 +244,37 @@ def restart_program():
     os.unlink("/tmp/aai.lock")
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
+def check_github(yaml_files):
+    #This is the link to the location where the .yaml files are kept in the github
+    path = "cache/"
+    link = "https://github.com/arcolinux/arcob-calamares-config-awesome/tree/master/calamares/modules/"
+    urls = []
+    fns = []
+    for file in yaml_files:
+        if isfileStale(path+file, 14, 0, 0):
+            fns.append(path+file)
+            urls.append(link+file)
+    if len(fns)>0 & len(urls)>0:
+        inputs = zip(urls,fns)
+        download_parallel(inputs)
+
+def download_url(args):
+    t0 = time.time()
+    url, fn = args[0], args[1]
+    try:
+        r = requests.get(url)
+        with open(fn, 'wb') as f:
+            f.write(r.content)
+        return(url, time.time() - t0)
+    except Exception as e:
+        print('Exception in download_url():', e)
+
+def download_parallel(args):
+    cpus = cpu_count()
+    results = ThreadPool(cpus - 1).imap_unordered(download_url, args)
+    for result in results:
+        print('url:', result[0], 'time (s):', result[1])
 
 # =====================================================
 #               CHECK RUNNING PROCESS

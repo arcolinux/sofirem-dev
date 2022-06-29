@@ -6,6 +6,7 @@
 # ============Functions============
 import Functions
 import App_Frame_GUI
+from multiprocessing import cpu_count
 from queue import Queue
 from threading import Thread
 
@@ -84,7 +85,8 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     #Need to sort the list (Or do we? I choose to)
     yaml_files = sorted(yaml_files_unsorted)
 
-
+    # Check github for updated files
+    Functions.check_github(yaml_files)
     # ==========================================================
     #                       GENERATE STACK
     # ==========================================================
@@ -96,8 +98,8 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     vboxStack = [ ]
     stack_item = 0
 
-    #6 threads
-    for x in range(6):
+    #Max Threads
+    for x in range(cpu_count()):
         worker = GUI_Worker(self.queue)
         #Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True

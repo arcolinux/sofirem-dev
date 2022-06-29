@@ -74,7 +74,7 @@ class Main(Gtk.Window):
         if aai == 0:
             Functions.permissions(Functions.home + "/.config/arcolinux-application-installer")
             print("Fix arcolinux-application-installer permissions...")
-
+        
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
         
         if not os.path.isfile("/tmp/aai.lock"):
@@ -101,9 +101,9 @@ class Main(Gtk.Window):
         Functions.get_current_installed(path)
         #App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         #widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
-        self.gui.hide()
-        self.gui.queue_redraw()
-        self.gui.show_all()
+        #self.gui.hide()
+        #self.gui.queue_redraw()
+        #self.gui.show_all()
         
         
         
