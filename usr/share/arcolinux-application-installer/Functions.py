@@ -189,7 +189,7 @@ def cache(package, path):
         desc = str(split[3])
         #Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
         #and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
-        description = desc[18:-1]
+        description = desc[18:]
         #writing to a caching file with filename matching the package name
         filename = path+pkg
         file = open(filename, "w")
