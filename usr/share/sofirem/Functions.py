@@ -2,7 +2,6 @@
 # =                 Author: Cameron Percival                      =
 # =================================================================
 
-
 import os
 import sys
 import shutil
@@ -21,9 +20,14 @@ from multiprocessing.pool import ThreadPool
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gtk  # noqa
 from queue import Queue #Multithreading the caching
-from threading import Thread 
+from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 
+# =====================================================
+#               Base Directory
+# =====================================================
+
+base_dir = os.path.dirname(os.path.realpath(__file__))
 
 # =====================================================
 #               Global Variables
@@ -35,14 +39,14 @@ packages = [ ]
 #               Create log file
 # =====================================================
 
-log_dir="/var/log/arcolinux/"
-aai_log_dir="/var/log/arcolinux/aai/"
+log_dir="/var/log/sofirem/"
+sof_log_dir="/var/log/sofirem/sof/"
 
 def create_log(self):
-    print('Making log in /var/log/arcolinux')
+    print('Making log in /var/log/sofirem')
     now = datetime.datetime.now()
     time = now.strftime("%Y-%m-%d-%H-%M-%S" )
-    destination = aai_log_dir + 'aai-log-' + time
+    destination = sof_log_dir + 'sof-log-' + time
     command = 'sudo pacman -Q > ' + destination
     subprocess.call(command,
                     shell=True,
@@ -100,20 +104,20 @@ def permissions(dst):
 #               APP INSTALLATION
 # =====================================================
 def install(package):
-    path = "cache/installed.lst"
+    path = base_dir + "/cache/installed.lst"
     pkg=package.strip("\n")
     inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
     subprocess.call(inst_str,
                     shell=False,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT)    
+                    stderr=subprocess.STDOUT)
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(package):
-    path = "cache/installed.lst"
+    path = base_dir + "/cache/installed.lst"
     pkg=package.strip("\n")
     uninst_str = ["pacman", "-Rs", pkg,"--noconfirm"]
 
@@ -121,7 +125,7 @@ def uninstall(package):
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT)
-    
+
 
 # =====================================================
 #               APP QUERY
@@ -141,7 +145,7 @@ def get_current_installed(path):
     file.close()
 
 def query_pkg(package):
-    path = "cache/installed.lst"
+    path = base_dir + "/cache/installed.lst"
 
     if os.path.exists(path):
         if isfileStale(path, 0, 0, 30):
@@ -180,7 +184,7 @@ def cache(package, path):
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     out, err = process.communicate()
-    
+
     output = out.decode("utf-8")
     split = output.splitlines()
 
@@ -205,7 +209,7 @@ def cache_btn(path, progressbar):
     for pkg in packages:
         cache(pkg, path)
         progressbar.timeout_id = GLib.timeout_add(50, progressbar.update, fraction)
-        
+
 
     #This will need to be coded to be running multiple processes eventually, since it will be manually invoked.
     #process the file list
@@ -241,7 +245,7 @@ def obtain_pkg_description(package):
     return output
 
 def restart_program():
-    os.unlink("/tmp/aai.lock")
+    os.unlink("/tmp/sofirem.lock")
     python = sys.executable
     os.execl(python, python, *sys.argv)
 

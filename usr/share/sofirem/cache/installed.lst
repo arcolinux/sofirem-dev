@@ -145,7 +145,6 @@ awesome-terminal-fonts 1.1.0-4
 ayatana-ido 0.9.1-1
 ayu-theme 21.07-01
 babl 0.1.90-2
-baloo 5.95.0-1
 bandwhich 0.20.0-1
 baobab 42.0-1
 base 2-2
@@ -205,7 +204,7 @@ ceph-libs 15.2.14-6
 chaotic-keyring 20220514-1
 chaotic-mirrorlist 20220504-2
 chromaprint 1.5.1-3
-chromium 103.0.5060.53-1
+chromium 103.0.5060.114-1
 cifs-utils 6.15-1
 cinnamon 5.4.2-1
 cinnamon-control-center 5.4.2-1
@@ -227,7 +226,6 @@ colord 1.4.6-1
 colord-sane 1.4.6-1
 colorgrab 0.3-2
 conky-lua-archers 1.11.3-2
-convertlit 1.8-10
 coreutils 9.1-1
 cowsay 3.04-2
 cpio 2.13-2
@@ -286,7 +284,6 @@ dtc 1.6.1-4
 duf 0.8.1-2
 duktape 2.7.0-2
 e2fsprogs 1.46.5-4
-ebook-tools 0.2.2-7
 ecryptfs-utils 111-5
 edid-decode-git r632.582c935-1
 editorconfig-core-c 0.12.5-1
@@ -593,15 +590,12 @@ kde-cli-tools 5.25.2-1
 kdeclarative 5.95.0-1
 kdecoration 5.25.2-1
 kded 5.95.0-1
-kdelibs4support 5.95.0-1
 kdeplasma-addons 5.25.2-1
 kdesu 5.95.0-1
 kdnssd 5.95.0-1
 kdsoap 2.0.0-1
 kdsoap-ws-discovery-client git20200927-2
-kemoticons 5.95.0-1
 keyutils 1.6.3-1
-kfilemetadata 5.95.0-1
 kglobalaccel 5.95.0-1
 kguiaddons 5.95.0-1
 kholidays 1:5.95.0-1
@@ -617,7 +611,6 @@ kitemviews 5.95.0-1
 kitty-shell-integration 0.25.2-1
 kitty-terminfo 0.25.2-1
 kjobwidgets 5.95.0-1
-kmenuedit 5.25.2-1
 kmod 30-1
 knewstuff 5.95.0-1
 knotifications 5.95.0-1
@@ -1325,14 +1318,12 @@ pixz 1.0.7-2
 pkcs11-helper 1.29.0-1
 pkgconf 1.8.0-1
 pkgfile 21-2
-plasma-desktop 5.25.2-1
 plasma-framework 5.95.0-2
 plasma-integration 5.25.2-1
 plasma-workspace 5.25.2-1
 playerctl 2.4.1-2
 polkit 0.120-5
 polkit-gnome 0.105-9
-polkit-kde-agent 5.25.2-1
 polkit-qt5 0.114.0-1
 polybar 3.6.3-2
 ponymix 5-4
@@ -1668,6 +1659,7 @@ snapd-glib 1.60-1
 snapper 0.10.2-2
 snappy 1.1.9-2
 sof-firmware 2.2-1
+sofirem-dev-git 22.07-01
 solid 5.95.0-1
 sonnet 5.95.0-1
 sord 0.16.10-2
@@ -1707,7 +1699,6 @@ svt-av1 1.1.0-1
 svt-hevc 1.5.1-2
 sweet-cursor-theme-git r246.c34d92c-1
 sweet-gtk-theme-dark 3.0-1
-sweet-kde-theme-mars-git r206.04f01b1-1
 sweet-theme-git v3.0.r29.g5a8f5ee-1
 swh-plugins 0.4.17-4
 sxhkd 0.6.2-2
@@ -1720,7 +1711,6 @@ system-tools-backends 2.10.2-5
 systemd 251.2-1
 systemd-libs 251.2-1
 systemd-sysvcompat 251.2-1
-systemsettings 5.25.2-1
 t1lib 5.1.2-8
 taglib 1.12-1
 taglib-sharp-git 2.1.0.0.r248.g60e7588-2

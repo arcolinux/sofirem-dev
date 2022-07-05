@@ -1,8 +1,11 @@
 - name: "Development"
   description: "Development software"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - arduino
-    - atom
     - bluefish
     - brackets-bin
     - code

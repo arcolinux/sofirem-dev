@@ -32,6 +32,20 @@ class Main(Gtk.Window):
         self.set_icon_from_file(os.path.join(base_dir, 'images/sofirem.png'))
         self.set_default_size(800, 900)
 
+        print("---------------------------------------------------------------------------")
+        print("If you have errors, report it on the discord channel of ArcoLinux")
+        print("---------------------------------------------------------------------------")
+        print("You can receive support on https://discord.gg/R2amEEz")
+        print("---------------------------------------------------------------------------")
+        print("Many applications are coming from the Arch Linux repos and can be installed")
+        print("without any issues. Other applications are available from third party repos")
+        print("like Chaotic repo, ArcoLinux repo and others.")
+        print("---------------------------------------------------------------------------")
+        print("We do NOT build packages from AUR.")
+        print("---------------------------------------------------------------------------")
+        print("Some packages are only available on the ArcoLinux repos.")
+        print("---------------------------------------------------------------------------")
+
         splScr = Splash.splashScreen()
 
         while Gtk.events_pending():
@@ -46,43 +60,43 @@ class Main(Gtk.Window):
             except Exception as e:
                 print(e)
 
-        if not os.path.isdir(Functions.aai_log_dir):
+        if not os.path.isdir(Functions.sof_log_dir):
             try:
-                os.mkdir(Functions.aai_log_dir)
+                os.mkdir(Functions.sof_log_dir)
             except Exception as e:
                 print(e)
 
 
         if not Functions.os.path.isdir(Functions.home +
-                                       "/.config/arcolinux-application-installer"):
+                                       "/.config/sofirem"):
 
             Functions.os.makedirs(Functions.home +
-                                  "/.config/arcolinux-application-installer", 0o766)
+                                  "/.config/sofirem", 0o766)
             Functions.permissions(Functions.home +
-                                  "/.config/arcolinux-application-installer")
+                                  "/.config/sofirem")
         # Force Permissions
         a1 = Functions.os.stat(Functions.home + "/.config/autostart")
-        a2 = Functions.os.stat(Functions.home + "/.config/arcolinux-application-installer")
+        a2 = Functions.os.stat(Functions.home + "/.config/sofirem")
         #a3 = Functions.os.stat(Functions.home + "/" + Functions.bd)
         autostart = a1.st_uid
-        aai = a2.st_uid
+        sof = a2.st_uid
         #backup = a3.st_uid
 
         if autostart == 0:
             Functions.permissions(Functions.home + "/.config/autostart")
             print("Fix autostart permissions...")
-        if aai == 0:
-            Functions.permissions(Functions.home + "/.config/arcolinux-application-installer")
-            print("Fix arcolinux-application-installer permissions...")
-        
+        if sof == 0:
+            Functions.permissions(Functions.home + "/.config/sofirem")
+            print("Fix sofirem permissions...")
+
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-        
-        if not os.path.isfile("/tmp/aai.lock"):
-            with open("/tmp/aai.lock", "w") as f:
+
+        if not os.path.isfile("/tmp/sofirem.lock"):
+            with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
 
     def on_close(self, widget, data):
-        os.unlink("/tmp/aai.lock")
+        os.unlink("/tmp/sofirem.lock")
         Gtk.main_quit()
 
 # ====================================================================
@@ -94,7 +108,7 @@ class Main(Gtk.Window):
         path = "cache/installed.lst"
         if widget.get_active():
             #Install the package
-            Functions.install(package)            
+            Functions.install(package)
         else:
             #Uninstall the package
             Functions.uninstall(package)
@@ -104,10 +118,6 @@ class Main(Gtk.Window):
         #self.gui.hide()
         #self.gui.queue_redraw()
         #self.gui.show_all()
-        
-        
-        
-        
 
     def recache_clicked(self, widget):
         #Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -117,27 +127,24 @@ class Main(Gtk.Window):
         #pb.reset_timer()
         Functions.cache_btn("cache/", pb)
 
-
-
 # ====================================================================
 #                       MAIN
 # ====================================================================
 
-
 def signal_handler(sig, frame):
-    print('\nAAI is Closing.')
-    os.unlink("/tmp/aai.lock")
+    print('\nSofirem is closing.')
+    os.unlink("/tmp/sofirem.lock")
     Gtk.main_quit(0)
 
 #These should be kept as it ensures that multiple installation instances can't be run concurrently.
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
-    if not os.path.isfile("/tmp/aai.lock"):
-        with open("/tmp/aai.pid", "w") as f:
+    if not os.path.isfile("/tmp/sofirem.lock"):
+        with open("/tmp/sofirem.pid", "w") as f:
             f.write(str(os.getpid()))
             f.close()
         style_provider = Gtk.CssProvider()
-        style_provider.load_from_path(base_dir + "/aai.css")
+        style_provider.load_from_path(base_dir + "/sofirem.css")
 
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),
@@ -145,7 +152,7 @@ if __name__ == "__main__":
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
         w = Main()
-        w.show_all()        
+        w.show_all()
         Gtk.main()
     else:
         md = Gtk.MessageDialog(parent=Main(),
@@ -154,7 +161,7 @@ if __name__ == "__main__":
                                buttons=Gtk.ButtonsType.YES_NO,
                                text="Lock File Found")
         md.format_secondary_markup(
-            "The lock file has been found. This indicates there is already an instance of <b>ArcoLinux Application Installer</b> running.\n\
+            "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
 click yes to remove the lock file and try running again")  # noqa
 
         result = md.run()
@@ -162,7 +169,7 @@ click yes to remove the lock file and try running again")  # noqa
 
         if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
             pid = ""
-            with open("/tmp/aai.pid", "r") as f:
+            with open("/tmp/sofirem.pid", "r") as f:
                 line = f.read()
                 pid = line.rstrip().lstrip()
                 f.close()
@@ -171,4 +178,4 @@ click yes to remove the lock file and try running again")  # noqa
                 Functions.MessageBox("Application Running!",
                                      "You first need to close the existing application")  # noqa
             else:
-                os.unlink("/tmp/aai.lock")
+                os.unlink("/tmp/sofirem.lock")

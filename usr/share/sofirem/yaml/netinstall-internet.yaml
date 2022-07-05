@@ -1,5 +1,9 @@
 - name: "Browsers"
   description: "Browsers"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - brave-bin
     - chromium
@@ -20,6 +24,10 @@
     - vivaldi-widevine
 - name: "Downloaders"
   description: "Downloaders"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - aria2
     - deluge
@@ -34,6 +42,10 @@
     - xdman
 - name: "Cloud Software"
   description: "Cloud software"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - dropbox
     - insync
@@ -41,6 +53,10 @@
     - nextcloud-client
 - name: "Mail Clients"
   description: "Mail clients"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - evolution
     - geary

@@ -1,5 +1,9 @@
 - name: "Terminals"
   description: "Terminals"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - alacritty
     - gnome-terminal
