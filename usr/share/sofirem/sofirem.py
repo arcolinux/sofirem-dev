@@ -25,12 +25,12 @@ class Main(Gtk.Window):
     #Create a queue, for worker communication (Multithreading - used in GUI layer)
     queue = Queue()
     def __init__(self):
-        super(Main, self).__init__(title="ArcoLinux Application Installer")
+        super(Main, self).__init__(title="Sofirem")
         self.set_border_width(10)
         self.connect("delete-event", self.on_close)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_icon_from_file(os.path.join(base_dir, 'images/arcolinux.png'))
-        self.set_default_size(800, 700)
+        self.set_icon_from_file(os.path.join(base_dir, 'images/sofirem.png'))
+        self.set_default_size(800, 900)
 
         splScr = Splash.splashScreen()
 

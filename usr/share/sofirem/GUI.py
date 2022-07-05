@@ -128,7 +128,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     # =====================================================
     ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
     pixbuf = GdkPixbuf.Pixbuf().new_from_file_at_size(
-        os.path.join(base_dir, 'images/arcolinux-stock.png'), 45, 45)
+        os.path.join(base_dir, 'images/sofirem.png'), 45, 45)
     image = Gtk.Image().new_from_pixbuf(pixbuf)
 
 
