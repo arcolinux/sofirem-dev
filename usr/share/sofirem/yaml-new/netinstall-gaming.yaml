@@ -1,7 +1,11 @@
 - name: "Games"
   description: "Gaming software"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
-    - aisleriot
+    - aisleriot    
     - armagetronad
     - astromenace
     - chromium-bsu
@@ -26,6 +30,10 @@
     - xonotic-data
 - name: "Game utilities"
   description: "Game utilities"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - arcolinux-meta-steam-amd
     - arcolinux-meta-steam-intel

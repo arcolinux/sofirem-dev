@@ -1,5 +1,9 @@
 - name: "Fonts"
   description: "Fonts"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
   packages:
     - awesome-terminal-fonts
     - nerd-fonts-source-code-pro

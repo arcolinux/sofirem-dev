@@ -104,7 +104,7 @@ def permissions(dst):
 #               APP INSTALLATION
 # =====================================================
 def install(package):
-    path = base_dir + "/cache/installed.lst"
+    path = "cache/installed.lst"
     pkg=package.strip("\n")
     inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
@@ -117,7 +117,7 @@ def install(package):
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(package):
-    path = base_dir + "/cache/installed.lst"
+    path = "cache/installed.lst"
     pkg=package.strip("\n")
     uninst_str = ["pacman", "-Rs", pkg,"--noconfirm"]
 
@@ -145,7 +145,7 @@ def get_current_installed(path):
     file.close()
 
 def query_pkg(package):
-    path = base_dir + "/cache/installed.lst"
+    path = "cache/installed.lst"
 
     if os.path.exists(path):
         if isfileStale(path, 0, 0, 30):
