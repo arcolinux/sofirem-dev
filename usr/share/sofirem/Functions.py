@@ -107,6 +107,8 @@ def install(package):
     path = "cache/installed.lst"
     pkg=package.strip("\n")
     inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
+    print("Installing package : " + pkg)
+    print("---------------------------------------------------------------------------")
 
     subprocess.call(inst_str,
                     shell=False,
@@ -120,7 +122,8 @@ def uninstall(package):
     path = "cache/installed.lst"
     pkg=package.strip("\n")
     uninst_str = ["pacman", "-Rs", pkg,"--noconfirm"]
-
+    print("Unstalling package : " + pkg)
+    print("---------------------------------------------------------------------------")
     subprocess.call(uninst_str,
                     shell=False,
                     stdout=subprocess.PIPE,
