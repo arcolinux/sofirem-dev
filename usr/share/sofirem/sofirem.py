@@ -105,7 +105,7 @@ class Main(Gtk.Window):
 # Given what this function does, it might be worth considering making it a
 # thread so that the app doesn't block while installing/uninstalling is happening.
     def app_toggle(self, widget, active, package, Gtk, vboxStack1, Functions, category, packages):
-        path = "cache/installed.lst"
+        path = base_dir + "/cache/installed.lst"
         if widget.get_active():
             #Install the package
             Functions.install(package)
