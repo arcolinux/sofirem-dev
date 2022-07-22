@@ -123,6 +123,7 @@ bluez-tools 0.2.0-5
 bluez-utils 5.64-2
 boost-libs 1.79.0-1
 breezy 3.2.2-2
+brltty 6.5-1
 brotli 1.0.9-8
 btrfs-progs 5.18.1-1
 bubblewrap 0.6.2-1
@@ -643,6 +644,7 @@ libsoup 2.74.2-2
 libsoup3 3.0.7-1
 libsoxr 0.1.3-2
 libspectre 0.2.10-1
+libspeechd 0.11.1-3
 libspiro 1:20200505-2
 libsrtp 1:2.4.2-1
 libssh 0.9.6-1

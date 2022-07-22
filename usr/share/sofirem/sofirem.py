@@ -9,10 +9,12 @@ import subprocess
 from Functions import os
 from queue import Queue
 import App_Frame_GUI
-#from Functions import install_alacritty, os, pacman
+
+# from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
-gi.require_version('Gtk', '3.0')
+
+gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 #      #============================================================
@@ -21,30 +23,48 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+
 class Main(Gtk.Window):
-    #Create a queue, for worker communication (Multithreading - used in GUI layer)
+    # Create a queue, for worker communication (Multithreading - used in GUI layer)
     queue = Queue()
+
     def __init__(self):
         super(Main, self).__init__(title="Sofirem")
         self.set_border_width(10)
         self.connect("delete-event", self.on_close)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_icon_from_file(os.path.join(base_dir, 'images/sofirem.png'))
+        self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
         self.set_default_size(800, 900)
 
-        print("---------------------------------------------------------------------------")
+        print(
+            "---------------------------------------------------------------------------"
+        )
         print("If you have errors, report it on the discord channel of ArcoLinux")
-        print("---------------------------------------------------------------------------")
+        print(
+            "---------------------------------------------------------------------------"
+        )
         print("You can receive support on https://discord.gg/R2amEEz")
-        print("---------------------------------------------------------------------------")
-        print("Many applications are coming from the Arch Linux repos and can be installed")
-        print("without any issues. Other applications are available from third party repos")
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print(
+            "Many applications are coming from the Arch Linux repos and can be installed"
+        )
+        print(
+            "without any issues. Other applications are available from third party repos"
+        )
         print("like Chaotic repo, ArcoLinux repo and others.")
-        print("---------------------------------------------------------------------------")
+        print(
+            "---------------------------------------------------------------------------"
+        )
         print("We do NOT build packages from AUR.")
-        print("---------------------------------------------------------------------------")
+        print(
+            "---------------------------------------------------------------------------"
+        )
         print("Some packages are only available on the ArcoLinux repos.")
-        print("---------------------------------------------------------------------------")
+        print(
+            "---------------------------------------------------------------------------"
+        )
 
         splScr = Splash.splashScreen()
 
@@ -66,21 +86,17 @@ class Main(Gtk.Window):
             except Exception as e:
                 print(e)
 
+        if not Functions.os.path.isdir(Functions.home + "/.config/sofirem"):
 
-        if not Functions.os.path.isdir(Functions.home +
-                                       "/.config/sofirem"):
-
-            Functions.os.makedirs(Functions.home +
-                                  "/.config/sofirem", 0o766)
-            Functions.permissions(Functions.home +
-                                  "/.config/sofirem")
+            Functions.os.makedirs(Functions.home + "/.config/sofirem", 0o766)
+            Functions.permissions(Functions.home + "/.config/sofirem")
         # Force Permissions
         a1 = Functions.os.stat(Functions.home + "/.config/autostart")
         a2 = Functions.os.stat(Functions.home + "/.config/sofirem")
-        #a3 = Functions.os.stat(Functions.home + "/" + Functions.bd)
+        # a3 = Functions.os.stat(Functions.home + "/" + Functions.bd)
         autostart = a1.st_uid
         sof = a2.st_uid
-        #backup = a3.st_uid
+        # backup = a3.st_uid
 
         if autostart == 0:
             Functions.permissions(Functions.home + "/.config/autostart")
@@ -99,44 +115,50 @@ class Main(Gtk.Window):
         os.unlink("/tmp/sofirem.lock")
         Gtk.main_quit()
 
-# ====================================================================
-#                     Button Functions
-# ====================================================================
-# Given what this function does, it might be worth considering making it a
-# thread so that the app doesn't block while installing/uninstalling is happening.
-    def app_toggle(self, widget, active, package, Gtk, vboxStack1, Functions, category, packages):
+    # ====================================================================
+    #                     Button Functions
+    # ====================================================================
+    # Given what this function does, it might be worth considering making it a
+    # thread so that the app doesn't block while installing/uninstalling is happening.
+    def app_toggle(
+        self, widget, active, package, Gtk, vboxStack1, Functions, category, packages
+    ):
         path = base_dir + "/cache/installed.lst"
+        print(path)
         if widget.get_active():
-            #Install the package
+            # Install the package
             Functions.install(package)
         else:
-            #Uninstall the package
+            # Uninstall the package
             Functions.uninstall(package)
         Functions.get_current_installed(path)
-        #App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
-        #widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
-        #self.gui.hide()
-        #self.gui.queue_redraw()
-        #self.gui.show_all()
+        # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
+        # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
+        # self.gui.hide()
+        # self.gui.queue_redraw()
+        # self.gui.show_all()
 
     def recache_clicked(self, widget):
-        #Check if cache is out of date. If so, run the re-cache, if not, don't.
+        # Check if cache is out of date. If so, run the re-cache, if not, don't.
         pb = ProgressBarWindow()
         pb.show_all()
-        #pb.set_text("Updating Cache")
-        #pb.reset_timer()
+        # pb.set_text("Updating Cache")
+        # pb.reset_timer()
         Functions.cache_btn("cache/", pb)
+
 
 # ====================================================================
 #                       MAIN
 # ====================================================================
 
+
 def signal_handler(sig, frame):
-    print('\nSofirem is closing.')
+    print("\nSofirem is closing.")
     os.unlink("/tmp/sofirem.lock")
     Gtk.main_quit(0)
 
-#These should be kept as it ensures that multiple installation instances can't be run concurrently.
+
+# These should be kept as it ensures that multiple installation instances can't be run concurrently.
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     if not os.path.isfile("/tmp/sofirem.lock"):
@@ -149,20 +171,23 @@ if __name__ == "__main__":
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),
             style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
         w = Main()
         w.show_all()
         Gtk.main()
     else:
-        md = Gtk.MessageDialog(parent=Main(),
-                               flags=0,
-                               message_type=Gtk.MessageType.INFO,
-                               buttons=Gtk.ButtonsType.YES_NO,
-                               text="Lock File Found")
+        md = Gtk.MessageDialog(
+            parent=Main(),
+            flags=0,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Lock File Found",
+        )
         md.format_secondary_markup(
             "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
-click yes to remove the lock file and try running again")  # noqa
+click yes to remove the lock file and try running again"
+        )  # noqa
 
         result = md.run()
         md.destroy()
@@ -175,7 +200,9 @@ click yes to remove the lock file and try running again")  # noqa
                 f.close()
 
             if Functions.checkIfProcessRunning(int(pid)):
-                Functions.MessageBox("Application Running!",
-                                     "You first need to close the existing application")  # noqa
+                Functions.MessageBox(
+                    "Application Running!",
+                    "You first need to close the existing application",
+                )  # noqa
             else:
                 os.unlink("/tmp/sofirem.lock")
