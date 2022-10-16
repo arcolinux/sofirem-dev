@@ -206,7 +206,7 @@ def cache(package, path):
         # and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
         description = desc[18:]
         # writing to a caching file with filename matching the package name
-        filename = path + "/" + pkg
+        filename = base_dir + "/cache/" + pkg
         file = open(filename, "w")
         file.write(description)
         file.close()
