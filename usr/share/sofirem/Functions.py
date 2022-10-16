@@ -206,7 +206,7 @@ def cache(package, path):
         # and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
         description = desc[18:]
         # writing to a caching file with filename matching the package name
-        filename = path + pkg
+        filename = base_dir + path + pkg
         file = open(filename, "w")
         file.write(description)
         file.close()
@@ -219,7 +219,7 @@ def cache_btn(path, progressbar):
     fraction = 1 / len(packages)
     # Non Multithreaded version.
     for pkg in packages:
-        cache(pkg, path)
+        cache(pkg, base_dir + path)
         progressbar.timeout_id = GLib.timeout_add(50, progressbar.update, fraction)
 
     # This will need to be coded to be running multiple processes eventually, since it will be manually invoked.
