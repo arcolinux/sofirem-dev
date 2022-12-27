@@ -11,8 +11,13 @@ adobe-source-han-sans-kr-fonts 2.004-1
 adobe-source-sans-fonts 3.046-1
 adwaita-icon-theme 42.0+r1+gc144c3d75-1
 aic94xx-firmware 30-9
+<<<<<<< HEAD
+alacritty 0.10.1-2
+alsa-card-profiles 1:0.3.59-1
+=======
 alacritty 0.11.0-1
 alsa-card-profiles 1:0.3.59-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 alsa-firmware 1.2.4-2
 alsa-lib 1.2.7.2-1
 alsa-plugins 1:1.2.7.1-1
@@ -29,6 +34,15 @@ apr-util 1.6.1-9
 arandr 0.1.10-7
 arc-gtk-theme 20220405-1
 arch-install-scripts 27-1
+<<<<<<< HEAD
+archinstall 2.5.1-1
+archiso 67-1
+archlinux-appstream-data 20220830-1
+archlinux-keyring 20220927-1
+archlinux-logout-git 22.06-03
+archlinux-logout-themes-git 22.06-02
+archlinux-tweak-tool-dev-git 22.09-03
+=======
 archinstall 2.5.2-1
 archiso 67-1
 archlinux-appstream-data 20221014-1
@@ -36,6 +50,7 @@ archlinux-keyring 20220927-1
 archlinux-logout-git 22.06-03
 archlinux-logout-themes-git 22.06-02
 archlinux-tweak-tool-dev-git 22.10-02
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 arcolinux-alacritty-git 22.05-01
 arcolinux-arc-dracul-git 22.07-02
 arcolinux-arc-kde 20220908-01
@@ -73,7 +88,11 @@ arcolinux-qt5-git 21.07-01
 arcolinux-root-git 22.08-01
 arcolinux-sddm-simplicity-git 22.09-02
 arcolinux-sddm-slice-git 21.08-01
+<<<<<<< HEAD
+arcolinux-system-config-git 22.09-07
+=======
 arcolinux-system-config-git 22.10-01
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 arcolinux-teamviewer 15.28.6-1
 arcolinux-termite-themes-git 21.07-01
 arcolinux-variety-autostart-git 21.07-01
@@ -89,7 +108,11 @@ asciidoc 10.2.0-1
 asciinema 2.2.0-2
 at-spi2-core 2.46.0-2
 atkmm 2.28.3-1
+<<<<<<< HEAD
+attica 5.98.0-1
+=======
 attica 5.99.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 attr 2.5.1-2
 audit 3.0.8-1
 autoconf 2.71-1
@@ -116,6 +139,15 @@ bluez-tools 0.2.0-5
 bluez-utils 5.65-3
 boost 1.80.0-2
 boost-libs 1.80.0-2
+<<<<<<< HEAD
+breeze 5.25.5-1
+breeze-icons 5.98.0-1
+breezy 3.2.2-2
+bridge-utils 1.7.1-1
+brltty 6.5-2
+brotli 1.0.9-8
+btrfs-progs 5.19.1-1
+=======
 breeze 5.26.0-1
 breeze-icons 5.99.0-1
 breezy 3.3.0-1
@@ -123,6 +155,7 @@ bridge-utils 1.7.1-1
 brltty 6.5-2
 brotli 1.0.9-8
 btrfs-progs 6.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 bubblewrap 0.6.2-1
 bzip2 1.0.8-4
 c-ares 1.18.1-1
@@ -139,9 +172,15 @@ cava 0.8.2-5
 cblas 3.10.1-1
 cdparanoia 10.2-8
 chaotic-keyring 20220803-1
+<<<<<<< HEAD
+chaotic-mirrorlist 20220918-1
+chromaprint 1.5.1-4
+chromium 106.0.5249.103-1
+=======
 chaotic-mirrorlist 20221008-2
 chromaprint 1.5.1-4
 chromium 106.0.5249.119-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 cifs-utils 7.0-1
 cinnamon 5.4.12-1
 cinnamon-control-center 5.4.7-1
@@ -174,7 +213,11 @@ curl 7.85.0-2
 cython 0.29.32-2
 dav1d 1.0.0-1
 db 5.3.28-5
+<<<<<<< HEAD
+dbus 1.14.2-1
+=======
 dbus 1.14.4-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 dbus-glib 0.112-2
 dbus-python 1.2.18-3
 dconf 0.40.0-1
@@ -184,7 +227,11 @@ ddrescue 1.26-1
 deadbeef 1.9.2-2
 desktop-file-utils 0.26-2
 device-mapper 2.03.16-2
+<<<<<<< HEAD
+devtools 20220621-1
+=======
 devtools 20221012-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 dex 0.9.0-1
 dhclient 4.4.3.P1-1
 dialog 1:1.3_20220728-1
@@ -192,10 +239,17 @@ diffutils 3.8-1
 ding-libs 0.6.2-1
 discord 0.0.20-1
 djvulibre 3.5.28-3
+<<<<<<< HEAD
+dkms 3.0.6-2
+dmenu 5.2-1
+dmidecode 3.4-1
+dmraid 1.0.0.rc16.3-13
+=======
 dkms 3.0.7-1
 dmenu 5.2-1
 dmidecode 3.4-1
 dmraid 1.0.0.rc16.3-14
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 dnsmasq 2.87-1
 dnssec-anchors 20190629-3
 docbook-xml 4.5-9
@@ -211,7 +265,11 @@ duf-bin 0.6.2-2
 duktape 2.7.0-4
 e2fsprogs 1.46.5-4
 ecryptfs-utils 111-5
+<<<<<<< HEAD
+edid-decode-git r643.f63a945-1
+=======
 edid-decode-git r644.f1ff7ad-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 edk2-ovmf 202208-1
 edk2-shell 202208-1
 efibootmgr 18-1
@@ -234,7 +292,11 @@ exiv2 0.27.5-3
 exo 4.16.4-1
 expac 10-5
 expat 2.4.9-1
+<<<<<<< HEAD
+extra-cmake-modules 5.98.0-1
+=======
 extra-cmake-modules 5.99.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 f2fs-tools 1.15.0-2
 faac 1.30-3
 faad2 2.10.0-1
@@ -249,13 +311,22 @@ fftw 3.3.10-3
 file 5.43-1
 file-roller 3.42.0-1
 filesystem 2021.12.07-1
+<<<<<<< HEAD
+filezilla 3.61.0-1
+=======
 filezilla 3.61.0-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 findutils 4.9.0-1
 firefox 105.0.3-1
 firefox-ublock-origin 1.44.4-1
 fish 3.5.1-1
+<<<<<<< HEAD
+flac 1.4.1-1
+flameshot-git r1853.134117b5-1
+=======
 flac 1.4.1-2
 flameshot-git r1854.f3577a00-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 flatpak 1:1.14.0-1
 flex 2.6.4-3
 fluidsynth 2.3.0-2
@@ -268,8 +339,13 @@ foomatic-db-gutenprint-ppds 5.3.4-1
 foomatic-db-nonfree 3:20221004-1
 foomatic-db-nonfree-ppds 3:20221004-1
 foomatic-db-ppds 3:20221004-1
+<<<<<<< HEAD
+frameworkintegration 5.98.0-1
+freeglut 3.2.2-2
+=======
 frameworkintegration 5.99.0-1
 freeglut 3.4.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 freetype2 2.12.1-1
 fribidi 1.0.12-1
 fsarchiver 0.8.6-1
@@ -294,7 +370,11 @@ gdk-pixbuf2 2.42.9-1
 gegl 0.4.38-1
 geoclue 2.6.0-2
 geocode-glib 3.26.4-1
+<<<<<<< HEAD
+gettext 0.21-2
+=======
 gettext 0.21.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ghostscript 10.0.0-1
 giflib 5.2.1-2
 gimp 2.10.32-2
@@ -333,7 +413,11 @@ gnome-software 42.4-1
 gnome-software-packagekit-plugin 42.4-1
 gnome-themes-extra 3.28+r6+g45b1d457-1
 gnu-netcat 0.7.1-8
+<<<<<<< HEAD
+gnupg 2.2.39-1
+=======
 gnupg 2.2.40-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 gnutls 3.7.8-1
 go 2:1.19.2-1
 go-tools 4:0.1.12-1
@@ -347,7 +431,11 @@ gpick 0.2.6-6
 gpm 1.20.7.r38.ge82d1a6-4
 gptfdisk 1.0.9-1
 graphene 1.10.8-1
+<<<<<<< HEAD
+graphicsmagick 1.3.38-4
+=======
 graphicsmagick 1.3.38-5
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 graphite 1:1.3.14-2
 graphviz 6.0.1-1
 grep 3.8-2
@@ -364,6 +452,16 @@ gsound 1.0.3-2
 gspell 1.12.0-1
 gssdp 1.4.0.1-1
 gssproxy 0.9.1-2
+<<<<<<< HEAD
+gst-libav 1.20.3-2
+gst-plugins-bad 1.20.3-2
+gst-plugins-bad-libs 1.20.3-2
+gst-plugins-base 1.20.3-2
+gst-plugins-base-libs 1.20.3-2
+gst-plugins-good 1.20.3-2
+gst-plugins-ugly 1.20.3-2
+gstreamer 1.20.3-2
+=======
 gst-libav 1.20.4-1
 gst-plugins-bad 1.20.4-1
 gst-plugins-bad-libs 1.20.4-1
@@ -372,6 +470,7 @@ gst-plugins-base-libs 1.20.4-1
 gst-plugins-good 1.20.4-1
 gst-plugins-ugly 1.20.4-1
 gstreamer 1.20.4-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 gtest 1.12.1-1
 gtk-doc 1.33.2-1
 gtk-engine-murrine 0.98.2-4
@@ -403,8 +502,13 @@ gvfs-smb 1.50.2-1
 gzip 1.12-1
 hardcode-fixer-git 2.0-1
 hardinfo-gtk3 0.5.1.816.g877ea2b-2
+<<<<<<< HEAD
+harfbuzz 5.2.0-1
+harfbuzz-icu 5.2.0-1
+=======
 harfbuzz 5.3.0-1
 harfbuzz-icu 5.3.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 hddtemp 0.3.beta15.53-3
 hdparm 9.65-1
 hicolor-icon-theme 0.17-2
@@ -426,15 +530,26 @@ i3lock-color 2.13.c.4-1
 iana-etc 20220915-1
 icu 71.1-1
 ijs 0.35-4
+<<<<<<< HEAD
+imagemagick 7.1.0.49-1
+=======
 imagemagick 7.1.0.50-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 imath 3.1.5-3
 imlib2 1.9.1-2
 inetutils 2.3-1
 iniparser 4.1-4
+<<<<<<< HEAD
+inkscape 1.2.1-7
+insync 3.7.13.50425-1
+intltool 0.51.0-6
+inxi 3.3.21.1-1
+=======
 inkscape 1.2.1-8
 insync 3.7.13.50425-1
 intltool 0.51.0-6
 inxi 3.3.22.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 iproute2 6.0.0-1
 iptables-nft 1:1.8.8-2
 iputils 20211215-1
@@ -453,6 +568,46 @@ js91 91.13.0-1
 json-c 0.16-1
 json-glib 1.6.6-2
 jsoncpp 1.9.5-2
+<<<<<<< HEAD
+kactivities 5.98.0-1
+karchive 5.98.0-1
+kauth 5.98.0-1
+kbd 2.5.1-1
+kbookmarks 5.98.0-1
+kcodecs 5.98.0-1
+kcompletion 5.98.0-1
+kconfig 5.98.0-1
+kconfigwidgets 5.98.0-1
+kcoreaddons 5.98.0-1
+kcrash 5.98.0-1
+kdbusaddons 5.98.0-1
+kdeclarative 5.98.0-1
+kdecoration 5.25.5-1
+kded 5.98.0-1
+keyutils 1.6.3-1
+kglobalaccel 5.98.0-1
+kguiaddons 5.98.0-1
+ki18n 5.98.0-1
+kiconthemes 5.98.0-1
+kio 5.98.0-1
+kirigami2 5.98.0-1
+kitemviews 5.98.0-1
+kjobwidgets 5.98.0-1
+kmod 30-1
+knewstuff 5.98.0-1
+knotifications 5.98.0-1
+kpackage 5.98.0-1
+kpmcore 22.08.1-1
+krb5 1.20-1
+kservice 5.98.0-1
+ktextwidgets 5.98.0-1
+kvantum 1.0.5-1
+kwallet 5.98.0-1
+kwayland 5.98.0-3
+kwidgetsaddons 5.98.0-1
+kwindowsystem 5.98.0-1
+kxmlgui 5.98.0-1
+=======
 kactivities 5.99.0-1
 karchive 5.99.0-1
 kauth 5.99.0-1
@@ -491,6 +646,7 @@ kwayland 5.99.0-1
 kwidgetsaddons 5.99.0-1
 kwindowsystem 5.99.0-1
 kxmlgui 5.99.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 l-smash 2.14.5-2
 lame 3.100-4
 lapack 3.10.1-1
@@ -512,10 +668,17 @@ lib32-bzip2 1.0.8-2
 lib32-cairo 1.17.6-2
 lib32-colord 1.4.6-1
 lib32-curl 7.85.0-1
+<<<<<<< HEAD
+lib32-dbus 1.14.2-1
+lib32-e2fsprogs 1.46.5-1
+lib32-expat 2.4.9-1
+lib32-flac 1.4.1-1
+=======
 lib32-dbus 1.14.4-1
 lib32-e2fsprogs 1.46.5-1
 lib32-expat 2.4.9-1
 lib32-flac 1.4.1-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 lib32-fontconfig 2:2.14.0-1
 lib32-freetype2 2.12.1-1
 lib32-fribidi 1.0.12-1
@@ -529,7 +692,11 @@ lib32-gnutls 3.7.8-1
 lib32-gst-plugins-base-libs 1.20.3-2
 lib32-gstreamer 1.20.3-2
 lib32-gtk3 3.24.34+r156+g812b3930d0-1
+<<<<<<< HEAD
+lib32-harfbuzz 5.2.0-1
+=======
 lib32-harfbuzz 5.3.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 lib32-icu 71.1-1
 lib32-json-glib 1.6.6-2
 lib32-keyutils 1.6.3-1
@@ -599,7 +766,11 @@ lib32-libxv 1.0.11-3
 lib32-libxxf86vm 1.1.4-3
 lib32-llvm-libs 14.0.6-2
 lib32-lm_sensors 1:3.6.0.r41.g31d1f125-1
+<<<<<<< HEAD
+lib32-mesa 22.1.7-1
+=======
 lib32-mesa 22.2.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 lib32-mpg123 1.30.2-1
 lib32-ncurses 6.3-1
 lib32-nettle 3.8-1
@@ -617,7 +788,11 @@ lib32-readline 8.1.002-1
 lib32-rest 0.8.1-4
 lib32-speex 1.2.1-1
 lib32-sqlite 3.39.3-1
+<<<<<<< HEAD
+lib32-systemd 251.5-1
+=======
 lib32-systemd 251.6-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 lib32-tdb 1.4.7-1
 lib32-util-linux 2.38.1-1
 lib32-vkd3d 1.4-1
@@ -677,7 +852,11 @@ libdvbpsi 1:1.3.3-2
 libdvdcss 1.4.3-1
 libdvdnav 6.1.1-1
 libdvdread 6.1.3-1
+<<<<<<< HEAD
+libebml 1.4.3-1
+=======
 libebml 1.4.4-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libedit 20210910_3.1-1
 libelf 0.187-2
 libepoxy 1.5.10-1
@@ -688,7 +867,11 @@ libexif 0.6.24-1
 libfdk-aac 2.0.2-1
 libffi 3.4.3-1
 libfido2 1.12.0-1
+<<<<<<< HEAD
+libfilezilla 1:0.39.1-1
+=======
 libfilezilla 1:0.39.2-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libfontenc 1.1.6-1
 libfreeaptx 0.1.1-1
 libgcrypt 1.10.1-1
@@ -702,18 +885,30 @@ libgme 0.6.3-1
 libgnome-keyring 3.12.0+13+g4f8ab73-3
 libgnomekbd 1:3.28.1-1
 libgovirt 2:0.3.8-1
+<<<<<<< HEAD
+libgpg-error 1.45-2
+=======
 libgpg-error 1.46-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libgphoto2 2.5.30-1
 libgsf 1.14.50-1
 libgtop 2.40.0+2+g31db82ef-2
 libgudev 237-2
+<<<<<<< HEAD
+libgusb 0.4.0-1
+=======
 libgusb 0.4.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libgweather-4 4.0.0-1
 libgxps 0.3.2-2
 libhandy 1.8.0-1
 libheif 1.13.0-2
 libibus 1.5.27-1
+<<<<<<< HEAD
+libical 3.0.14-3
+=======
 libical 3.0.15-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libice 1.0.10-4
 libid3tag 0.15.1b-11
 libidn 1.41-1
@@ -744,7 +939,11 @@ libltc 1.3.2-1
 libmad 0.15.1b-9
 libmalcontent 0.10.5-1
 libmanette 0.2.6-3
+<<<<<<< HEAD
+libmatroska 1.7.0-1
+=======
 libmatroska 1.7.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libmaxminddb 1.7.1-1
 libmbim 1.26.4-1
 libmd 1.0.4-1
@@ -863,7 +1062,11 @@ libvisio 0.1.7-7
 libvisual 0.4.0-8
 libvorbis 1.3.7-3
 libvpx 1.12.0-1
+<<<<<<< HEAD
+libwacom 2.4.0-1
+=======
 libwacom 2.5.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libwebp 1.2.4-1
 libwmf 0.2.12-2
 libwnck3 43.0-2
@@ -897,7 +1100,11 @@ libxklavier 5.4-3
 libxml2 2.10.2-2
 libxmlb 0.3.9-1
 libxmu 1.1.3-3
+<<<<<<< HEAD
+libxnvctrl 515.76-1
+=======
 libxnvctrl 520.56.06-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 libxpm 3.5.13-3
 libxpresent 1.0.0-2
 libxrandr 1.5.2-4
@@ -917,16 +1124,26 @@ lightdm 1:1.32.0-4
 lightdm-gtk-greeter 1:2.0.8-3
 lightdm-gtk-greeter-settings 1.2.2-7
 lilv 0.24.20-1
+<<<<<<< HEAD
+linux 5.19.13.arch1-1
+=======
 linux 6.0.1.arch2-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 linux-api-headers 5.18.15-1
 linux-atm 2.5.2-7
 linux-firmware 20220913.f09bebf-1
 linux-firmware-marvell 20220913.f09bebf-1
 linux-firmware-qlogic 20220913.f09bebf-1
 linux-firmware-whence 20220913.f09bebf-1
+<<<<<<< HEAD
+linux-headers 5.19.13.arch1-1
+linux-xanmod 5.19.11-1
+linux-xanmod-headers 5.19.11-1
+=======
 linux-headers 6.0.1.arch2-1
 linux-xanmod 5.19.15-1
 linux-xanmod-headers 5.19.15-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 llvm-libs 14.0.6-3
 lm_sensors 1:3.6.0.r41.g31d1f125-1
 lmdb 0.9.29-1
@@ -943,7 +1160,10 @@ lua52 5.2.4-5
 luajit 2.1.0.beta3.r449.gdad04f17-1
 lv2 1.18.10-1
 lvm2 2.03.16-2
+<<<<<<< HEAD
+=======
 lxappearance-gtk3 0.6.3-4
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 lxdm 0.5.3-7
 lz4 1:1.9.4-1
 lzo 2.10-3
@@ -961,12 +1181,20 @@ meld 3.22.0-1
 memtest86+ 5.31b-1
 menulibre 2.2.3-1
 mercurial 6.2.3-1
+<<<<<<< HEAD
+mesa 22.1.7-1
+=======
 mesa 22.2.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 mesa-utils 8.5.0-2
 meson 0.63.3-1
 metis 5.1.0.p10-2
 min 1.26.0-1
+<<<<<<< HEAD
+minizip 1:1.2.12-2
+=======
 minizip 1:1.2.13-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 mintstick-git r245.b7f43d2-1
 mjpegtools 2.2.1-1
 mkinitcpio 31-3
@@ -994,7 +1222,10 @@ ncurses 6.3-3
 ndctl 74-1
 ndisc6 1.0.5-1
 nemo 5.4.3-1
+<<<<<<< HEAD
+=======
 nemo-share 5.4.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 neofetch 7.1.0-2
 neon 0.32.4-1
 nerd-fonts-source-code-pro 2.1.0-2
@@ -1016,8 +1247,13 @@ ninja 1.11.1-1
 nitrogen 1.6.1-4
 nlohmann-json 3.11.2-1
 nm-connection-editor 1.28.0-1
+<<<<<<< HEAD
+node-gyp 9.1.0-1
+nodejs 18.10.0-1
+=======
 node-gyp 9.2.0-1
 nodejs 18.11.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 nodejs-nopt 6.0.0-1
 nomacs 1:3.17.2206-8
 noto-fonts 20220810-1
@@ -1031,6 +1267,15 @@ ntp 4.2.8.p15-1
 numactl 2.0.16-1
 numix-icon-theme-git 22.08.16.r1.gb5001d962-1
 numlockx 1.2-5
+<<<<<<< HEAD
+nvidia-dkms 515.76-1
+nvidia-settings 515.76-1
+nvidia-utils 515.76-1
+nvme-cli 2.1.2-1
+oath-toolkit 2.6.7-1
+ocl-icd 2.3.1-1
+oh-my-zsh-git r6657.11daa7dd5-1
+=======
 nvidia-dkms 520.56.06-1
 nvidia-settings 520.56.06-1
 nvidia-utils 520.56.06-1
@@ -1038,16 +1283,24 @@ nvme-cli 2.1.2-1
 oath-toolkit 2.6.7-1
 ocl-icd 2.3.1-1
 oh-my-zsh-git r6660.b9be3a43b-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 oniguruma 6.9.8-1
 open-iscsi 2.1.8-1
 open-isns 0.102-1
 openal 1.22.2-1
 openconnect 1:9.01-2
 opencore-amr 0.1.6-1
+<<<<<<< HEAD
+opencv 4.6.0-4
+openexr 3.1.5-1
+openjpeg2 2.5.0-1
+openmpi 4.1.4-2
+=======
 opencv 4.6.0-5
 openexr 3.1.5-1
 openjpeg2 2.5.0-1
 openmpi 4.1.4-4
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 openpmix 4.2.1-1
 openresolv 3.12.0-1
 openssh 9.1p1-1
@@ -1063,12 +1316,21 @@ ostree 2022.6-1
 p11-kit 0.24.1-1
 p7zip 1:17.04-3
 pace 1.4.2-1
+<<<<<<< HEAD
+packagekit 1.2.5-1
+pacman 6.0.1-8
+pacman-contrib 1.7.1-1
+pacman-mirrorlist 20220828-1
+pacseek-bin 1.7.3-1
+pahole 1:1.23-1
+=======
 packagekit 1.2.5-2
 pacman 6.0.1-8
 pacman-contrib 1.7.1-1
 pacman-mirrorlist 20221016-1
 pacseek-bin 1.7.3-1
 pahole 1:1.24-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 pam 1.5.2-1
 pamac-cli 10.4.2-1
 pamac-gtk 10.4.2-1
@@ -1130,17 +1392,28 @@ phodav 2.5-2
 picom 9.1-3
 pigz 2.7-2
 pinentry 1.2.1-1
+<<<<<<< HEAD
+pipewire 1:0.3.59-1
+pipewire-alsa 1:0.3.59-1
+pipewire-audio 1:0.3.59-1
+pipewire-pulse 1:0.3.59-1
+=======
 pipewire 1:0.3.59-2
 pipewire-alsa 1:0.3.59-2
 pipewire-audio 1:0.3.59-2
 pipewire-pulse 1:0.3.59-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 pixman 0.40.0-2
 pixz 1.0.7-3
 pkcs11-helper 1.29.0-1
 pkgconf 1.8.0-1
 pkgfile 21-2
 plank 0.11.89-4
+<<<<<<< HEAD
+plasma-framework 5.98.0-1
+=======
 plasma-framework 5.99.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 playerctl 2.4.1-2
 polkit 121-1
 polkit-gnome 0.105-9
@@ -1148,10 +1421,17 @@ polkit-qt5 0.114.0-1
 polybar 3.6.3-2
 pop-launcher-git 1.2.1.r0.g0893990-1
 pop-shell-shortcuts-git 1:r30.52cc83f-2
+<<<<<<< HEAD
+poppler 22.09.0-1
+poppler-data 0.4.11-1
+poppler-glib 22.09.0-1
+poppler-qt5 22.09.0-1
+=======
 poppler 22.10.0-1
 poppler-data 0.4.11-1
 poppler-glib 22.10.0-1
 poppler-qt5 22.10.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 popt 1.18-3
 portaudio 1:19.7.0-1
 potrace 1.16-2
@@ -1166,11 +1446,19 @@ psmisc 23.5-1
 pulseaudio-alsa 1:1.2.7.1-1
 pulseaudio-equalizer-ladspa 3.0.2-5
 pv 1.6.20-2
+<<<<<<< HEAD
+python 3.10.7-1
+python-anytree 2.8.0-5
+python-apipkg 3.0.1-1
+python-appdirs 1.4.4-7
+python-astroid 2.12.10-1
+=======
 python 3.10.8-1
 python-anytree 2.8.0-5
 python-apipkg 3.0.1-1
 python-appdirs 1.4.4-7
 python-astroid 2.12.11-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-atspi 2.38.2-1
 python-attrs 22.1.0-1
 python-autocommand 2.2.1-1
@@ -1189,7 +1477,11 @@ python-cryptography 38.0.1-1
 python-cssselect 1.1.0-9
 python-cycler 0.11.0-1
 python-dateutil 2.8.2-4
+<<<<<<< HEAD
+python-dill 0.3.4-3
+=======
 python-dill 0.3.5.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-distlib 0.3.6-1
 python-distro 1.7.0-1
 python-distutils-extra 2.39-10
@@ -1202,7 +1494,11 @@ python-gobject 3.42.2-1
 python-html5lib 1.1-11
 python-httplib2 0.20.4-1
 python-idna 3.4-1
+<<<<<<< HEAD
+python-importlib-metadata 4.9.0-1
+=======
 python-importlib-metadata 5.0.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-inflect 6.0.0-1
 python-iniconfig 1.1.1-5
 python-injector 0.20.1-2
@@ -1216,12 +1512,20 @@ python-kiwisolver 1.4.4-1
 python-lazy-object-proxy 1.7.1-1
 python-lxml 4.9.1-1
 python-mako 1.2.3-1
+<<<<<<< HEAD
+python-markdown 3.4.1-1
+python-markupsafe 2.1.1-1
+python-matplotlib 3.5.2-1
+python-mccabe 0.7.0-1
+python-more-itertools 8.13.0-2
+=======
 python-markdown 3.4.1-2
 python-markupsafe 2.1.1-1
 python-matplotlib 3.5.2-1
 python-mccabe 0.7.0-1
 python-merge3 0.0.9-1
 python-more-itertools 8.14.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-msgpack 1.0.4-1
 python-nspektr 0.4.0-2
 python-numpy 1.23.3-1
@@ -1233,7 +1537,11 @@ python-peewee 3.15.3-1
 python-pep517 0.13.0-1
 python-pexpect 4.8.0-6
 python-pillow 9.2.0-1
+<<<<<<< HEAD
+python-pip 22.2.2-2
+=======
 python-pip 22.3-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-platformdirs 2.5.2-1
 python-pluggy 1.0.0-1
 python-ply 3.11-10
@@ -1264,7 +1572,11 @@ python-resolvelib 0.8.1-1
 python-rich 12.6.0-1
 python-rx 3.2.0-3
 python-setproctitle 1.3.1-1
+<<<<<<< HEAD
+python-setuptools 1:63.2.0-1
+=======
 python-setuptools 1:63.4.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-six 1.16.0-6
 python-soupsieve 2.3.2.post1-1
 python-suntime 1.2.5-1
@@ -1272,7 +1584,11 @@ python-tenacity 8.1.0-1
 python-tinycss2 1.1.1-1
 python-toml 0.10.2-8
 python-tomli 2.0.1-1
+<<<<<<< HEAD
+python-tomlkit 0.11.4-1
+=======
 python-tomlkit 0.11.5-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 python-trove-classifiers 2022.9.26-1
 python-typing_extensions 4.3.0-1
 python-urllib3 1.26.12-1
@@ -1283,6 +1599,55 @@ python-wrapt 1.14.1-1
 python-xapp 2.2.2-1
 python-xlib 0.31-3
 python-yaml 6.0-1
+<<<<<<< HEAD
+python-zipp 3.8.1-1
+qbittorrent 4.4.5-1
+qca-qt5 2.3.4-3
+qemu-audio-alsa 7.1.0-8
+qemu-audio-dbus 7.1.0-8
+qemu-audio-jack 7.1.0-8
+qemu-audio-oss 7.1.0-8
+qemu-audio-pa 7.1.0-8
+qemu-audio-sdl 7.1.0-8
+qemu-audio-spice 7.1.0-8
+qemu-block-curl 7.1.0-8
+qemu-block-dmg 7.1.0-8
+qemu-block-nfs 7.1.0-8
+qemu-block-ssh 7.1.0-8
+qemu-chardev-spice 7.1.0-8
+qemu-common 7.1.0-8
+qemu-desktop 7.1.0-8
+qemu-hw-display-qxl 7.1.0-8
+qemu-hw-display-virtio-gpu 7.1.0-8
+qemu-hw-display-virtio-gpu-gl 7.1.0-8
+qemu-hw-display-virtio-gpu-pci 7.1.0-8
+qemu-hw-display-virtio-gpu-pci-gl 7.1.0-8
+qemu-hw-display-virtio-vga 7.1.0-8
+qemu-hw-display-virtio-vga-gl 7.1.0-8
+qemu-hw-s390x-virtio-gpu-ccw 7.1.0-8
+qemu-hw-usb-host 7.1.0-8
+qemu-hw-usb-redirect 7.1.0-8
+qemu-hw-usb-smartcard 7.1.0-8
+qemu-img 7.1.0-8
+qemu-pr-helper 7.1.0-8
+qemu-system-x86 7.1.0-8
+qemu-system-x86-firmware 7.1.0-8
+qemu-tools 7.1.0-8
+qemu-ui-curses 7.1.0-8
+qemu-ui-dbus 7.1.0-8
+qemu-ui-egl-headless 7.1.0-8
+qemu-ui-gtk 7.1.0-8
+qemu-ui-opengl 7.1.0-8
+qemu-ui-sdl 7.1.0-8
+qemu-ui-spice-app 7.1.0-8
+qemu-ui-spice-core 7.1.0-8
+qemu-vhost-user-gpu 7.1.0-8
+qemu-virtiofsd 7.1.0-8
+qhull 2020.2-4
+qpdf 11.1.1-1
+qrencode 4.1.1-1
+qt5-base 5.15.6+kde+r177-1
+=======
 python-zipp 3.9.0-1
 qbittorrent 4.4.5-1
 qca-qt5 2.3.4-3
@@ -1330,6 +1695,7 @@ qhull 2020.2-4
 qpdf 11.1.1-1
 qrencode 4.1.1-1
 qt5-base 5.15.6+kde+r180-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 qt5-declarative 5.15.6+kde+r20-1
 qt5-graphicaleffects 5.15.6+kde+r0-1
 qt5-location 5.15.6+kde+r3-1
@@ -1348,9 +1714,15 @@ qt5-webkit 5.212.0alpha4-16
 qt5-x11extras 5.15.6+kde+r0-1
 qt5-xmlpatterns 5.15.6+kde+r0-1
 qt5ct 1.5-2
+<<<<<<< HEAD
+qt6-5compat 6.4.0-1
+qt6-base 6.4.0-1
+qt6-declarative 6.4.0-1
+=======
 qt6-5compat 6.4.0-2
 qt6-base 6.4.0-1
 qt6-declarative 6.4.0-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 qt6-imageformats 6.4.0-1
 qt6-svg 6.4.0-1
 qt6-translations 6.4.0-1
@@ -1384,8 +1756,13 @@ ruby-base64 0.1.1-3
 ruby-benchmark 0.2.0-3
 ruby-bigdecimal 3.1.2-3
 ruby-bundledgems 3.0.4-18
+<<<<<<< HEAD
+ruby-bundler 2.3.22-2
+ruby-cgi 0.3.2-9
+=======
 ruby-bundler 2.3.23-1
 ruby-cgi 0.3.3-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ruby-csv 3.2.5-3
 ruby-date 3.2.2-3
 ruby-delegate 0.2.0-3
@@ -1406,7 +1783,11 @@ ruby-io-console 0.5.11-2
 ruby-io-nonblock 0.1.0-2
 ruby-io-wait 0.2.3-3
 ruby-ipaddr 1.2.4-2
+<<<<<<< HEAD
+ruby-irb 1.4.1-2
+=======
 ruby-irb 1.4.2-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ruby-json 2.6.2-2
 ruby-logger 1.5.1-2
 ruby-manpages 0.6.1-4
@@ -1417,7 +1798,11 @@ ruby-open-uri 0.2.0-3
 ruby-optimist 3.0.1-2
 ruby-paint 2.3.0-1
 ruby-power_assert 2.0.1-1
+<<<<<<< HEAD
+ruby-psych 4.0.4-4
+=======
 ruby-psych 4.0.6-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ruby-racc 1.6.0-3
 ruby-rainbow 3.1.1-1
 ruby-rake 13.0.6-1
@@ -1433,17 +1818,29 @@ ruby-ruby2_keywords 0.0.5-1
 ruby-stdlib 3.0.4-18
 ruby-stringio 3.0.2-4
 ruby-term-ansicolor 1.7.1-2
+<<<<<<< HEAD
+ruby-test-unit 3.5.4-1
+=======
 ruby-test-unit 3.5.5-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ruby-time 0.2.0-4
 ruby-tins 1.31.0-1
 ruby-tmpdir 0.1.2-3
 ruby-uri 0.11.0-5
+<<<<<<< HEAD
+rubygems 3.3.21-2
+=======
 rubygems 3.3.23-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 run-parts 5.5-1
 rustup 1.25.1-1
 rxvt-unicode 9.30-1
 rxvt-unicode-terminfo 9.30-1
+<<<<<<< HEAD
+samba 4.17.0-1
+=======
 samba 4.17.0-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 sane 1.1.1-1
 sardi-icons 22.10-01
 sardi-mono-papirus-colora-variations-icons-git 22.10-01
@@ -1457,7 +1854,11 @@ scrot 1.7-1
 sdbus-cpp 1.2.0-2
 sddm 0.19.0-8
 sdl12-compat 1.2.56-1
+<<<<<<< HEAD
+sdl2 2.24.0-2
+=======
 sdl2 2.24.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 sdl2_image 2.6.2-2
 sdparm 1.12-1
 seabios 1.16.0-3
@@ -1475,15 +1876,24 @@ simplescreenrecorder 0.4.4-1
 skypeforlinux-stable-bin 8.89.0.403-1
 slang 2.3.3-1
 smartmontools 7.3-1
+<<<<<<< HEAD
+smbclient 4.17.0-1
+=======
 smbclient 4.17.0-2
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 snapd 2.57.1-2
 snapd-glib 1.63-1
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.2-1
+<<<<<<< HEAD
+solid 5.98.0-1
+sonnet 5.98.0-1
+=======
 sofirem-dev-git 22.10-02
 solid 5.99.0-1
 sonnet 5.99.0-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 sord 0.16.14-1
 sound-theme-freedesktop 0.8-5
 soundtouch 2.3.1-2
@@ -1516,6 +1926,15 @@ svt-av1 1.2.1-1
 svt-hevc 1.5.1-2
 swh-plugins 0.4.17-4
 sxhkd 0.6.2-2
+<<<<<<< HEAD
+syndication 5.98.0-1
+sysfsutils 2.1.1-1
+syslinux 6.04.pre2.r11.gbf6db5b4-3
+system-config-printer 1.5.18-1
+systemd 251.5-1
+systemd-libs 251.5-1
+systemd-sysvcompat 251.5-1
+=======
 syndication 5.99.0-1
 sysfsutils 2.1.1-1
 syslinux 6.04.pre2.r11.gbf6db5b4-3
@@ -1524,6 +1943,7 @@ systemd 251.6-1
 systemd-libs 251.6-1
 systemd-sysvcompat 251.6-1
 tabby-bin 1.0.183-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 taglib 1.12-2
 talloc 2.3.4-1
 tar 1.34-1
@@ -1573,7 +1993,11 @@ ttf-fira-mono 2:3.206-4
 ttf-fira-sans 1:4.301-2
 ttf-font-awesome 6.2.0-1
 ttf-hack 3.003-3
+<<<<<<< HEAD
+ttf-hactor 20221008-1
+=======
 ttf-hactor 20221014-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ttf-hellvetica 20191029-2
 ttf-ibm-plex 6.0.2-1
 ttf-inconsolata 1:3.000-3
@@ -1589,7 +2013,10 @@ ttf-meslo-nerd-font-powerlevel10k 1.000-3
 ttf-monofur 1.0-7
 ttf-ms-fonts 2.0-12
 ttf-nerd-fonts-symbols-1000-em 2.2.2-3
+<<<<<<< HEAD
+=======
 ttf-nerd-fonts-symbols-1000-em-mono 2.2.2-3
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 ttf-nerd-fonts-symbols-common 2.2.2-3
 ttf-opensans 1.101-2
 ttf-proggy-clean 1.1.5-2
@@ -1599,7 +2026,11 @@ ttf-ubuntu-font-family 0.83-8
 tumbler 4.16.1-1
 twolame 0.4.0-2
 typescript 4.8.4-1
+<<<<<<< HEAD
+tzdata 2022d-1
+=======
 tzdata 2022e-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 udftools 2.3-1
 udiskie 2.4.2-1
 udisks2 2.9.4-1
@@ -1633,6 +2064,15 @@ virglrenderer 0.9.1-1
 virt-install 4.1.0-1
 virt-manager 4.1.0-1
 virt-viewer 11.0-1
+<<<<<<< HEAD
+virtualbox 6.1.38-1
+virtualbox-host-dkms 6.1.38-1
+visual-studio-code-bin 1.72.0-1
+vivaldi 5.5.2805.32-1
+vivaldi-ffmpeg-codecs 106.0.5249.12-1
+vivaldi-widevine 1:4.10.2449.0-1
+vlc 3.0.17.4-9
+=======
 virtualbox 6.1.40-1
 virtualbox-host-dkms 6.1.40-1
 visual-studio-code-bin 1.72.2-1
@@ -1640,11 +2080,16 @@ vivaldi 5.5.2805.38-1
 vivaldi-ffmpeg-codecs 106.0.5249.12-1
 vivaldi-widevine 1:4.10.2449.0-1
 vlc 3.0.17.4-10
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 vmaf 2.3.1-1
 volctl 0.9.2-1
 volume_key 0.3.12-7
 vpnc 1:0.5.3.r506.r204-1
+<<<<<<< HEAD
+vscodium-bin 1.72.0.22279-1
+=======
 vscodium-bin 1.72.2.22286-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 vte-common 0.68.0-2
 vte3 0.68.0-2
 vulkan-headers 1:1.3.227-1
@@ -1652,7 +2097,11 @@ vulkan-icd-loader 1.3.226-1
 w3m 0.5.3.git20220409_1-1
 wavpack 5.5.0-1
 wayland 1.21.0-1
+<<<<<<< HEAD
+wayland-protocols 1.26-1
+=======
 wayland-protocols 1.27-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 wd719x-firmware 1-7
 webkit2gtk 2.38.0-2
 webkit2gtk-4.1 2.38.0-2
@@ -1746,7 +2195,11 @@ xfwm4-themes 4.10.0-4
 xkeyboard-config 2.37-1
 xl2tpd 1.3.17-1
 xmlsec 1.2.34-2
+<<<<<<< HEAD
+xorg-bdftopcf 1.1-3
+=======
 xorg-bdftopcf 1.1.1-1
+>>>>>>> de5f6b7c9a6b2add1add3ab4034a7ad3351ee5d0
 xorg-fonts-encodings 1.0.6-1
 xorg-iceauth 1.0.9-1
 xorg-mkfontscale 1.2.2-1
