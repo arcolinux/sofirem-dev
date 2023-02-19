@@ -7,9 +7,14 @@
   packages:
     - caja
     - dolphin
+    - doublecmd-qt5
     - mc
     - nautilus
     - nemo
     - nemo-fileroller
     - pcmanfm
     - ranger
+    - thunar
+    - thunar-archive-plugin
+    - thunar-volman
+    - thunar-shares-plugin
