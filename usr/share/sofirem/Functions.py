@@ -107,34 +107,60 @@ def permissions(dst):
     except Exception as e:
         print(e)
 
+# =====================================================
+#               PACMAN SYNC MIRRORS
+# =====================================================
+def sync():
+    sync_str = ["pacman", "-Sy"]
+
+    print(":: Pacman: sync-mirrors")
+
+    subprocess_sync = subprocess.check_call(
+        sync_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+
+    if subprocess_sync == 0:
+        print("[INFO] Sync complete")
+        print("---------------------------------------------------------------------------")
+    else:
+        print("[ERROR] Sync failed")
+        print("---------------------------------------------------------------------------")
+
 
 # =====================================================
 #               APP INSTALLATION
 # =====================================================
-def install(package):
+def install(package,queue):
     path = base_dir + "/cache/installed.lst"
     pkg = package.strip("\n")
     inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
-    print("Installing package : " + pkg)
-    print("---------------------------------------------------------------------------")
 
-    subprocess.call(
+    print("[INFO] Installing package : " + pkg)
+
+    subprocess_inst = subprocess.check_call(
         inst_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
+
+    queue.put(subprocess_inst)
 
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
-def uninstall(package):
+def uninstall(package,queue):
     path = base_dir + "/cache/installed.lst"
     pkg = package.strip("\n")
     uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
-    print("Unstalling package : " + pkg)
-    print("---------------------------------------------------------------------------")
-    subprocess.call(
+
+    print("[INFO] Unstalling package : " + pkg)
+
+
+    subprocess_rem = subprocess.check_call(
         uninst_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
+
+    queue.put(subprocess_rem)
+
 
 
 # =====================================================

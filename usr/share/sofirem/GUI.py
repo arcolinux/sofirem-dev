@@ -21,7 +21,12 @@ class GUI_Worker(Thread):
     def run(self):
         while True:
             # pull what we need from the queue so we can process properly.
-            self, Gtk, vboxStack1, Functions, category, package_file = self.queue.get()
+            """
+            block=True added to queue.get(), this blocks if necessary until an item is available
+            currently testing whether this actually resolves the seg fault issue
+            """
+            #
+            self, Gtk, vboxStack1, Functions, category, package_file = self.queue.get(block=True)
             try:
                 App_Frame_GUI.GUI(
                     self, Gtk, vboxStack1, Functions, category, package_file

@@ -67,6 +67,11 @@ class Main(Gtk.Window):
         print(
             "---------------------------------------------------------------------------"
         )
+        # run pacman -Sy to sync mirrors, else you get a lot of 404 errors
+
+        Functions.sync()
+
+
 
         splScr = Splash.splashScreen()
 
@@ -113,6 +118,9 @@ class Main(Gtk.Window):
             with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
 
+
+
+
     def on_close(self, widget, data):
         os.unlink("/tmp/sofirem.lock")
         Gtk.main_quit()
@@ -126,21 +134,58 @@ class Main(Gtk.Window):
         self, widget, active, package, Gtk, vboxStack1, Functions, category, packages
     ):
         path = base_dir + "/cache/installed.lst"
-        print(path)
+
         if widget.get_active():
             # Install the package
             package = package.strip()
-            print("[INFO] Package to install = %s" % package)
+
+            print(":: Package to install = %s" % package)
             if len(package) > 0:
-                th = Functions.threading.Thread(target=Functions.install,args=(package,))
+                pkginst_queue = Queue()
+                th = Functions.threading.Thread(
+                        name="thread_pkginst",
+                        target=Functions.install,
+                        args=(package,pkginst_queue,)
+                    )
                 th.start()
+                th.join()
+
+                if pkginst_queue.get() == 0:
+                    print("[INFO] Package install completed")
+                    print("---------------------------------------------------------------------------")
+
+                else:
+                    print("[ERROR] Package install failed")
+                    print("---------------------------------------------------------------------------")
 
 
 
             #Functions.install(package)
         else:
             # Uninstall the package
-            Functions.uninstall(package)
+
+            package = package.strip()
+            if len(package) > 0:
+                print(":: Package to remove = %s" % package)
+                pkgrem_queue = Queue()
+                th = Functions.threading.Thread(
+                        name="thread_pkgremove",
+                        target=Functions.uninstall,
+                        args=(package,pkgrem_queue,)
+                    )
+                th.start()
+                th.join()
+
+                if pkgrem_queue.get() == 0:
+                    print("[INFO] Package removal completed")
+                    print("---------------------------------------------------------------------------")
+                else:
+                    print("[ERROR] Package removal failed")
+                    print("---------------------------------------------------------------------------")
+
+
+
+                #Functions.uninstall(package)
         Functions.get_current_installed(path)
         # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
