@@ -9,7 +9,9 @@ import subprocess
 from Functions import os
 from queue import Queue
 import App_Frame_GUI
+import faulthandler
 
+faulthandler.enable()
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
@@ -127,7 +129,15 @@ class Main(Gtk.Window):
         print(path)
         if widget.get_active():
             # Install the package
-            Functions.install(package)
+            package = package.strip()
+            print("[INFO] Package to install = %s" % package)
+            if len(package) > 0:
+                th = Functions.threading.Thread(target=Functions.install,args=(package,))
+                th.start()
+
+
+
+            #Functions.install(package)
         else:
             # Uninstall the package
             Functions.uninstall(package)
@@ -137,6 +147,10 @@ class Main(Gtk.Window):
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
+
+
+
+
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
