@@ -112,6 +112,11 @@ def permissions(dst):
 # =====================================================
 #               PACMAN SYNC PACKAGE DB
 # =====================================================
+'''
+    This was added since if the user hasn't run a pacman update recently
+    then the Pacman DB will be out of sync, causing a lot of 404 errors
+    from the mirrors
+'''
 def sync():
     try:
         sync_str = ["pacman", "-Sy"]
@@ -143,7 +148,7 @@ def sync():
 #               APP INSTALLATION
 # =====================================================
 def install(queue):
-
+    # get the package name from the queue
     pkg = queue.get()
 
     try:
@@ -158,11 +163,14 @@ def install(queue):
             shell=False,
             stdout=subprocess.PIPE
         )
+        # wait for the process to finish
         process_pkg_inst.communicate()
+        # add the process on the queue, to check on the returncode later on
         queue.put(process_pkg_inst)
     except Exception as e:
         print("Exception in install(): %s" %e)
     finally:
+        # set the signal as task is done
         queue.task_done()
 
 
@@ -170,7 +178,7 @@ def install(queue):
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(queue):
-
+    # get the package name from the queue
     pkg = queue.get()
 
     try:
@@ -185,11 +193,14 @@ def uninstall(queue):
             shell=False,
             stdout=subprocess.PIPE
         )
+        # wait for the process to finish
         process_pkg_rem.communicate()
+        # add the process on the queue, to check on the returncode later on
         queue.put(process_pkg_rem)
     except Exception as e:
         print("Exception in uninstall(): %s" %e)
     finally:
+        # set the signal as task is done
         queue.task_done()
 
 

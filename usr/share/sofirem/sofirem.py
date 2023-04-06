@@ -128,9 +128,6 @@ class Main(Gtk.Window):
             with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
 
-
-
-
     def on_close(self, widget, data):
         os.unlink("/tmp/sofirem.lock")
         Gtk.main_quit()
@@ -153,19 +150,23 @@ class Main(Gtk.Window):
                 print(":: Package to install : %s" % package)
 
                 self.pkg_queue.put(package)
-
+                # spawn a new thread to handle package installs
                 th = Functions.threading.Thread(
                         name = "thread_pkginst",
                         target = Functions.install,
                         args = (self.pkg_queue,)
                     )
-
+                # do not block
                 th.daemon = True
                 th.start()
 
+                # get the resulting process
                 process_pkg_inst = self.pkg_queue.get()
+
+                # set the signal to indicate work is done
                 self.pkg_queue.task_done()
 
+                # check the returncode of the process
                 if process_pkg_inst.returncode == 0:
                     print("[INFO] Package install completed")
                     print("-------------------------------------------------------")
@@ -181,21 +182,26 @@ class Main(Gtk.Window):
 
             if len(package) > 0:
                 print(":: Package to remove : %s" % package)
-
+                # put the package name into the queue
                 self.pkg_queue.put(package)
 
+                # spawn a new thread to handle package removals
                 th = Functions.threading.Thread(
                         name = "thread_pkgrem",
                         target = Functions.uninstall,
                         args = (self.pkg_queue,)
                     )
-
+                # do not block
                 th.daemon = True
                 th.start()
 
+                # get the resulting process
                 process_pkg_rem = self.pkg_queue.get()
 
+                # set the signal to indicate work is done
                 self.pkg_queue.task_done()
+
+                # check the returncode of the process
 
                 if process_pkg_rem.returncode == 0:
                     print("[INFO] Package removal completed")
