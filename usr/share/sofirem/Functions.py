@@ -25,6 +25,7 @@ from queue import Queue  # Multithreading the caching
 from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 
+
 # =====================================================
 #               Base Directory
 # =====================================================
@@ -108,58 +109,85 @@ def permissions(dst):
         print(e)
 
 # =====================================================
-#               PACMAN SYNC MIRRORS
+#               PACMAN SYNC PACKAGE DB
 # =====================================================
 def sync():
-    sync_str = ["pacman", "-Sy"]
+    try:
+        sync_str = ["pacman", "-Sy"]
 
-    print(":: Pacman: sync-mirrors")
+        print("[INFO] Synchronising package databases")
 
-    subprocess_sync = subprocess.check_call(
-        sync_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
+        # Pacman will not work if there is a lock file
+        if os.path.exists("/var/lib/pacman/db.lck"):
+            print("[ERROR] Pacman lock file found")
+            print("[ERROR] Sync failed")
+            sys.exit(1)
+        else:
 
-    if subprocess_sync == 0:
-        print("[INFO] Sync complete")
-        print("---------------------------------------------------------------------------")
-    else:
-        print("[ERROR] Sync failed")
-        print("---------------------------------------------------------------------------")
+            process_sync = subprocess.check_call(
+                sync_str,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=60
+            )
+
+        return process_sync
+    except Exception as e:
+        print("Exception in sync(): %s " %e)
+
 
 
 # =====================================================
 #               APP INSTALLATION
 # =====================================================
 def install(package,queue):
-    path = base_dir + "/cache/installed.lst"
-    pkg = package.strip("\n")
-    inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
+    try:
+        path = base_dir + "/cache/installed.lst"
+        pkg = package.strip("\n")
+        inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
-    print("[INFO] Installing package : " + pkg)
+        print("[INFO] Installing package : " + pkg)
 
-    subprocess_inst = subprocess.check_call(
-        inst_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
+        process_pkg_install = subprocess.check_call(
+            inst_str,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
 
-    queue.put(subprocess_inst)
+        queue.put(process_pkg_install)
+
+    except Exception as e:
+        print("Exception in install(): %s " %e)
+    finally:
+        queue.task_done()
 
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(package,queue):
-    path = base_dir + "/cache/installed.lst"
-    pkg = package.strip("\n")
-    uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
+    try:
+        path = base_dir + "/cache/installed.lst"
+        pkg = package.strip("\n")
+        uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
-    print("[INFO] Unstalling package : " + pkg)
+        print("[INFO] Removing package : " + pkg)
 
+        process_pkg_rem = subprocess.check_call(
+            uninst_str,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
 
-    subprocess_rem = subprocess.check_call(
-        uninst_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
+        queue.put(process_pkg_rem)
 
-    queue.put(subprocess_rem)
+    except Exception as e:
+        print("Exception in uninstall(): %s " %e)
+    finally:
+        queue.task_done()
 
 
 
@@ -172,38 +200,54 @@ def get_current_installed(path):
     # query_str = "pacman -Q > " + path
     query_str = ["pacman", "-Q"]
     # run the query - using Popen because it actually suits this use case a bit better.
-    process = subprocess.Popen(query_str, shell=False, stdout=subprocess.PIPE)
-    out, err = process.communicate()
-    file = open(path, "w")
-    for line in out.decode("utf-8"):
-        file.write(line)
-    file.close()
+
+    #process = subprocess.Popen(query_str, shell=False, stdout=subprocess.PIPE)
+    #out, err = process.communicate()
+    subprocess_query = subprocess.run(
+        query_str,
+        shell=False,
+        capture_output=True
+    )
+
+    # added validation on process result
+    if subprocess_query.returncode == 0:
+        file = open(path, "w")
+        for line in subprocess_query.stdout.decode("utf-8"):
+            file.write(line)
+        file.close()
+    else:
+        print("[ERROR] Failed to run %s" % query_str)
 
 
 def query_pkg(package):
-    path = base_dir + "/cache/installed.lst"
+    try:
+        package = package.strip()
+        path = base_dir + "/cache/installed.lst"
 
-    if os.path.exists(path):
-        if isfileStale(path, 0, 0, 30):
+        if os.path.exists(path):
+            if isfileStale(path, 0, 0, 30):
+                get_current_installed(path)
+        # file does NOT exist;
+        else:
             get_current_installed(path)
-    # file does NOT exist;
-    else:
-        get_current_installed(path)
-    # then, open the resulting list in read mode
-    file = open(path, "r")
-    # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
-    pkg = package.strip("\n")
+        # then, open the resulting list in read mode
+        with open(path, "r") as f:
 
-    # If the pkg name appears in the list, then it is installed
-    for line in file:
-        installed = line.split(" ")
-        # We only compare against the name of the package, NOT the version number.
-        if pkg == installed[0]:
-            file.close()
-            return True
-    # We will only hit here, if the pkg does not match anything in the file.
-    file.close()
-    return False
+            # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
+            pkg = package.strip("\n")
+
+            # If the pkg name appears in the list, then it is installed
+            for line in f:
+                installed = line.split(" ")
+                # We only compare against the name of the package, NOT the version number.
+                if pkg == installed[0]:
+                    #file.close()
+                    return True
+            # We will only hit here, if the pkg does not match anything in the file.
+            #file.close()
+        return False
+    except Exception as e:
+        print("Exception in query_pkg(): %s " % e)
 
 
 # =====================================================
@@ -212,32 +256,57 @@ def query_pkg(package):
 
 
 def cache(package, path):
-    # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
-    pkg = package.strip("\n")
-    # create the query
-    query_str = ["pacman", "-Si", pkg, " --noconfirm"]
-    # run the query - using Popen because it actually suits this use case a bit better.
-    process = subprocess.Popen(
-        query_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    out, err = process.communicate()
+    try:
+        # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
+        pkg = package.strip()
+        # create the query
+        query_str = ["pacman", "-Si", pkg, " --noconfirm"]
 
-    output = out.decode("utf-8")
-    split = output.splitlines()
+        # run the query - using Popen because it actually suits this use case a bit better.
 
-    if len(output) > 0:
-        # Currently the output of the pacman command above always puts the description on the 4th line.
-        desc = str(split[3])
-        # Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
-        # and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
-        description = desc[18:]
-        # writing to a caching file with filename matching the package name
-        filename = base_dir + "/cache/" + pkg
-        file = open(filename, "w")
-        file.write(description)
-        file.close()
-        return description
-    return "No Description Found"
+        '''
+        process = subprocess.Popen(
+            query_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        '''
+
+        # switched over to subprocess.run
+        process = subprocess.run(
+             query_str,
+             shell=False,
+             check=False,
+             capture_output=True
+
+            )
+
+        # validate the process result
+        if process.returncode == 0:
+            #out, err = process.communicate()
+
+            output = process.stdout.decode("utf-8")
+
+
+            if len(output) > 0:
+                split = output.splitlines()
+
+                # Currently the output of the pacman command above always puts the description on the 4th line.
+                desc = str(split[3])
+                # Ok, so this is a little fancy: there is formatting from the output which we wish to ignore (ends at 19th character)
+                # and there is a remenant of it as the last character - usually a single or double quotation mark, which we also need to ignore
+                description = desc[18:]
+                # writing to a caching file with filename matching the package name
+                filename = base_dir + "/cache/" + pkg
+
+                file = open(filename, "w")
+                file.write(description)
+                file.close()
+
+                return description
+        return "No Description Found"
+    except Exception as e:
+        print("Exception in cache(): %s " % e)
+
+
 
 
 # Creating an over-load so that we can use the same function, with slightly different code to get the results we need
@@ -273,12 +342,14 @@ def obtain_pkg_description(package):
     # processing variables.
     output = ""
     path = base_dir + "/cache/"
+
     # First we need to determine whether to pull from cache or pacman.
     if os.path.exists(path + package.strip("\n")):
         output = file_lookup(package, path)
+
     # file doesn't exist, so create a blank copy
     else:
-        output = cache(package, path)
+        output = cache(package,path)
     # Add the package in question to the global variable, in case recache is needed
     packages.append(package)
     return output

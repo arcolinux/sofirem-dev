@@ -11,7 +11,6 @@ from queue import Queue
 import App_Frame_GUI
 import faulthandler
 
-faulthandler.enable()
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
@@ -23,12 +22,17 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 #      #=          Authors:  Erik Dubois - Cameron Percival        =
 #      #============================================================
 
+faulthandler.enable()
+PYTHONFAULTHANDLER = 1
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class Main(Gtk.Window):
     # Create a queue, for worker communication (Multithreading - used in GUI layer)
     queue = Queue()
+
+    # Created a second queue to handle package install/removal
+    pkg_queue = Queue()
 
     def __init__(self):
         super(Main, self).__init__(title="Sofirem")
@@ -67,10 +71,14 @@ class Main(Gtk.Window):
         print(
             "---------------------------------------------------------------------------"
         )
-        # run pacman -Sy to sync mirrors, else you get a lot of 404 errors
+        # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-        Functions.sync()
-
+        if Functions.sync() == 0:
+            print("[INFO] Sync complete")
+            print("---------------------------------------------------------------------------")
+        else:
+            print("[ERROR] Sync failed")
+            print("---------------------------------------------------------------------------")
 
 
         splScr = Splash.splashScreen()
@@ -112,7 +120,11 @@ class Main(Gtk.Window):
             Functions.permissions(Functions.home + "/.config/sofirem")
             print("Fix sofirem permissions...")
 
+        print("[INFO] Preparing GUI")
+
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+
+        print("[INFO] Completed GUI")
 
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.lock", "w") as f:
@@ -135,30 +147,30 @@ class Main(Gtk.Window):
     ):
         path = base_dir + "/cache/installed.lst"
 
+
         if widget.get_active():
             # Install the package
             package = package.strip()
 
             print(":: Package to install = %s" % package)
             if len(package) > 0:
-                pkginst_queue = Queue()
+
                 th = Functions.threading.Thread(
                         name="thread_pkginst",
                         target=Functions.install,
-                        args=(package,pkginst_queue,)
+                        args=(package,self.pkg_queue,)
                     )
-                th.start()
-                th.join()
 
-                if pkginst_queue.get() == 0:
+                th.start()
+
+
+                if self.pkg_queue.get() == 0:
                     print("[INFO] Package install completed")
                     print("---------------------------------------------------------------------------")
 
                 else:
                     print("[ERROR] Package install failed")
                     print("---------------------------------------------------------------------------")
-
-
 
             #Functions.install(package)
         else:
@@ -167,23 +179,22 @@ class Main(Gtk.Window):
             package = package.strip()
             if len(package) > 0:
                 print(":: Package to remove = %s" % package)
-                pkgrem_queue = Queue()
+
                 th = Functions.threading.Thread(
                         name="thread_pkgremove",
                         target=Functions.uninstall,
-                        args=(package,pkgrem_queue,)
+                        args=(package,self.pkg_queue,)
                     )
-                th.start()
-                th.join()
 
-                if pkgrem_queue.get() == 0:
+                th.start()
+
+
+                if self.pkg_queue.get() == 0:
                     print("[INFO] Package removal completed")
                     print("---------------------------------------------------------------------------")
                 else:
                     print("[ERROR] Package removal failed")
                     print("---------------------------------------------------------------------------")
-
-
 
                 #Functions.uninstall(package)
         Functions.get_current_installed(path)
@@ -219,49 +230,55 @@ def signal_handler(sig, frame):
 
 # These should be kept as it ensures that multiple installation instances can't be run concurrently.
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-    if not os.path.isfile("/tmp/sofirem.lock"):
-        with open("/tmp/sofirem.pid", "w") as f:
-            f.write(str(os.getpid()))
-            f.close()
-        style_provider = Gtk.CssProvider()
-        style_provider.load_from_path(base_dir + "/sofirem.css")
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        if not os.path.isfile("/tmp/sofirem.lock"):
+            with open("/tmp/sofirem.pid", "w") as f:
+                f.write(str(os.getpid()))
 
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
-        w = Main()
-        w.show_all()
-        Gtk.main()
-    else:
-        md = Gtk.MessageDialog(
-            parent=Main(),
-            flags=0,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.YES_NO,
-            text="Lock File Found",
-        )
-        md.format_secondary_markup(
-            "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
-click yes to remove the lock file and try running again"
-        )  # noqa
+            style_provider = Gtk.CssProvider()
+            style_provider.load_from_path(base_dir + "/sofirem.css")
 
-        result = md.run()
-        md.destroy()
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(),
+                style_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+            w = Main()
+            w.show_all()
 
-        if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
-            pid = ""
-            with open("/tmp/sofirem.pid", "r") as f:
-                line = f.read()
-                pid = line.rstrip().lstrip()
-                f.close()
+            print("[INFO] App Started")
+            Gtk.main()
+            print("[INFO] App Completed")
+        else:
+            md = Gtk.MessageDialog(
+                parent=Main(),
+                flags=0,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.YES_NO,
+                text="Lock File Found",
+            )
+            md.format_secondary_markup(
+                "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
+    click yes to remove the lock file and try running again"
+            )  # noqa
 
-            if Functions.checkIfProcessRunning(int(pid)):
-                Functions.MessageBox(
-                    "Application Running!",
-                    "You first need to close the existing application",
-                )  # noqa
-            else:
-                os.unlink("/tmp/sofirem.lock")
+            result = md.run()
+            md.destroy()
+
+            if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
+                pid = ""
+                with open("/tmp/sofirem.pid", "r") as f:
+                    line = f.read()
+                    pid = line.rstrip().lstrip()
+
+
+                if Functions.checkIfProcessRunning(int(pid)):
+                    Functions.MessageBox(
+                        "Application Running!",
+                        "You first need to close the existing application",
+                    )  # noqa
+                else:
+                    os.unlink("/tmp/sofirem.lock")
+    except Exception as e:
+        print("Exception in __main__: %s" %e)
