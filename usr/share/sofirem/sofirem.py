@@ -9,7 +9,6 @@ import subprocess
 from Functions import os
 from queue import Queue
 import App_Frame_GUI
-import faulthandler
 
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
@@ -22,8 +21,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 #      #=          Authors:  Erik Dubois - Cameron Percival        =
 #      #============================================================
 
-faulthandler.enable()
-PYTHONFAULTHANDLER = 1
+
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -74,10 +72,10 @@ class Main(Gtk.Window):
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
-            print("[INFO] Sync complete")
+            print("[INFO] Synchronising complete")
             print("---------------------------------------------------------------------------")
         else:
-            print("[ERROR] Sync failed")
+            print("[ERROR] Synchronising failed")
             print("---------------------------------------------------------------------------")
 
 
@@ -147,49 +145,59 @@ class Main(Gtk.Window):
     ):
         path = base_dir + "/cache/installed.lst"
 
-
         if widget.get_active():
             # Install the package
             package = package.strip()
 
-            print(":: Package to install = %s" % package)
             if len(package) > 0:
+                print(":: Package to install : %s" % package)
+
+                self.pkg_queue.put(package)
 
                 th = Functions.threading.Thread(
-                        name="thread_pkginst",
-                        target=Functions.install,
-                        args=(package,self.pkg_queue,)
+                        name = "thread_pkginst",
+                        target = Functions.install,
+                        args = (self.pkg_queue,)
                     )
 
+                th.daemon = True
                 th.start()
 
+                process_pkg_inst = self.pkg_queue.get()
+                self.pkg_queue.task_done()
 
-                if self.pkg_queue.get() == 0:
+                if process_pkg_inst.returncode == 0:
                     print("[INFO] Package install completed")
-                    print("---------------------------------------------------------------------------")
-
+                    print("-------------------------------------------------------")
                 else:
                     print("[ERROR] Package install failed")
                     print("---------------------------------------------------------------------------")
 
+
             #Functions.install(package)
         else:
             # Uninstall the package
-
             package = package.strip()
+
             if len(package) > 0:
-                print(":: Package to remove = %s" % package)
+                print(":: Package to remove : %s" % package)
+
+                self.pkg_queue.put(package)
 
                 th = Functions.threading.Thread(
-                        name="thread_pkgremove",
-                        target=Functions.uninstall,
-                        args=(package,self.pkg_queue,)
+                        name = "thread_pkgrem",
+                        target = Functions.uninstall,
+                        args = (self.pkg_queue,)
                     )
 
+                th.daemon = True
                 th.start()
 
+                process_pkg_rem = self.pkg_queue.get()
 
-                if self.pkg_queue.get() == 0:
+                self.pkg_queue.task_done()
+
+                if process_pkg_rem.returncode == 0:
                     print("[INFO] Package removal completed")
                     print("---------------------------------------------------------------------------")
                 else:

@@ -25,6 +25,7 @@ from queue import Queue  # Multithreading the caching
 from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 
+import asyncio
 
 # =====================================================
 #               Base Directory
@@ -134,32 +135,33 @@ def sync():
 
         return process_sync
     except Exception as e:
-        print("Exception in sync(): %s " %e)
+        print("Exception in sync(): %s" %e)
 
 
 
 # =====================================================
 #               APP INSTALLATION
 # =====================================================
-def install(package,queue):
+def install(queue):
+
+    pkg = queue.get()
+
     try:
         path = base_dir + "/cache/installed.lst"
-        pkg = package.strip("\n")
+
         inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
         print("[INFO] Installing package : " + pkg)
 
-        process_pkg_install = subprocess.check_call(
+        process_pkg_inst = subprocess.Popen(
             inst_str,
             shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stdout=subprocess.PIPE
         )
-
-        queue.put(process_pkg_install)
-
+        process_pkg_inst.communicate()
+        queue.put(process_pkg_inst)
     except Exception as e:
-        print("Exception in install(): %s " %e)
+        print("Exception in install(): %s" %e)
     finally:
         queue.task_done()
 
@@ -167,28 +169,28 @@ def install(package,queue):
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
-def uninstall(package,queue):
+def uninstall(queue):
+
+    pkg = queue.get()
+
     try:
         path = base_dir + "/cache/installed.lst"
-        pkg = package.strip("\n")
+
         uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
         print("[INFO] Removing package : " + pkg)
 
-        process_pkg_rem = subprocess.check_call(
+        process_pkg_rem = subprocess.Popen(
             uninst_str,
             shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stdout=subprocess.PIPE
         )
-
+        process_pkg_rem.communicate()
         queue.put(process_pkg_rem)
-
     except Exception as e:
-        print("Exception in uninstall(): %s " %e)
+        print("Exception in uninstall(): %s" %e)
     finally:
         queue.task_done()
-
 
 
 # =====================================================
@@ -201,18 +203,18 @@ def get_current_installed(path):
     query_str = ["pacman", "-Q"]
     # run the query - using Popen because it actually suits this use case a bit better.
 
-    #process = subprocess.Popen(query_str, shell=False, stdout=subprocess.PIPE)
-    #out, err = process.communicate()
-    subprocess_query = subprocess.run(
+    subprocess_query = subprocess.Popen(
         query_str,
         shell=False,
-        capture_output=True
+        stdout=subprocess.PIPE
     )
+
+    out, err = subprocess_query.communicate()
 
     # added validation on process result
     if subprocess_query.returncode == 0:
         file = open(path, "w")
-        for line in subprocess_query.stdout.decode("utf-8"):
+        for line in out.decode("utf-8"):
             file.write(line)
         file.close()
     else:
@@ -264,26 +266,19 @@ def cache(package, path):
 
         # run the query - using Popen because it actually suits this use case a bit better.
 
-        '''
+
         process = subprocess.Popen(
             query_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        '''
 
-        # switched over to subprocess.run
-        process = subprocess.run(
-             query_str,
-             shell=False,
-             check=False,
-             capture_output=True
+        out, err = process.communicate()
 
-            )
 
         # validate the process result
         if process.returncode == 0:
             #out, err = process.communicate()
 
-            output = process.stdout.decode("utf-8")
+            output = out.decode("utf-8")
 
 
             if len(output) > 0:

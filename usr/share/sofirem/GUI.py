@@ -127,7 +127,9 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             This error happens randomly, due to the for loop iteration on the cpu_count
             old code: for x in range(cpu_count()):
         '''
-        # only spawn a single thread anything higher causes Segmentation fault
+
+        # run over 3 GUI_Worker threads, as any number greater than 3 causes a Segmentation fault
+
         worker = GUI_Worker(self.queue)
         # Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
