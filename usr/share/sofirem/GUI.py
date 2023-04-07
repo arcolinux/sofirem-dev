@@ -128,7 +128,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             old code: for x in range(cpu_count()):
         '''
 
-        # run over 3 GUI_Worker threads, as any number greater than 3 causes a Segmentation fault
+        #spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         worker = GUI_Worker(self.queue)
         # Set the worker to be True to allow processing, and avoid Blocking
