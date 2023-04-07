@@ -72,10 +72,10 @@ class Main(Gtk.Window):
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
-            print("[INFO] Synchronising complete")
+            print("[INFO] %s Synchronising complete" % Functions.datetime.now().strftime('%H:%M:%S'))
             print("---------------------------------------------------------------------------")
         else:
-            print("[ERROR] Synchronising failed")
+            print("[ERROR] %s Synchronising failed" % Functions.datetime.now().strftime('%H:%M:%S'))
             print("---------------------------------------------------------------------------")
 
 
@@ -118,15 +118,18 @@ class Main(Gtk.Window):
             Functions.permissions(Functions.home + "/.config/sofirem")
             print("Fix sofirem permissions...")
 
-        print("[INFO] Preparing GUI")
+        print("[INFO] %s Preparing GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
 
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-        print("[INFO] Completed GUI")
+        print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
 
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
+
+
+
 
     def on_close(self, widget, data):
         os.unlink("/tmp/sofirem.lock")
@@ -150,30 +153,17 @@ class Main(Gtk.Window):
                 print(":: Package to install : %s" % package)
 
                 self.pkg_queue.put(package)
-                # spawn a new thread to handle package installs
+
                 th = Functions.threading.Thread(
                         name = "thread_pkginst",
                         target = Functions.install,
                         args = (self.pkg_queue,)
                     )
-                # do not block
+
                 th.daemon = True
                 th.start()
 
-                # get the resulting process
-                process_pkg_inst = self.pkg_queue.get()
-
-                # set the signal to indicate work is done
-                self.pkg_queue.task_done()
-
-                # check the returncode of the process
-                if process_pkg_inst.returncode == 0:
-                    print("[INFO] Package install completed")
-                    print("-------------------------------------------------------")
-                else:
-                    print("[ERROR] Package install failed")
-                    print("---------------------------------------------------------------------------")
-
+                self.pkg_queue.put(None)
 
             #Functions.install(package)
         else:
@@ -182,33 +172,19 @@ class Main(Gtk.Window):
 
             if len(package) > 0:
                 print(":: Package to remove : %s" % package)
-                # put the package name into the queue
+
                 self.pkg_queue.put(package)
 
-                # spawn a new thread to handle package removals
                 th = Functions.threading.Thread(
                         name = "thread_pkgrem",
                         target = Functions.uninstall,
                         args = (self.pkg_queue,)
                     )
-                # do not block
+
                 th.daemon = True
                 th.start()
 
-                # get the resulting process
-                process_pkg_rem = self.pkg_queue.get()
-
-                # set the signal to indicate work is done
-                self.pkg_queue.task_done()
-
-                # check the returncode of the process
-
-                if process_pkg_rem.returncode == 0:
-                    print("[INFO] Package removal completed")
-                    print("---------------------------------------------------------------------------")
-                else:
-                    print("[ERROR] Package removal failed")
-                    print("---------------------------------------------------------------------------")
+                self.pkg_queue.put(None)
 
                 #Functions.uninstall(package)
         Functions.get_current_installed(path)
@@ -261,9 +237,8 @@ if __name__ == "__main__":
             w = Main()
             w.show_all()
 
-            print("[INFO] App Started")
+            print("[INFO] %s App Started" %Functions.datetime.now().strftime('%H:%M:%S'))
             Gtk.main()
-            print("[INFO] App Completed")
         else:
             md = Gtk.MessageDialog(
                 parent=Main(),

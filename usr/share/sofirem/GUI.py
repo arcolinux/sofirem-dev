@@ -125,12 +125,10 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         '''
             Fatal Python error: Segmentation fault
             This error happens randomly, due to the for loop iteration on the cpu_count
-            Possibly because of a race condition of how items are concurrently added/pulled from the queue ?
-            old code: for x in range(cpu_count())
+            old code: for x in range(cpu_count()):
         '''
 
-        # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
-
+        # run over 3 GUI_Worker threads, as any number greater than 3 causes a Segmentation fault
 
         worker = GUI_Worker(self.queue)
         # Set the worker to be True to allow processing, and avoid Blocking

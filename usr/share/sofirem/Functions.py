@@ -25,8 +25,6 @@ from queue import Queue  # Multithreading the caching
 from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 
-import asyncio
-
 # =====================================================
 #               Base Directory
 # =====================================================
@@ -112,16 +110,11 @@ def permissions(dst):
 # =====================================================
 #               PACMAN SYNC PACKAGE DB
 # =====================================================
-'''
-    This was added since if the user hasn't run a pacman update recently
-    then the Pacman DB will be out of sync, causing a lot of 404 errors
-    from the mirrors
-'''
 def sync():
     try:
         sync_str = ["pacman", "-Sy"]
 
-        print("[INFO] Synchronising package databases")
+        print("[INFO] %s Synchronising package databases" % datetime.now().strftime('%H:%M:%S'))
 
         # Pacman will not work if there is a lock file
         if os.path.exists("/var/lib/pacman/db.lck"):
@@ -130,7 +123,7 @@ def sync():
             sys.exit(1)
         else:
 
-            process_sync = subprocess.check_call(
+            process_sync = subprocess.run(
                 sync_str,
                 shell=False,
                 stdout=subprocess.PIPE,
@@ -138,7 +131,7 @@ def sync():
                 timeout=60
             )
 
-        return process_sync
+        return process_sync.returncode
     except Exception as e:
         print("Exception in sync(): %s" %e)
 
@@ -148,59 +141,76 @@ def sync():
 #               APP INSTALLATION
 # =====================================================
 def install(queue):
-    # get the package name from the queue
+
     pkg = queue.get()
 
     try:
-        path = base_dir + "/cache/installed.lst"
+        if not waitForPacmanLockFile() and pkg is not None:
+            path = base_dir + "/cache/installed.lst"
 
-        inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
+            inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
-        print("[INFO] Installing package : " + pkg)
+            print("[INFO] %s Installing package %s: " %(datetime.now().strftime('%H:%M:%S'),pkg))
 
-        process_pkg_inst = subprocess.Popen(
-            inst_str,
-            shell=False,
-            stdout=subprocess.PIPE
-        )
-        # wait for the process to finish
-        process_pkg_inst.communicate()
-        # add the process on the queue, to check on the returncode later on
-        queue.put(process_pkg_inst)
+            process_pkg_inst = subprocess.run(
+                inst_str,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=60
+            )
+
+            if process_pkg_inst.returncode == 0:
+                print("[INFO] Package install completed")
+                print("---------------------------------------------------------------------------")
+            else:
+                print("[ERROR] Package install failed")
+                print("---------------------------------------------------------------------------")
+                raise SystemError("Pacman failed to install package = %s" % pkg)
+
     except Exception as e:
         print("Exception in install(): %s" %e)
+    except SystemError as s:
+        print("SystemError in install(): %s" %s)
     finally:
-        # set the signal as task is done
         queue.task_done()
-
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(queue):
-    # get the package name from the queue
+
     pkg = queue.get()
 
     try:
-        path = base_dir + "/cache/installed.lst"
+       if not waitForPacmanLockFile() and pkg is not None:
+           if checkPackageInstalled(pkg):
+               path = base_dir + "/cache/installed.lst"
+               uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
-        uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
+               print("[INFO] %s Removing package : %s" %(datetime.now().strftime('%H:%M:%S'),pkg))
 
-        print("[INFO] Removing package : " + pkg)
+               process_pkg_rem = subprocess.run(
+                        uninst_str,
+                        shell=False,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        timeout=60
+               )
 
-        process_pkg_rem = subprocess.Popen(
-            uninst_str,
-            shell=False,
-            stdout=subprocess.PIPE
-        )
-        # wait for the process to finish
-        process_pkg_rem.communicate()
-        # add the process on the queue, to check on the returncode later on
-        queue.put(process_pkg_rem)
+               if process_pkg_rem.returncode == 0:
+                   print("[INFO] %s Package removal completed" ,datetime.now().strftime('%H:%M:%S'))
+                   print("---------------------------------------------------------------------------")
+               else:
+                   print("[ERROR] %s Package removal failed" ,datetime.now().strftime('%H:%M:%S'))
+                   print("---------------------------------------------------------------------------")
+                   raise SystemError("Pacman failed to remove package = %s" % pkg)
+
     except Exception as e:
         print("Exception in uninstall(): %s" %e)
+    except SystemError as s:
+        print("SystemError in uninstall(): %s" %s)
     finally:
-        # set the signal as task is done
         queue.task_done()
 
 
@@ -229,7 +239,7 @@ def get_current_installed(path):
             file.write(line)
         file.close()
     else:
-        print("[ERROR] Failed to run %s" % query_str)
+        print("[ERROR] %s Failed to run %s" % (datetime.now().strftime('%H:%M:%S'),query_str))
 
 
 def query_pkg(package):
@@ -415,6 +425,40 @@ def checkIfProcessRunning(processName):
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return False
+
+# =====================================================
+#               CHECK PACMAN LOCK FILE
+# =====================================================
+
+def waitForPacmanLockFile():
+    while True:
+        if not os.path.exists("/var/lib/pacman/db.lck"):
+            return False
+        else:
+            time.sleep(5)
+
+# =====================================================
+#               CHECK PACKAGE INSTALLED
+# =====================================================
+
+def checkPackageInstalled(pkg):
+    try:
+        query_str = ["pacman", "-Q", pkg]
+
+        process_query = subprocess.run(
+            query_str,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=60
+        )
+
+        if process_query.returncode == 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print("Exception in checkPackageInstalled(): %s", e)
 
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
