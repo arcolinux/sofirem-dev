@@ -59,7 +59,7 @@ arcolinux-faces-git 21.07-01
 arcolinux-fish-git 23.04-03
 arcolinux-fonts-git 21.07-01
 arcolinux-grub-theme-vimix-git 20230305-03
-arcolinux-gtk3-sardi-arc-git 21.07-01
+arcolinux-gtk3-arcolinux-candy-beauty-git 23.04-01
 arcolinux-hblock-git 3.4.1-1
 arcolinux-i3wm-db-nemesis-git 23.01-03
 arcolinux-keyring 20251209-3
@@ -67,7 +67,7 @@ arcolinux-kvantum-git 22.06-01
 arcolinux-leftwm-git 23.01-03
 arcolinux-local-applications-all-hide-git 23.01-01
 arcolinux-local-applications-git 22.04-01
-arcolinux-local-xfce4-git 21.07-01
+arcolinux-local-xfce4-git 23.04-01
 arcolinux-logo-git 22.07-01
 arcolinux-meta-log 22.03-01
 arcolinux-mirrorlist-git 22.12-01
@@ -76,7 +76,7 @@ arcolinux-nitrogen-git 21.07-01
 arcolinux-pamac-all 10.5.0-1
 arcolinux-paru-git 21.07-01
 arcolinux-pipemenus-git 22.02-01
-arcolinux-plank-git 21.07-01
+arcolinux-plank-git 23.04-01
 arcolinux-plank-themes-git 22.06-01
 arcolinux-polybar-git 23.03-01
 arcolinux-qt5-git 21.07-01
@@ -1767,7 +1767,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-03
+sofirem-dev-git 23.04-04
 solid 5.104.0-1
 sonnet 5.104.0-1
 sord 0.16.14-1

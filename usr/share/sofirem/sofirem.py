@@ -143,6 +143,8 @@ class Main(Gtk.Window):
 
     def on_close(self, widget):
         os.unlink("/tmp/sofirem.lock")
+        os.unlink("/tmp/sofirem.pid")
+
         Gtk.main_quit()
         print(
             "---------------------------------------------------------------------------"
@@ -233,6 +235,7 @@ class Main(Gtk.Window):
 def signal_handler(sig, frame):
     print("\nSofirem is closing.")
     os.unlink("/tmp/sofirem.lock")
+    os.unlink("/tmp/sofirem.pid")
     Gtk.main_quit(0)
 
 
