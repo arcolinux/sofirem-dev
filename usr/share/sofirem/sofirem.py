@@ -21,12 +21,16 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 #      #=          Authors:  Erik Dubois - Cameron Percival        =
 #      #============================================================
 
+
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class Main(Gtk.Window):
     # Create a queue, for worker communication (Multithreading - used in GUI layer)
     queue = Queue()
+
+    # Created a second queue to handle package install/removal
+    pkg_queue = Queue()
 
     def __init__(self):
         super(Main, self).__init__(title="Sofirem")
@@ -65,6 +69,15 @@ class Main(Gtk.Window):
         print(
             "---------------------------------------------------------------------------"
         )
+        # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
+
+        if Functions.sync() == 0:
+            print("[INFO] %s Synchronising complete" % Functions.datetime.now().strftime('%H:%M:%S'))
+            print("---------------------------------------------------------------------------")
+        else:
+            print("[ERROR] %s Synchronising failed" % Functions.datetime.now().strftime('%H:%M:%S'))
+            print("---------------------------------------------------------------------------")
+
 
         splScr = Splash.splashScreen()
 
@@ -105,11 +118,18 @@ class Main(Gtk.Window):
             Functions.permissions(Functions.home + "/.config/sofirem")
             print("Fix sofirem permissions...")
 
+        print("[INFO] %s Preparing GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
+
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+
+        print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
 
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
+
+
+
 
     def on_close(self, widget, data):
         os.unlink("/tmp/sofirem.lock")
@@ -124,19 +144,59 @@ class Main(Gtk.Window):
         self, widget, active, package, Gtk, vboxStack1, Functions, category, packages
     ):
         path = base_dir + "/cache/installed.lst"
-        print(path)
+
         if widget.get_active():
             # Install the package
-            Functions.install(package)
+            package = package.strip()
+
+            if len(package) > 0:
+                print(":: Package to install : %s" % package)
+
+                self.pkg_queue.put(package)
+
+                th = Functions.threading.Thread(
+                        name = "thread_pkginst",
+                        target = Functions.install,
+                        args = (self.pkg_queue,)
+                    )
+
+                th.daemon = True
+                th.start()
+
+                self.pkg_queue.put(None)
+
+            #Functions.install(package)
         else:
             # Uninstall the package
-            Functions.uninstall(package)
+            package = package.strip()
+
+            if len(package) > 0:
+                print(":: Package to remove : %s" % package)
+
+                self.pkg_queue.put(package)
+
+                th = Functions.threading.Thread(
+                        name = "thread_pkgrem",
+                        target = Functions.uninstall,
+                        args = (self.pkg_queue,)
+                    )
+
+                th.daemon = True
+                th.start()
+
+                self.pkg_queue.put(None)
+
+                #Functions.uninstall(package)
         Functions.get_current_installed(path)
         # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
+
+
+
+
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -160,49 +220,54 @@ def signal_handler(sig, frame):
 
 # These should be kept as it ensures that multiple installation instances can't be run concurrently.
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-    if not os.path.isfile("/tmp/sofirem.lock"):
-        with open("/tmp/sofirem.pid", "w") as f:
-            f.write(str(os.getpid()))
-            f.close()
-        style_provider = Gtk.CssProvider()
-        style_provider.load_from_path(base_dir + "/sofirem.css")
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        if not os.path.isfile("/tmp/sofirem.lock"):
+            with open("/tmp/sofirem.pid", "w") as f:
+                f.write(str(os.getpid()))
 
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
-        w = Main()
-        w.show_all()
-        Gtk.main()
-    else:
-        md = Gtk.MessageDialog(
-            parent=Main(),
-            flags=0,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.YES_NO,
-            text="Lock File Found",
-        )
-        md.format_secondary_markup(
-            "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
-click yes to remove the lock file and try running again"
-        )  # noqa
+            style_provider = Gtk.CssProvider()
+            style_provider.load_from_path(base_dir + "/sofirem.css")
 
-        result = md.run()
-        md.destroy()
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(),
+                style_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+            w = Main()
+            w.show_all()
 
-        if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
-            pid = ""
-            with open("/tmp/sofirem.pid", "r") as f:
-                line = f.read()
-                pid = line.rstrip().lstrip()
-                f.close()
+            print("[INFO] %s App Started" %Functions.datetime.now().strftime('%H:%M:%S'))
+            Gtk.main()
+        else:
+            md = Gtk.MessageDialog(
+                parent=Main(),
+                flags=0,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.YES_NO,
+                text="Lock File Found",
+            )
+            md.format_secondary_markup(
+                "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
+    click yes to remove the lock file and try running again"
+            )  # noqa
 
-            if Functions.checkIfProcessRunning(int(pid)):
-                Functions.MessageBox(
-                    "Application Running!",
-                    "You first need to close the existing application",
-                )  # noqa
-            else:
-                os.unlink("/tmp/sofirem.lock")
+            result = md.run()
+            md.destroy()
+
+            if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
+                pid = ""
+                with open("/tmp/sofirem.pid", "r") as f:
+                    line = f.read()
+                    pid = line.rstrip().lstrip()
+
+
+                if Functions.checkIfProcessRunning(int(pid)):
+                    Functions.MessageBox(
+                        "Application Running!",
+                        "You first need to close the existing application",
+                    )  # noqa
+                else:
+                    os.unlink("/tmp/sofirem.lock")
+    except Exception as e:
+        print("Exception in __main__: %s" %e)
