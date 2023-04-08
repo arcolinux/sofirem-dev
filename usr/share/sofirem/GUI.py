@@ -12,6 +12,7 @@ from threading import Thread
 
 base_dir = Functions.os.path.dirname(Functions.os.path.realpath(__file__))
 
+
 class GUI_Worker(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
@@ -29,19 +30,14 @@ class GUI_Worker(Thread):
 
                 # make sure we have the required number of items on the queue
                 if len(items) == 5:
-                    self, Gtk, vboxStack1, category, package_file=items
-                    App_Frame_GUI.GUI(
-                            self,
-                            Gtk,
-                            vboxStack1,
-                            category,
-                            package_file
-                        )
+                    self, Gtk, vboxStack1, category, package_file = items
+                    App_Frame_GUI.GUI(self, Gtk, vboxStack1, category, package_file)
 
             except Exception as e:
                 print("Exception in GUI_Worker(): %s" % e)
             finally:
                 self.queue.task_done()
+
 
 def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     try:
@@ -122,19 +118,18 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         stack_item = 0
 
         # Max Threads
-        '''
+        """
             Fatal Python error: Segmentation fault
             This error happens randomly, due to the for loop iteration on the cpu_count
             old code: for x in range(cpu_count()):
-        '''
+        """
 
-        #spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
+        # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         worker = GUI_Worker(self.queue)
         # Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
         worker.start()
-
 
         # This code section might look a little weird. It is because it was
         # derived from another function before this version was required.
@@ -153,7 +148,6 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
                     vboxStack[stack_item],
                     name,
                     path + yaml_files[stack_item],
-
                 )
             )
             stack_item += 1
@@ -188,6 +182,13 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #           "Refresh the application cache")
 
         # =====================================================
+        #               QUIT BUTTON
+        # =====================================================
+        btnQuitSofi = Gtk.Button(label="Quit")
+        btnQuitSofi.set_size_request(100, 30)
+        btnQuitSofi.connect("clicked", self.on_close)
+
+        # =====================================================
         #                      PACKS
         # =====================================================
 
@@ -202,6 +203,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # ivbox.pack_start(hbox2, False, False, 0)
         ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
         vbox1.pack_start(stack, True, True, 0)
@@ -212,4 +214,4 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         stack.set_hhomogeneous(False)
         stack.set_vhomogeneous(False)
     except Exception as e:
-        print("Exception in GUI(): %s" %e)
+        print("Exception in GUI(): %s" % e)

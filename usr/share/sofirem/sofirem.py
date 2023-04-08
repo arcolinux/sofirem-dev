@@ -72,12 +72,21 @@ class Main(Gtk.Window):
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
-            print("[INFO] %s Synchronising complete" % Functions.datetime.now().strftime('%H:%M:%S'))
-            print("---------------------------------------------------------------------------")
+            print(
+                "[INFO] %s Synchronising complete"
+                % Functions.datetime.now().strftime("%H:%M:%S")
+            )
+            print(
+                "---------------------------------------------------------------------------"
+            )
         else:
-            print("[ERROR] %s Synchronising failed" % Functions.datetime.now().strftime('%H:%M:%S'))
-            print("---------------------------------------------------------------------------")
-
+            print(
+                "[ERROR] %s Synchronising failed"
+                % Functions.datetime.now().strftime("%H:%M:%S")
+            )
+            print(
+                "---------------------------------------------------------------------------"
+            )
 
         splScr = Splash.splashScreen()
 
@@ -118,22 +127,35 @@ class Main(Gtk.Window):
             Functions.permissions(Functions.home + "/.config/sofirem")
             print("Fix sofirem permissions...")
 
-        print("[INFO] %s Preparing GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
+        print("[INFO] %s Preparing GUI" % Functions.datetime.now().strftime("%H:%M:%S"))
 
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-        print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime('%H:%M:%S'))
+        print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime("%H:%M:%S"))
 
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.lock", "w") as f:
                 f.write("")
 
+    # =====================================================
+    #               RESTART/QUIT BUTTON
+    # =====================================================
 
-
-
-    def on_close(self, widget, data):
+    def on_close(self, widget):
         os.unlink("/tmp/sofirem.lock")
         Gtk.main_quit()
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print("Thanks for using Sofirem")
+        print("Report issues to make it even better")
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print("You can report issues on https://discord.gg/R2amEEz")
+        print(
+            "---------------------------------------------------------------------------"
+        )
 
     # ====================================================================
     #                     Button Functions
@@ -155,17 +177,17 @@ class Main(Gtk.Window):
                 self.pkg_queue.put(package)
 
                 th = Functions.threading.Thread(
-                        name = "thread_pkginst",
-                        target = Functions.install,
-                        args = (self.pkg_queue,)
-                    )
+                    name="thread_pkginst",
+                    target=Functions.install,
+                    args=(self.pkg_queue,),
+                )
 
                 th.daemon = True
                 th.start()
 
                 self.pkg_queue.put(None)
 
-            #Functions.install(package)
+            # Functions.install(package)
         else:
             # Uninstall the package
             package = package.strip()
@@ -176,27 +198,23 @@ class Main(Gtk.Window):
                 self.pkg_queue.put(package)
 
                 th = Functions.threading.Thread(
-                        name = "thread_pkgrem",
-                        target = Functions.uninstall,
-                        args = (self.pkg_queue,)
-                    )
+                    name="thread_pkgrem",
+                    target=Functions.uninstall,
+                    args=(self.pkg_queue,),
+                )
 
                 th.daemon = True
                 th.start()
 
                 self.pkg_queue.put(None)
 
-                #Functions.uninstall(package)
+                # Functions.uninstall(package)
         Functions.get_current_installed(path)
         # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
-
-
-
-
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -237,7 +255,9 @@ if __name__ == "__main__":
             w = Main()
             w.show_all()
 
-            print("[INFO] %s App Started" %Functions.datetime.now().strftime('%H:%M:%S'))
+            print(
+                "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
+            )
             Gtk.main()
         else:
             md = Gtk.MessageDialog(
@@ -261,7 +281,6 @@ if __name__ == "__main__":
                     line = f.read()
                     pid = line.rstrip().lstrip()
 
-
                 if Functions.checkIfProcessRunning(int(pid)):
                     Functions.MessageBox(
                         "Application Running!",
@@ -270,4 +289,4 @@ if __name__ == "__main__":
                 else:
                     os.unlink("/tmp/sofirem.lock")
     except Exception as e:
-        print("Exception in __main__: %s" %e)
+        print("Exception in __main__: %s" % e)
