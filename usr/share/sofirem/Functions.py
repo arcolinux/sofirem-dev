@@ -362,7 +362,10 @@ def file_lookup(package, path):
     # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
     pkg = package.strip("\n")
     output = ""
-    filename = path + pkg
+    if os.path.exists(path + "corrections/" + pkg):
+        filename = path + "corrections/" + pkg
+    else:
+        filename = path + pkg
     file = open(filename, "r")
     output = file.read()
     file.close()
@@ -397,6 +400,7 @@ def restart_program():
 
 def check_github(yaml_files):
     # This is the link to the location where the .yaml files are kept in the github
+    # Removing desktop wayland, desktop, drivers, nvidia, ...
     path = base_dir + "/cache/"
     link = "https://github.com/arcolinux/arcob-calamares-config-awesome/tree/master/calamares/modules/"
     urls = []

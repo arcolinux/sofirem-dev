@@ -37,7 +37,7 @@ arch-install-scripts 28-1
 archiso 70-1
 archlinux-appstream-data 20230220-1
 archlinux-keyring 20230320-1
-archlinux-logout-git 23.04-03
+archlinux-logout-git 23.04-04
 archlinux-tweak-tool-git 23.04-34
 arcolinux-alacritty-git 23.03-01
 arcolinux-arc-dawn-git 22.12-03
@@ -51,7 +51,7 @@ arcolinux-common-git 21.07-01
 arcolinux-config-all-desktops-git 22.07-01
 arcolinux-conky-collection-git 22.02-04
 arcolinux-dconf-all-desktops-git 22.07-01
-arcolinux-desktop-trasher-dev-git 22.11-10
+arcolinux-desktop-trasher-dev-git 23.04-01
 arcolinux-dwm-git 23.01-04
 arcolinux-dwm-slstatus-git 21.07-01
 arcolinux-dwm-st-git 21.07-01
@@ -363,7 +363,7 @@ git 2.40.0-1
 git-lfs 3.3.0-1
 gitahead-bin 2.6.3-2
 gitfiend 0.39.4-1
-github-desktop-bin 3.2.0_linux1-1
+github-desktop-bin 3.2.1_linux1-1
 gjs 2:1.74.2-1
 gksu 2.0.2-6
 glade 3.40.0+r14+g1fbca367-1
@@ -1767,7 +1767,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-02
+sofirem-dev-git 23.04-03
 solid 5.104.0-1
 sonnet 5.104.0-1
 sord 0.16.14-1
