@@ -34,6 +34,8 @@
 echo "Checking for newer files online first"
 git pull
 
+sudo rm -r /usr/share/sofirem/__pycache__
+
 # Below command will backup everything inside the project folder
 git add --all .
 
