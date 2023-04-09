@@ -18,9 +18,15 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 #      #============================================================
-#      #=          Authors:  Erik Dubois - Cameron Percival        =
+#      #=  Authors:  Erik Dubois - Cameron Percival   - Fennec     =
 #      #============================================================
 
+# Folder structure
+
+# cache contains descriptions - inside we have corrections for manual intervention
+# + installed applications list
+# yaml is the folder that is used to create the application
+# yaml-awesome is a copy/paste from Calamares to meld manually - not used in the app
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 debug = False

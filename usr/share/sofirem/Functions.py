@@ -305,6 +305,8 @@ def cache(package, path):
     try:
         # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
         pkg = package.strip()
+        # you can see all the errors here with the print command below
+        # print(pkg)
         # create the query
         query_str = ["pacman", "-Si", pkg, " --noconfirm"]
 
@@ -313,7 +315,6 @@ def cache(package, path):
         process = subprocess.Popen(
             query_str, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-
         out, err = process.communicate()
 
         # validate the process result
@@ -338,7 +339,34 @@ def cache(package, path):
                 file.close()
 
                 return description
-        return "No Description Found"
+        # There are several packages that do not return a valid process return code
+        # Cathing those manually via corrections folder
+        if process.returncode != 0:
+            exceptions = [
+                "florence",
+                "mintstick-bin",
+                "arcolinux-conky-collection-plasma-git",
+                "arcolinux-desktop-trasher-git",
+                "arcolinux-pamac-all",
+                "arcolinux-sddm-simplicity-git",
+                "ttf-hack",
+                "ttf-roboto-mono",
+                "aisleriot",
+                "mailspring",
+                "linux-rt",
+                "linux-rt-headers",
+                "linux-rt-lts",
+                "linux-rt-lts-headers",
+                "arcolinux-sddm-simplicity-git",
+                "kodi-x11",
+                "kodi-addons",
+                "sardi-icons",
+            ]
+            if pkg in exceptions:
+                description = file_lookup(pkg, path + "corrections/")
+                return description
+        return "No Description Foundd"
+
     except Exception as e:
         print("Exception in cache(): %s " % e)
 
