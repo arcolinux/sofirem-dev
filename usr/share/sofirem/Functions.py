@@ -6,15 +6,13 @@ import os
 import sys
 import shutil
 import psutil
+import time
 import datetime
 from datetime import datetime, timedelta
-
-# import time
 import subprocess
 import threading  # noqa
 import gi
 import requests
-import time
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -37,19 +35,32 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 sudo_username = os.getlogin()
 home = "/home/" + str(sudo_username)
 packages = []
+debug = False
 # =====================================================
 #               Create log file
 # =====================================================
 
 log_dir = "/var/log/sofirem/"
-sof_log_dir = "/var/log/sofirem/sof/"
+sof_log_dir = "/var/log/sofirem/software/"
 
 
-def create_log(self):
-    print("Making log in /var/log/sofirem")
-    now = datetime.datetime.now()
+def create_packages_log():
+    print("Making log in /var/log/sofirem/software - currently installed")
+    now = datetime.now()
     time = now.strftime("%Y-%m-%d-%H-%M-%S")
-    destination = sof_log_dir + "sof-log-" + time
+    destination = sof_log_dir + "software-log-" + time
+    command = "sudo pacman -Q > " + destination
+    subprocess.call(
+        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
+    # GLib.idle_add(show_in_app_notification, self, "Log file created")
+
+
+def create_actions_log():
+    print("Making log in /var/log/sofirem/ - Sofirem log")
+    now = datetime.now()
+    time = now.strftime("%Y-%m-%d-%H-%M-%S")
+    destination = sof_log_dir + "sofirem-log-" + time
     command = "sudo pacman -Q > " + destination
     subprocess.call(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -306,7 +317,8 @@ def cache(package, path):
         # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
         pkg = package.strip()
         # you can see all the errors here with the print command below
-        # print(pkg)
+        if debug == True:
+            print(pkg)
         # create the query
         query_str = ["pacman", "-Si", pkg, " --noconfirm"]
 

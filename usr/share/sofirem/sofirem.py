@@ -4,6 +4,7 @@ import gi
 import Functions
 from ProgressBarWindow import ProgressBarWindow
 import signal
+import datetime
 import GUI
 import subprocess
 from Functions import os
@@ -29,7 +30,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 # yaml-awesome is a copy/paste from Calamares to meld manually - not used in the app
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
-debug = False
+debug = True
 
 
 class Main(Gtk.Window):
@@ -265,6 +266,8 @@ if __name__ == "__main__":
             w = Main()
             w.show_all()
 
+            Functions.create_packages_log()
+
             print(
                 "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
             )
@@ -298,5 +301,6 @@ if __name__ == "__main__":
                     )  # noqa
                 else:
                     os.unlink("/tmp/sofirem.lock")
+                    os.unlink("/tmp/sofirem.pid")
     except Exception as e:
         print("Exception in __main__: %s" % e)

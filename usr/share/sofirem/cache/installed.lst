@@ -77,7 +77,6 @@ arcolinux-pamac-all 10.5.0-1
 arcolinux-paru-git 21.07-01
 arcolinux-pipemenus-git 23.04-03
 arcolinux-plank-git 23.04-01
-arcolinux-plank-themes-git 23.04-01
 arcolinux-polybar-git 23.04-02
 arcolinux-qt5-git 21.07-01
 arcolinux-rofi-git 23.04-01
@@ -117,7 +116,6 @@ awesome-terminal-fonts 1.1.0-4
 babl 0.1.102-1
 bamf 0.5.6-1
 banner 1.3.2-10
-baobab 44.0-1
 base 3-1
 base-devel 1-1
 bash 5.1.016-3
@@ -1130,7 +1128,7 @@ mkinitcpio-firmware 1.4.0-1
 mkinitcpio-nfs-utils 0.3-7
 mkinitcpio-openswap 0.1.0-3
 mlocate 0.26.git.20170220-7
-mlt 7.14.0-2
+mlt 7.14.0-5
 mobile-broadband-provider-info 20221107-2
 modemmanager 1.20.6-1
 mold 1.11.0-1
@@ -1767,7 +1765,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-11
+sofirem-dev-git 23.04-12
 solid 5.104.0-1
 sonnet 5.104.0-1
 sord 0.16.14-1
