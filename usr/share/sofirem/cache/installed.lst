@@ -217,7 +217,7 @@ dconf 0.40.0-2
 dconf-editor 43.0-1
 ddcutil 1.3.0-1
 ddrescue 1.27-1
-deadbeef 1.9.5-1
+deadbeef 1.9.5-2
 debugedit 5.0-5
 default-cursors 2-1
 deluge 1:2.1.1-3
@@ -1476,7 +1476,7 @@ python-pyproject-hooks 1.0.0-1
 python-pyqt5 5.15.9-1
 python-pyqt5-sip 12.11.1-1
 python-pyrsistent 0.19.3-1
-python-pytest 7.2.2-1
+python-pytest 7.3.0-1
 python-pytz 2022.7.1-1
 python-pywal 3.3.0-7
 python-pyxdg 0.28-1
@@ -1767,7 +1767,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-09
+sofirem-dev-git 23.04-10
 solid 5.104.0-1
 sonnet 5.104.0-1
 sord 0.16.14-1
@@ -1823,7 +1823,7 @@ tcpdump 4.99.3-1
 tdb 1.4.8-1
 telegram-desktop 4.7.1-1
 telepathy-glib 0.24.2-2
-tempus-themes-xfce4-terminal-git r29.c58c907-1
+tempus-themes-xfce4-terminal-git 0.5.0.r12.gc58c907-1
 termdown 1.18.0-3
 terminus-font 4.49.1-5
 termite 16.5-2

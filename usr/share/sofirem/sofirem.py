@@ -23,6 +23,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
+debug = False
 
 
 class Main(Gtk.Window):
