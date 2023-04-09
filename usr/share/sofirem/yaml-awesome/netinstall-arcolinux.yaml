@@ -1,5 +1,31 @@
-- name: "Applications"
-  description: "Applications"
+- name: "ArcoLinux Third Party Packages"
+  description: "ArcoLinux third party packages"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+    - arcolinux-pamac-all
+- name: "ArcoLinux Meta Packages"
+  description: "ArcoLinux meta packages"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+    - arcolinux-meta-arc-theme
+    - arcolinux-meta-asian-fonts
+    - arcolinux-meta-fun
+    - arcolinux-meta-log
+    - arcolinux-meta-samba
+    - arcolinux-meta-sddm-themes
+    - arcolinux-meta-steam-amd
+    - arcolinux-meta-steam-intel
+    - arcolinux-meta-steam-nvidia
+    - arcolinux-meta-utilities
+    - arcolinux-meta-wine
+- name: "ArcoLinux Applications"
+  description: "ArcoLinux applications"
   critical: false
   hidden: false
   selected: false
@@ -7,14 +33,13 @@
   packages:
     - archlinux-logout-git
     - archlinux-tweak-tool-git
-    - arcolinux-desktop-trasher-git
-    - arcolinux-pamac-all     
+    - arcolinux-desktop-trasher-git    
     - arcolinux-reflector-simple-git
     - arcolinux-teamviewer
     - arcolinux-tellme-git
     - arcolinux-xlunch-git
-- name: "Arc Theming"
-  description: "Arc theming packages"
+- name: "ArcoLinux Arc Theming"
+  description: "ArcoLinux arc theming packages"
   critical: false
   hidden: false
   selected: false
@@ -67,8 +92,8 @@
     - arcolinux-arc-tangerine-git
     - arcolinux-arc-tory-git
     - arcolinux-arc-warm-pink-git
-- name: "Theming"
-  description: "Theming packages"
+- name: "ArcoLinux Theming"
+  description: "ArcoLinux theming packages"
   critical: false
   hidden: false
   selected: false
@@ -77,10 +102,11 @@
     - arcolinux-candy-beauty-git
     - arcolinux-arc-kde
     - arcolinux-mint-y-icons-git
+    - arcolinux-paleofetch-git
     - arcolinux-plank-git
     - arcolinux-plank-themes-git
-- name: "Wallpapers"
-  description: "Wallpapers"
+- name: "ArcoLinux Wallpapers"
+  description: "ArcoLinux wallpapers"
   critical: false
   hidden: false
   selected: false
@@ -90,8 +116,8 @@
     - arcolinux-wallpapers-git
     - arcolinux-wallpapers-candy-git
     - arcolinux-wallpapers-dual-git
-- name: "Sddm themes"
-  description: "Sddm themes"
+- name: "ArcoLinux Sddm themes"
+  description: "ArcoLinux Sddm themes"
   critical: false
   hidden: false
   selected: false
@@ -104,21 +130,12 @@
     - arcolinux-sddm-slice-git
     - arcolinux-sddm-sugar-candy-git
     - arcolinux-sddm-urbanlifestyle-git
-- name: "Meta"
-  description: "ArcoLinux meta packages"
+- name: "Packages that will install plasma as a dependency"
+  description: "Plasma related"
   critical: false
   hidden: false
   selected: false
   expanded: true
   packages:
-    - arcolinux-meta-arc-theme
-    - arcolinux-meta-asian-fonts
-    - arcolinux-meta-fun
-    - arcolinux-meta-log
-    - arcolinux-meta-samba
-    - arcolinux-meta-sddm-themes
-    - arcolinux-meta-steam-amd
-    - arcolinux-meta-steam-intel
-    - arcolinux-meta-steam-nvidia
-    - arcolinux-meta-utilities
-    - arcolinux-meta-wine
+    - arcolinux-sddm-breeze-git
+    - arcolinux-sddm-breeze-minimal-git

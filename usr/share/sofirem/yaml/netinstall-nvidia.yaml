@@ -1,4 +1,4 @@
-- name: "Nvidia"
+- name: "Nvidia tools"
   description: "Nvidia related applications"
   critical: false
   hidden: false
