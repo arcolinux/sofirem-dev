@@ -282,7 +282,7 @@ if __name__ == "__main__":
             )
             md.format_secondary_markup(
                 "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
-    click yes to remove the lock file and try running again"
+Click 'Yes' to remove the lock file and try running again"
             )  # noqa
 
             result = md.run()
@@ -295,12 +295,22 @@ if __name__ == "__main__":
                     pid = line.rstrip().lstrip()
 
                 if Functions.checkIfProcessRunning(int(pid)):
-                    Functions.MessageBox(
-                        "Application Running!",
-                        "You first need to close the existing application",
-                    )  # noqa
+                    # needs to be fixed - todo
+
+                    # md2 = Gtk.MessageDialog(
+                    #     parent=Main,
+                    #     flags=0,
+                    #     message_type=Gtk.MessageType.INFO,
+                    #     buttons=Gtk.ButtonsType.OK,
+                    #     title="Application Running!",
+                    #     text="You first need to close the existing application",
+                    # )
+                    # md2.format_secondary_markup(
+                    #     "You first need to close the existing application"
+                    # )
+                    # md2.run()
+                    print("You first need to close the existing application")
                 else:
                     os.unlink("/tmp/sofirem.lock")
-                    os.unlink("/tmp/sofirem.pid")
     except Exception as e:
         print("Exception in __main__: %s" % e)

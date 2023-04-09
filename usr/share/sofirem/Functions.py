@@ -527,4 +527,22 @@ def checkPackageInstalled(pkg):
         print("Exception in checkPackageInstalled(): %s", e)
 
 
+# =====================================================
+#               MESSAGEBOX
+# =====================================================
+
+
+def messageBox(self, title, message):
+    md2 = Gtk.MessageDialog(
+        parent=self,
+        flags=0,
+        message_type=Gtk.MessageType.INFO,
+        buttons=Gtk.ButtonsType.OK,
+        text=message,
+    )
+    md2.format_secondary_markup(message)
+    md2.run()
+    md2.destroy()
+
+
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
