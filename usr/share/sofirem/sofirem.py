@@ -149,7 +149,7 @@ class Main(Gtk.Window):
     #               RESTART/QUIT BUTTON
     # =====================================================
 
-    def on_close(self, widget):
+    def on_close(self, widget, data):
         os.unlink("/tmp/sofirem.lock")
         os.unlink("/tmp/sofirem.pid")
 
