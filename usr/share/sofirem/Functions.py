@@ -179,13 +179,16 @@ def install(queue):
             out,err = process_pkg_inst.communicate(timeout=60)
 
             if process_pkg_inst.returncode == 0:
-                print("[INFO] %s Package install completed" % datetime.now().strftime('%H:%M:%S'))
+                print(
+                    "[INFO] %s Package install completed"
+                    % datetime.now().strftime('%H:%M:%S'))
                 print(
                     "---------------------------------------------------------------------------"
                 )
             else:
                 print("[ERROR] Package install failed")
-                print(err.decode("utf-8"))
+                if out:
+                    print(out.decode("utf-8"))
                 print(
                     "---------------------------------------------------------------------------"
                 )
@@ -239,7 +242,8 @@ def uninstall(queue):
                         "[ERROR] %s Package removal failed"
                         % datetime.now().strftime("%H:%M:%S"),
                     )
-                    print(err.decode("utf-8"))
+                    if out:
+                        print(out.decode("utf-8"))
                     print(
                         "---------------------------------------------------------------------------"
                     )
