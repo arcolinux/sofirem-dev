@@ -169,21 +169,23 @@ def install(queue):
                 % (datetime.now().strftime("%H:%M:%S"), pkg)
             )
 
-            process_pkg_inst = subprocess.run(
+            process_pkg_inst = subprocess.Popen(
                 inst_str,
                 shell=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                timeout=60,
             )
 
+            out,err = process_pkg_inst.communicate(timeout=60)
+
             if process_pkg_inst.returncode == 0:
-                print("[INFO] Package install completed")
+                print("[INFO] %s Package install completed" % datetime.now().strftime('%H:%M:%S'))
                 print(
                     "---------------------------------------------------------------------------"
                 )
             else:
                 print("[ERROR] Package install failed")
+                print(err.decode("utf-8"))
                 print(
                     "---------------------------------------------------------------------------"
                 )
@@ -215,30 +217,33 @@ def uninstall(queue):
                     % (datetime.now().strftime("%H:%M:%S"), pkg)
                 )
 
-                process_pkg_rem = subprocess.run(
+                process_pkg_rem = subprocess.Popen(
                     uninst_str,
                     shell=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    timeout=60,
                 )
+
+                out,err = process_pkg_rem.communicate(timeout=60)
 
                 if process_pkg_rem.returncode == 0:
                     print(
-                        "[INFO] %s Package removal completed",
-                        datetime.now().strftime("%H:%M:%S"),
+                        "[INFO] %s Package removal completed"
+                        % datetime.now().strftime("%H:%M:%S"),
                     )
                     print(
                         "---------------------------------------------------------------------------"
                     )
                 else:
                     print(
-                        "[ERROR] %s Package removal failed",
-                        datetime.now().strftime("%H:%M:%S"),
+                        "[ERROR] %s Package removal failed"
+                        % datetime.now().strftime("%H:%M:%S"),
                     )
+                    print(err.decode("utf-8"))
                     print(
                         "---------------------------------------------------------------------------"
                     )
+
                     raise SystemError("Pacman failed to remove package = %s" % pkg)
 
     except Exception as e:

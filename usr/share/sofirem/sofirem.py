@@ -195,8 +195,6 @@ class Main(Gtk.Window):
                 th.daemon = True
                 th.start()
 
-                self.pkg_queue.put(None)
-
             # Functions.install(package)
         else:
             # Uninstall the package
@@ -215,8 +213,6 @@ class Main(Gtk.Window):
 
                 th.daemon = True
                 th.start()
-
-                self.pkg_queue.put(None)
 
                 # Functions.uninstall(package)
         Functions.get_current_installed(path)
