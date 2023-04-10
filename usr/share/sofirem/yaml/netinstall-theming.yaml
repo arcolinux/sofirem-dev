@@ -81,8 +81,6 @@
     - fluent-kde-theme-git
     - graphite-gtk-theme-git
     - kripton-theme-git
-    - kvantum-theme-materia
-    - kvantum-theme-qogir-git
     - layan-gtk-theme-git
     - layan-kde-git
     - materia-gtk-theme
@@ -132,6 +130,7 @@
     - kvantum
     - kvantum-qt5-git
     - kvantum-qt6-git
+    - kvantum-theme-materia
     - kvantum-theme-qogir-git
     - picom
     - picom-jonaburg-git
