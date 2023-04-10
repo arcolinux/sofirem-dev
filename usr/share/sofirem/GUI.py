@@ -186,7 +186,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # =====================================================
         btnQuitSofi = Gtk.Button(label="Quit")
         btnQuitSofi.set_size_request(100, 30)
-        btnQuitSofi.connect("clicked", self.on_close)
+        btnQuitSofi.connect("clicked", self.on_close, "delete-event")
 
         # =====================================================
         #                      PACKS
