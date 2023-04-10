@@ -46,7 +46,7 @@ class Main(Gtk.Window):
         self.connect("delete-event", self.on_close)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
-        self.set_default_size(800, 900)
+        self.set_default_size(1100, 900)
 
         print(
             "---------------------------------------------------------------------------"
