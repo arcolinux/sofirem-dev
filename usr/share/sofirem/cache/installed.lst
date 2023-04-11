@@ -1722,7 +1722,6 @@ rxvt-unicode 9.31-1
 rxvt-unicode-terminfo 9.31-1
 samba 4.18.1-1
 sane 1.2.1-4
-sardi-icons 23.02-05
 sardi-mono-papirus-colora-variations-icons-git 23.02-05
 sassc 3.6.2-3
 sbc 2.0-1
@@ -1768,7 +1767,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-22
+sofirem-dev-git 23.04-23
 solid 5.105.0-1
 sonnet 5.105.0-1
 sord 0.16.14-1
