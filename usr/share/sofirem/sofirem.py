@@ -14,6 +14,7 @@ import App_Frame_GUI
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
+from datetime import datetime
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -31,6 +32,8 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 debug = True
+now = datetime.now()
+launchtime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
 
 class Main(Gtk.Window):
@@ -84,6 +87,12 @@ class Main(Gtk.Window):
                 "[INFO] %s Synchronising complete"
                 % Functions.datetime.now().strftime("%H:%M:%S")
             )
+            Functions.create_actions_log(
+                launchtime,
+                "[INFO] %s Synchronising complete"
+                % Functions.datetime.now().strftime("%H:%M:%S")
+                + "\n",
+            )
             print(
                 "---------------------------------------------------------------------------"
             )
@@ -91,6 +100,12 @@ class Main(Gtk.Window):
             print(
                 "[ERROR] %s Synchronising failed"
                 % Functions.datetime.now().strftime("%H:%M:%S")
+            )
+            Functions.create_actions_log(
+                launchtime,
+                "[ERROR] %s Synchronising failed"
+                % Functions.datetime.now().strftime("%H:%M:%S")
+                + "\n",
             )
             print(
                 "---------------------------------------------------------------------------"
@@ -116,6 +131,12 @@ class Main(Gtk.Window):
             except Exception as e:
                 print(e)
 
+        if not os.path.isdir(Functions.act_log_dir):
+            try:
+                os.mkdir(Functions.act_log_dir)
+            except Exception as e:
+                print(e)
+
         if not Functions.os.path.isdir(Functions.home + "/.config/sofirem"):
 
             Functions.os.makedirs(Functions.home + "/.config/sofirem", 0o766)
@@ -137,9 +158,20 @@ class Main(Gtk.Window):
 
         print("[INFO] %s Preparing GUI" % Functions.datetime.now().strftime("%H:%M:%S"))
 
+        Functions.create_actions_log(
+            launchtime,
+            "[INFO] %s Preparing GUI" % Functions.datetime.now().strftime("%H:%M:%S")
+            + "\n",
+        )
         gui = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
         print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime("%H:%M:%S"))
+
+        Functions.create_actions_log(
+            launchtime,
+            "[INFO] %s Completed GUI" % Functions.datetime.now().strftime("%H:%M:%S")
+            + "\n",
+        )
 
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.lock", "w") as f:
@@ -181,6 +213,10 @@ class Main(Gtk.Window):
             # Install the package
             package = package.strip()
 
+            Functions.create_actions_log(
+                launchtime, "Package installation : " + package + "\n"
+            )
+
             if len(package) > 0:
                 print(":: Package to install : %s" % package)
 
@@ -199,6 +235,10 @@ class Main(Gtk.Window):
         else:
             # Uninstall the package
             package = package.strip()
+
+            Functions.create_actions_log(
+                launchtime, "Package removal      : " + package + "\n"
+            )
 
             if len(package) > 0:
                 print(":: Package to remove : %s" % package)
@@ -231,6 +271,12 @@ class Main(Gtk.Window):
         print(
             "[INFO] %s Recache applications"
             % Functions.datetime.now().strftime("%H:%M:%S")
+        )
+        Functions.create_actions_log(
+            launchtime,
+            "[INFO] %s Recache applications"
+            % Functions.datetime.now().strftime("%H:%M:%S")
+            + "\n",
         )
         Functions.cache_btn("/cache/", pb)
 
@@ -270,6 +316,11 @@ if __name__ == "__main__":
 
             print(
                 "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
+            )
+            Functions.create_actions_log(
+                launchtime,
+                "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
+                + "\n",
             )
             Gtk.main()
         else:

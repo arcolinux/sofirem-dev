@@ -42,10 +42,11 @@ debug = False
 
 log_dir = "/var/log/sofirem/"
 sof_log_dir = "/var/log/sofirem/software/"
+act_log_dir = "/var/log/sofirem/actions/"
 
 
 def create_packages_log():
-    print("Making log in /var/log/sofirem/software - currently installed")
+    print("Creating a log file in /var/log/sofirem/software - currently installed")
     now = datetime.now()
     time = now.strftime("%Y-%m-%d-%H-%M-%S")
     destination = sof_log_dir + "software-log-" + time
@@ -56,16 +57,21 @@ def create_packages_log():
     # GLib.idle_add(show_in_app_notification, self, "Log file created")
 
 
-def create_actions_log():
-    print("Making log in /var/log/sofirem/ - Sofirem log")
-    now = datetime.now()
-    time = now.strftime("%Y-%m-%d-%H-%M-%S")
-    destination = sof_log_dir + "sofirem-log-" + time
-    command = "sudo pacman -Q > " + destination
-    subprocess.call(
-        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
-    # GLib.idle_add(show_in_app_notification, self, "Log file created")
+def create_actions_log(launchtime, message):
+    if not os.path.exists(act_log_dir + launchtime):
+        try:
+            with open(act_log_dir + launchtime, "x", encoding="utf8") as f:
+                f.close
+        except Exception as error:
+            print(error)
+
+    if os.path.exists(act_log_dir + launchtime):
+        try:
+            with open(act_log_dir + launchtime, "a", encoding="utf-8") as f:
+                f.write(message)
+                f.close()
+        except Exception as error:
+            print(error)
 
 
 # =====================================================

@@ -79,6 +79,7 @@ arcolinux-pamac-all 10.5.0-1
 arcolinux-paru-git 21.07-01
 arcolinux-pipemenus-git 23.04-03
 arcolinux-plank-git 23.04-01
+arcolinux-plank-themes-git 23.04-01
 arcolinux-polybar-git 23.04-02
 arcolinux-qt5-git 21.07-01
 arcolinux-rofi-git 23.04-01
@@ -168,6 +169,7 @@ chaotic-keyring 20220803-1
 chaotic-mirrorlist 20230330-1
 chatgpt-nativefier 1.1-1
 check 0.15.2-2
+cheese 43.0-1
 chromaprint 1.5.1-7
 chromium 112.0.5615.49-1
 cifs-utils 7.0-3
@@ -183,6 +185,8 @@ ckbcomp 1.210-1
 clang 15.0.7-2
 clonezilla 3.35.2-5
 clutter 1.26.4-2
+clutter-gst 3.0.27-4
+clutter-gtk 1.8.4-3
 cmake 3.26.3-1
 cmocka 1.1.5-2
 cogl 1.22.8-2
@@ -277,6 +281,7 @@ enchant 2.3.4-1
 endeavouros-keyring 20220614-1
 endeavouros-mirrorlist 4.11-1
 erofs-utils 1.6-1
+espeak-ng 1.51.1-2
 etcher-bin 1.18.4-1
 ethtool 1:6.2-1
 evince 43.1-2
@@ -400,6 +405,7 @@ gnome-software 43.5-1
 gnome-software-packagekit-plugin 43.5-1
 gnome-terminal 3.46.8-1
 gnome-themes-extra 3.28+r6+g45b1d457-1
+gnome-video-effects 0.5.0+4+g9554041-2
 gnu-netcat 0.7.1-9
 gnupg 2.2.41-1
 gnutls 3.8.0-1
@@ -770,6 +776,7 @@ libcddb 1.3.2-7
 libcdio 2.1.0-3
 libcdio-paranoia 10.2+2.0.1-2
 libcdr 0.1.7-5
+libcheese 43.0-1
 libcloudproviders 0.3.1+r8+g3a229ee-1
 libcolord 1.4.6-1
 libconfig 1.7.3-2
@@ -960,6 +967,7 @@ libslirp 4.7.0-1
 libsm 1.2.4-1
 libsndfile 1.2.0-1
 libsodium 1.0.18-2
+libsonic 0.2.0-1
 libsoup 2.74.3-1
 libsoup3 3.4.0-1
 libsoxr 0.1.3-3
@@ -1256,6 +1264,7 @@ paru-bin 1.11.2-1
 patch 2.7.6-9
 pavucontrol 1:5.0+r61+gee77d86-2
 pbzip2 1.1.13-3
+pcaudiolib 1.2-2
 pciutils 3.9.0-2
 pcre 8.45-3
 pcre2 10.42-2
@@ -1767,7 +1776,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-23
+sofirem-dev-git 23.04-24
 solid 5.105.0-1
 sonnet 5.105.0-1
 sord 0.16.14-1
@@ -1964,13 +1973,11 @@ wget 1.21.3-1
 whatsapp-nativefier 2.2305.7-1
 which 2.21-6
 wildmidi 0.4.5-1
-wimlib 1.13.6-2
 wireless-regdb 2023.02.13-1
 wireless_tools 30.pre9-3
 wlroots-git 0.17.0.r6176.12e28c34-1
 wlroots0.15 0.15.1-1
 wmctrl 1.07-6
-woeusb 5.2.4-1
 woff2 1.0.2-4
 wolfssl 5.6.0-1
 wpa_supplicant 2:2.10-8
@@ -2012,7 +2019,6 @@ xf86-input-evdev 2.10.6-3
 xf86-input-libinput 1.3.0-1
 xf86-input-vmmouse 13.2.0-1
 xf86-input-void 1.4.2-1
-xfburn 0.7.0-1
 xfce4-appfinder 4.18.0-1
 xfce4-battery-plugin 1.1.4-1
 xfce4-clipman-plugin 1.6.3-1
