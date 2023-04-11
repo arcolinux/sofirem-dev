@@ -15,7 +15,7 @@ adwaita-qt6 1.4.2-1
 aic94xx-firmware 30-9
 alacritty 0.12.0-1
 alacritty-themes 5.3.1-1
-alsa-card-profiles 1:0.3.68-1
+alsa-card-profiles 1:0.3.68-2
 alsa-firmware 1.2.4-3
 alsa-lib 1.2.8-1
 alsa-plugins 1:1.2.7.1-2
@@ -51,7 +51,6 @@ arcolinux-chadwm-git 23.04-02
 arcolinux-chadwm-pacman-hook-git 23.02-01
 arcolinux-common-git 23.04-01
 arcolinux-config-all-desktops-git 22.07-01
-arcolinux-conky-collection-git 23.04-01
 arcolinux-dconf-all-desktops-git 22.07-01
 arcolinux-desktop-trasher-dev-git 23.04-01
 arcolinux-dwm-git 23.01-04
@@ -79,7 +78,6 @@ arcolinux-pamac-all 10.5.0-1
 arcolinux-paru-git 21.07-01
 arcolinux-pipemenus-git 23.04-03
 arcolinux-plank-git 23.04-01
-arcolinux-plank-themes-git 23.04-01
 arcolinux-polybar-git 23.04-02
 arcolinux-qt5-git 21.07-01
 arcolinux-rofi-git 23.04-01
@@ -930,7 +928,7 @@ libpciaccess 0.17-1
 libpeas 1.34.0-1
 libpgm 5.3.128-2
 libpipeline 1.5.7-1
-libpipewire 1:0.3.68-1
+libpipewire 1:0.3.68-2
 libplacebo 5.229.2-2
 libplist 2.2.0-6
 libpng 1.6.39-1
@@ -1321,9 +1319,9 @@ phonon-qt5-gstreamer 4.10.0-4
 picom 10.2-1
 pigz 2.7-3
 pinentry 1.2.1-1
-pipewire 1:0.3.68-1
-pipewire-alsa 1:0.3.68-1
-pipewire-audio 1:0.3.68-1
+pipewire 1:0.3.68-2
+pipewire-alsa 1:0.3.68-2
+pipewire-audio 1:0.3.68-2
 pipewire-media-session 1:0.4.2-2
 pixman 0.42.2-1
 pixz 1.0.7-4
@@ -1775,7 +1773,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-25
+sofirem-dev-git 23.04-26
 solid 5.105.0-1
 sonnet 5.105.0-1
 sord 0.16.14-1
@@ -1818,10 +1816,10 @@ syntax-highlighting 5.105.0-1
 sysfsutils 2.1.1-1
 syslinux 6.04.pre2.r11.gbf6db5b4-3
 system-config-printer 1.5.18-1
-systemd 253.3-1
-systemd-libs 253.3-1
+systemd 253.3-3
+systemd-libs 253.3-3
 systemd-manager-git 1.0.0.r12.g4efeb47-1
-systemd-sysvcompat 253.3-1
+systemd-sysvcompat 253.3-3
 tabby-bin 1.0.188-1
 taglib 1.13-1
 talloc 2.4.0-2

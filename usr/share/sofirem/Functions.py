@@ -54,6 +54,10 @@ def create_packages_log():
     subprocess.call(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
+    create_actions_log(
+        launchtime,
+        "[INFO] %s Creating a log file in /var/log/sofirem/software " % now + "\n",
+    )
     # GLib.idle_add(show_in_app_notification, self, "Log file created")
 
 
@@ -131,10 +135,11 @@ def permissions(dst):
 def sync():
     try:
         sync_str = ["pacman", "-Sy"]
-
-        print(
-            "[INFO] %s Synchronising package databases"
-            % datetime.now().strftime("%H:%M:%S")
+        now = datetime.now().strftime("%H:%M:%S")
+        print("[INFO] %s Synchronising package databases" % now)
+        create_actions_log(
+            launchtime,
+            "[INFO] %s Synchronising package databases " % now + "\n",
         )
 
         # Pacman will not work if there is a lock file
@@ -170,9 +175,10 @@ def install(queue):
 
             inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
-            print(
-                "[INFO] %s Installing package %s: "
-                % (datetime.now().strftime("%H:%M:%S"), pkg)
+            now = datetime.now().strftime("%H:%M:%S")
+            print("[INFO] %s Installing package %s " % (now, pkg))
+            create_actions_log(
+                launchtime, "[INFO] " + now + " Installing package " + pkg + "\n"
             )
 
             process_pkg_inst = subprocess.Popen(
@@ -222,9 +228,10 @@ def uninstall(queue):
                 path = base_dir + "/cache/installed.lst"
                 uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
-                print(
-                    "[INFO] %s Removing package : %s"
-                    % (datetime.now().strftime("%H:%M:%S"), pkg)
+                now = datetime.now().strftime("%H:%M:%S")
+                print("[INFO] %s Removing package : %s" % (now, pkg))
+                create_actions_log(
+                    launchtime, "[INFO] " + now + " Removing package " + pkg + "\n"
                 )
 
                 process_pkg_rem = subprocess.Popen(
