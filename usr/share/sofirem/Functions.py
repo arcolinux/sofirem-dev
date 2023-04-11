@@ -176,12 +176,13 @@ def install(queue):
                 stderr=subprocess.STDOUT,
             )
 
-            out,err = process_pkg_inst.communicate(timeout=60)
+            out, err = process_pkg_inst.communicate(timeout=60)
 
             if process_pkg_inst.returncode == 0:
                 print(
                     "[INFO] %s Package install completed"
-                    % datetime.now().strftime('%H:%M:%S'))
+                    % datetime.now().strftime("%H:%M:%S")
+                )
                 print(
                     "---------------------------------------------------------------------------"
                 )
@@ -227,7 +228,7 @@ def uninstall(queue):
                     stderr=subprocess.STDOUT,
                 )
 
-                out,err = process_pkg_rem.communicate(timeout=60)
+                out, err = process_pkg_rem.communicate(timeout=60)
 
                 if process_pkg_rem.returncode == 0:
                     print(
@@ -386,7 +387,7 @@ def cache(package, path):
             if pkg in exceptions:
                 description = file_lookup(pkg, path + "corrections/")
                 return description
-        return "No Description Foundd"
+        return "No Description Found"
 
     except Exception as e:
         print("Exception in cache(): %s " % e)
@@ -396,9 +397,17 @@ def cache(package, path):
 def cache_btn(path, progressbar):
     fraction = 1 / len(packages)
     # Non Multithreaded version.
+    packages.sort()
+    number = 1
     for pkg in packages:
+        print(str(number) + "/" + str(len(packages)) + ": Caching " + pkg)
         cache(pkg, base_dir + path)
+        number = number + 1
         progressbar.timeout_id = GLib.timeout_add(50, progressbar.update, fraction)
+
+    print(
+        "[INFO] Caching applications finished  " + datetime.now().strftime("%H:%M:%S")
+    )
 
     # This will need to be coded to be running multiple processes eventually, since it will be manually invoked.
     # process the file list

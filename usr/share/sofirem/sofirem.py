@@ -228,7 +228,11 @@ class Main(Gtk.Window):
         pb.show_all()
         # pb.set_text("Updating Cache")
         # pb.reset_timer()
-        Functions.cache_btn("cache/", pb)
+        print(
+            "[INFO] %s Recache applications"
+            % Functions.datetime.now().strftime("%H:%M:%S")
+        )
+        Functions.cache_btn("/cache/", pb)
 
 
 # ====================================================================
