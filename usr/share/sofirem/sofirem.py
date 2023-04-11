@@ -33,6 +33,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 base_dir = os.path.dirname(os.path.realpath(__file__))
 debug = True
 now = datetime.now()
+global launchtime
 launchtime = now.strftime("%Y-%m-%d-%H-%M-%S")
 
 
@@ -83,29 +84,20 @@ class Main(Gtk.Window):
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
-            print(
-                "[INFO] %s Synchronising complete"
-                % Functions.datetime.now().strftime("%H:%M:%S")
-            )
+            now = datetime.now().strftime("%H:%M:%S")
+            print("[INFO] %s Synchronising complete" % now)
             Functions.create_actions_log(
                 launchtime,
-                "[INFO] %s Synchronising complete"
-                % Functions.datetime.now().strftime("%H:%M:%S")
-                + "\n",
-            )
-            print(
-                "---------------------------------------------------------------------------"
+                "[INFO] %s Synchronising complete" % now + "\n",
             )
         else:
+            now = datetime.now().strftime("%H:%M:%S")
             print(
-                "[ERROR] %s Synchronising failed"
-                % Functions.datetime.now().strftime("%H:%M:%S")
+                "[ERROR] %s Synchronising failed" % now,
             )
             Functions.create_actions_log(
                 launchtime,
-                "[ERROR] %s Synchronising failed"
-                % Functions.datetime.now().strftime("%H:%M:%S")
-                + "\n",
+                "[ERROR] %s Synchronising failed" % now + "\n",
             )
             print(
                 "---------------------------------------------------------------------------"
@@ -213,10 +205,6 @@ class Main(Gtk.Window):
             # Install the package
             package = package.strip()
 
-            Functions.create_actions_log(
-                launchtime, "Package installation : " + package + "\n"
-            )
-
             if len(package) > 0:
                 print(":: Package to install : %s" % package)
 
@@ -235,10 +223,6 @@ class Main(Gtk.Window):
         else:
             # Uninstall the package
             package = package.strip()
-
-            Functions.create_actions_log(
-                launchtime, "Package removal      : " + package + "\n"
-            )
 
             if len(package) > 0:
                 print(":: Package to remove : %s" % package)

@@ -22,6 +22,7 @@ from gi.repository import GLib, Gtk  # noqa
 from queue import Queue  # Multithreading the caching
 from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
+from sofirem import launchtime
 
 # =====================================================
 #               Base Directory
@@ -46,10 +47,9 @@ act_log_dir = "/var/log/sofirem/actions/"
 
 
 def create_packages_log():
-    print("Creating a log file in /var/log/sofirem/software - currently installed")
-    now = datetime.now()
-    time = now.strftime("%Y-%m-%d-%H-%M-%S")
-    destination = sof_log_dir + "software-log-" + time
+    now = datetime.now().strftime("%H:%M:%S")
+    print("[INFO] " + now + " Creating a log file in /var/log/sofirem/software")
+    destination = sof_log_dir + "software-log-" + launchtime
     command = "sudo pacman -Q > " + destination
     subprocess.call(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
