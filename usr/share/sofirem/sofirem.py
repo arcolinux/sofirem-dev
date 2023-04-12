@@ -81,6 +81,25 @@ class Main(Gtk.Window):
         print(
             "---------------------------------------------------------------------------"
         )
+
+        if not os.path.isdir(Functions.log_dir):
+            try:
+                os.mkdir(Functions.log_dir)
+            except Exception as e:
+                print(e)
+
+        if not os.path.isdir(Functions.sof_log_dir):
+            try:
+                os.mkdir(Functions.sof_log_dir)
+            except Exception as e:
+                print(e)
+
+        if not os.path.isdir(Functions.act_log_dir):
+            try:
+                os.mkdir(Functions.act_log_dir)
+            except Exception as e:
+                print(e)
+
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
@@ -110,24 +129,6 @@ class Main(Gtk.Window):
 
         sleep(2)
         splScr.destroy()
-
-        if not os.path.isdir(Functions.log_dir):
-            try:
-                os.mkdir(Functions.log_dir)
-            except Exception as e:
-                print(e)
-
-        if not os.path.isdir(Functions.sof_log_dir):
-            try:
-                os.mkdir(Functions.sof_log_dir)
-            except Exception as e:
-                print(e)
-
-        if not os.path.isdir(Functions.act_log_dir):
-            try:
-                os.mkdir(Functions.act_log_dir)
-            except Exception as e:
-                print(e)
 
         if not Functions.os.path.isdir(Functions.home + "/.config/sofirem"):
 

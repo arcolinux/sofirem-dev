@@ -78,6 +78,7 @@ arcolinux-pamac-all 10.5.0-1
 arcolinux-paru-git 21.07-01
 arcolinux-pipemenus-git 23.04-03
 arcolinux-plank-git 23.04-01
+arcolinux-plank-themes-git 23.04-01
 arcolinux-polybar-git 23.04-02
 arcolinux-qt5-git 21.07-01
 arcolinux-rofi-git 23.04-01
@@ -307,7 +308,7 @@ file-roller 43.0-1
 filesystem 2023.01.31-1
 filezilla 3.63.2.1-1
 findutils 4.9.0-3
-firefox 111.0.1-1
+firefox 112.0-1
 firefox-ublock-origin 1.48.4-1
 fish 3.6.1-1
 flac 1.4.2-1
@@ -1773,7 +1774,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-26
+sofirem-dev-git 23.04-27
 solid 5.105.0-1
 sonnet 5.105.0-1
 sord 0.16.14-1
