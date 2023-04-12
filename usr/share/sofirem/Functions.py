@@ -469,20 +469,20 @@ def restart_program():
     os.execl(python, python, *sys.argv)
 
 
-def check_github(yaml_files):
-    # This is the link to the location where the .yaml files are kept in the github
-    # Removing desktop wayland, desktop, drivers, nvidia, ...
-    path = base_dir + "/cache/"
-    link = "https://github.com/arcolinux/arcob-calamares-config-awesome/tree/master/calamares/modules/"
-    urls = []
-    fns = []
-    for file in yaml_files:
-        if isfileStale(path + file, 14, 0, 0):
-            fns.append(path + file)
-            urls.append(link + file)
-    if len(fns) > 0 & len(urls) > 0:
-        inputs = zip(urls, fns)
-        download_parallel(inputs)
+# def check_github(yaml_files):
+#     # This is the link to the location where the .yaml files are kept in the github
+#     # Removing desktop wayland, desktop, drivers, nvidia, ...
+#     path = base_dir + "/cache/"
+#     link = "https://github.com/arcolinux/arcob-calamares-config-awesome/tree/master/calamares/modules/"
+#     urls = []
+#     fns = []
+#     for file in yaml_files:
+#         if isfileStale(path + file, 14, 0, 0):
+#             fns.append(path + file)
+#             urls.append(link + file)
+#     if len(fns) > 0 & len(urls) > 0:
+#         inputs = zip(urls, fns)
+#         download_parallel(inputs)
 
 
 def download_url(args):

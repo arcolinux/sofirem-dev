@@ -107,10 +107,11 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
                         grid.attach(lblSep1, 0, i, 1, 1)
                         lblPkg = Gtk.Label(xalign=0, yalign=0)  # was in for loop
 
-                        lblPkg.set_markup("<b>%s</b>" % packages[i].strip())  # was in for loop
+                        lblPkg.set_markup(
+                            "<b>%s</b>" % packages[i].strip()
+                        )  # was in for loop
                         # hbox_pkg.pack_start(lblPkg, False, False, 100)
                         ###### switch widget starts ######
-
 
                         # construct new switch
                         switch = Gtk.Switch()
@@ -146,12 +147,10 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
 
                         ###### switch widget ends ######
 
-
                         ###### pkg name label widget starts ######
 
                         lblSepPkg1 = Gtk.Label(xalign=0, yalign=0)
                         lblSepPkg1.set_text(sep_text)
-
 
                         # add space seperator next to switch for extra padding
 
@@ -170,7 +169,6 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
 
                         ###### pkg name label widget ends
 
-
                         ###### pkg desc label widget starts ######
 
                         lblSepPkgDesc = Gtk.Label(xalign=0, yalign=0)
@@ -183,16 +181,15 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
                         )
 
                         lblPkgDesc = Gtk.Label(xalign=0, yalign=0)
-                        lblPkgDesc.set_text(Functions.obtain_pkg_description(packages[i]))
+                        lblPkgDesc.set_text(
+                            Functions.obtain_pkg_description(packages[i])
+                        )
 
                         # add pkg desc label widget to grid
 
                         grid.attach_next_to(
                             lblPkgDesc, lblSepPkgDesc, Gtk.PositionType.RIGHT, 1, 1
                         )
-
-
-
 
                         ###### pkg desc label widget ends
 

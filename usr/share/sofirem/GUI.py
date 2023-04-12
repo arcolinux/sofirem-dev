@@ -105,7 +105,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         yaml_files = sorted(yaml_files_unsorted)
 
         # Check github for updated files
-        Functions.check_github(yaml_files)
+        # Functions.check_github(yaml_files)
         # ==========================================================
         #                       GENERATE STACK
         # ==========================================================
