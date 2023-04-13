@@ -51,6 +51,7 @@ class Main(Gtk.Window):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
         self.set_default_size(1100, 900)
+        self.timeout_id = None
 
         print(
             "---------------------------------------------------------------------------"
@@ -101,7 +102,7 @@ class Main(Gtk.Window):
                 print(e)
 
         # start making sure sofirem starts next time with dark or light theme
-        if Functions.path.isdir(Functions.home + "/.config/gtk-3.0"):
+        if os.path.isdir(Functions.home + "/.config/gtk-3.0"):
             try:
                 if not os.path.islink("/root/.config/gtk-3.0"):
                     Functions.shutil.rmtree("/root/.config/gtk-3.0")
@@ -111,7 +112,7 @@ class Main(Gtk.Window):
             except Exception as error:
                 print(error)
 
-        if Functions.path.isdir(Functions.home + "/.config/gtk-4.0/"):
+        if os.path.isdir(Functions.home + "/.config/gtk-4.0/"):
             try:
                 if not os.path.islink("/root/.config/gtk-4.0"):
                     Functions.shutil.rmtree("/root/.config/gtk-4.0/")
@@ -121,7 +122,7 @@ class Main(Gtk.Window):
             except Exception as error:
                 print(error)
 
-        if Functions.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
+        if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
             try:
                 if not os.path.islink("/root/.config/xsettingsd/"):
                     Functions.shutil.rmtree("/root/.config/xsettingsd/")

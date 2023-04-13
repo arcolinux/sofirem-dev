@@ -38,7 +38,7 @@ archiso 70-1
 archlinux-appstream-data 20230220-1
 archlinux-keyring 20230320-1
 archlinux-logout-git 23.04-04
-archlinux-tweak-tool-git 23.04-35
+archlinux-tweak-tool-git 23.04-40
 arcolinux-alacritty-git 23.04-01
 arcolinux-arc-blue-sky-git 22.12-03
 arcolinux-arc-dawn-git 22.12-03
@@ -164,7 +164,7 @@ cbindgen 0.24.3-1
 cblas 3.11.0-2
 cdparanoia 10.2-8
 chaotic-keyring 20220803-1
-chaotic-mirrorlist 20230330-1
+chaotic-mirrorlist 20230412-1
 chatgpt-nativefier 1.1-1
 check 0.15.2-2
 cheese 43.0-1
@@ -465,7 +465,7 @@ guake 3.9.0-2
 gufw 22.04-1
 guile 3.0.9-1
 gupnp 1:1.6.3-1
-gupnp-igd 1.2.0-3
+gupnp-igd 1.6.0-1
 gutenprint 5.3.4-2
 guvcview 2.0.8-2
 guvcview-common 2.0.8-2
@@ -718,7 +718,7 @@ lib32-mesa 23.0.2-2
 lib32-mpg123 1.31.3-1
 lib32-ncurses 6.4-1
 lib32-nettle 3.8.1-1
-lib32-openal 1.23.0-1
+lib32-openal 1.23.1-1
 lib32-openssl 1:3.0.8-1
 lib32-opus 1.3.1-2
 lib32-orc 0.4.33-1
@@ -905,7 +905,7 @@ libnfnetlink 1.0.2-1
 libnfs 5.0.2-1
 libnftnl 1.2.5-1
 libnghttp2 1.52.0-2
-libnice 0.1.21-1
+libnice 0.1.21-2
 libnl 3.7.0-3
 libnm 1.42.4-2
 libnma 1.10.6-1
@@ -923,7 +923,7 @@ libpackagekit-glib 1.2.6-1
 libpamac 11.5.0-1
 libpamac-flatpak-plugin 11.5.0-1
 libpamac-snap-plugin 11.5.0-1
-libpaper 2.0.10-2
+libpaper 2.0.12-1
 libpcap 1.10.3-1
 libpciaccess 0.17-1
 libpeas 1.34.0-1
@@ -945,7 +945,7 @@ libqaccessibilityclient 0.4.1-2
 libqalculate 4.6.0-1
 libqmi 1.32.4-1
 libqrtr-glib 1.2.2-2
-libraqm 0.10.0-1
+libraqm 0.10.1-1
 libraw 0.21.1-1
 libraw1394 2.1.2-3
 librest 0.9.1-2
@@ -1216,7 +1216,7 @@ onetbb 2021.8.0-2
 oniguruma 6.9.8-1
 open-iscsi 2.1.8-2
 open-isns 0.102-2
-openal 1.23.0-2
+openal 1.23.1-1
 opencl-headers 2:2022.09.30-1
 openconnect 1:9.01-2
 opencore-amr 0.1.6-1
@@ -1455,7 +1455,7 @@ python-packaging 23.0-1
 python-pam 2.0.2-1
 python-patiencediff 0.2.13-1
 python-pbr 5.11.1-3
-python-peewee 3.15.4-1
+python-peewee 3.16.0-1
 python-pexpect 4.8.0-6
 python-pillow 9.4.0-2
 python-pip 23.0.1-1
@@ -1738,7 +1738,7 @@ screen 4.9.0-1
 screenfetch 3.9.1-1
 scrot 1.9-1
 sdbus-cpp 1.2.0-2
-sddm-git 0.19.0.207.gd00b2ce-1
+sddm 0.20.0-2
 sdl12-compat 1.2.60-1
 sdl2 2.26.5-1
 sdl2_image 2.6.3-1
@@ -1774,7 +1774,7 @@ snapd-glib 1.63-3
 snappy 1.1.9-2
 sndio 1.9.0-1
 sof-firmware 2.2.4-1
-sofirem-dev-git 23.04-29
+sofirem-dev-git 23.04-30
 solid 5.105.0-1
 sonnet 5.105.0-1
 sord 0.16.14-1
@@ -1947,7 +1947,7 @@ volctl 0.9.3-1
 volume_key 0.3.12-7
 volumeicon 0.5.1-5
 vpnc 1:0.5.3.r526.r213-1
-vscodium-bin 1.77.2.23101-1
+vscodium-bin 1.77.3.23102-1
 vte-common 0.72.0-1
 vte3 0.72.0-1
 vulkan-headers 1:1.3.246-1

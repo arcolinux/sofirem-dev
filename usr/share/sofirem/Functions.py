@@ -58,7 +58,9 @@ def create_packages_log():
         launchtime,
         "[INFO] %s Creating a log file in /var/log/sofirem/software " % now + "\n",
     )
-    # GLib.idle_add(show_in_app_notification, self, "Log file created")
+    # GLib.idle_add(
+    #     show_in_app_notification, "is already installed - nothing to do", "test"
+    # )
 
 
 def create_actions_log(launchtime, message):
@@ -574,6 +576,33 @@ def messageBox(self, title, message):
     md2.format_secondary_markup(message)
     md2.run()
     md2.destroy()
+
+
+# =====================================================
+#               NOTIFICATIONS
+# =====================================================
+
+
+# def show_in_app_notification(self, message):
+#     if self.timeoutnot_id is not None:
+#         GLib.source_remove(self.timeoutnot_id)
+#         self.timeoutnot_id = None
+
+#     self.notification_label.set_markup(
+#         '<span foreground="white">' + message + "</span>"
+#     )
+#     self.notification_revealer.set_reveal_child(True)
+#     self.timeoutnot_id = GLib.timeout_add(3000, timeOut, self)
+
+
+# def timeOut(self):
+#     close_in_app_notification(self)
+
+
+# def close_in_app_notification(self):
+#     self.notification_revealer.set_reveal_child(False)
+#     GLib.source_remove(self.timeoutnot_id)
+#     self.timeoutnot_id = None
 
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
