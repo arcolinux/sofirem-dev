@@ -100,6 +100,40 @@ class Main(Gtk.Window):
             except Exception as e:
                 print(e)
 
+        # start making sure sofirem starts next time with dark or light theme
+        if Functions.path.isdir(Functions.home + "/.config/gtk-3.0"):
+            try:
+                if not os.path.islink("/root/.config/gtk-3.0"):
+                    Functions.shutil.rmtree("/root/.config/gtk-3.0")
+                    Functions.shutil.copytree(
+                        Functions.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
+                    )
+            except Exception as error:
+                print(error)
+
+        if Functions.path.isdir(Functions.home + "/.config/gtk-4.0/"):
+            try:
+                if not os.path.islink("/root/.config/gtk-4.0"):
+                    Functions.shutil.rmtree("/root/.config/gtk-4.0/")
+                    Functions.shutil.copytree(
+                        Functions.home + "/.config/gtk-4.0/", "/root/.config/gtk-4.0/"
+                    )
+            except Exception as error:
+                print(error)
+
+        if Functions.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
+            try:
+                if not os.path.islink("/root/.config/xsettingsd/"):
+                    Functions.shutil.rmtree("/root/.config/xsettingsd/")
+                    if Functions.path.isdir(Functions.home + "/.config/xsettingsd/"):
+                        Functions.shutil.copytree(
+                            Functions.home + "/.config/xsettingsd/",
+                            "/root/.config/xsettingsd/",
+                        )
+            except Exception as error:
+                print(error)
+        # end making sure sofirem starts next time with dark or light theme
+
         # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
         if Functions.sync() == 0:
