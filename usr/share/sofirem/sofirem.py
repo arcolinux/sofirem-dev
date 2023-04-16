@@ -124,8 +124,20 @@ class Main(Gtk.Window):
 
         if os.path.isdir(Functions.home + "/.config/gtk-4.0/"):
             try:
-                if not os.path.islink("/root/.config/gtk-4.0"):
-                    Functions.shutil.rmtree("/root/.config/gtk-4.0/")
+                # if you find a link remove it
+                if os.path.islink("/root/.config/gtk-4.0"):
+                    try:
+                        Functions.shutil.rmtree("/root/.config/gtk-4.0")
+                    except Exception as error:
+                        print(error)
+
+                # if no link and dir does not exist - create it
+                if not os.path.exists("/root/.config/gtk-4.0"):
+                    try:
+                        os.mkdir("/root/.config/gtk-4.0")
+                    except Exception as error:
+                        print(error)
+                else:
                     Functions.shutil.copytree(
                         Functions.home + "/.config/gtk-4.0/", "/root/.config/gtk-4.0/"
                     )
