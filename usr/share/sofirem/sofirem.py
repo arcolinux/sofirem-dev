@@ -127,7 +127,7 @@ class Main(Gtk.Window):
                 # if you find a link remove it
                 if os.path.islink("/root/.config/gtk-4.0"):
                     try:
-                        Functions.shutil.rmtree("/root/.config/gtk-4.0")
+                        os.unlink("/root/.config/gtk-4.0")
                     except Exception as error:
                         print(error)
 
