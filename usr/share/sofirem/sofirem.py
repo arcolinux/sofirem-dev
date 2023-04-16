@@ -132,7 +132,7 @@ class Main(Gtk.Window):
                         print(error)
 
                 # if no link and dir does not exist - create it
-                if not os.path.exists("/root/.config/gtk-4.0"):
+                if not os.path.isdir("/root/.config/gtk-4.0"):
                     try:
                         os.mkdir("/root/.config/gtk-4.0")
                     except Exception as error:
