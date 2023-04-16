@@ -122,21 +122,22 @@ class Main(Gtk.Window):
             except Exception as error:
                 print(error)
 
-        if os.path.isdir(Functions.home + "/.config/gtk-4.0/"):
+        # TODO: for a later date
+        # if os.path.isdir(Functions.home + "/.config/gtk-4.0/"):
 
-            # if you find a link remove it
-            if os.path.islink("/root/.config/gtk-4.0"):
-                try:
-                    os.unlink("/root/.config/gtk-4.0")
-                except Exception as error:
-                    print(error)
+        #     # if you find a link remove it
+        #     if os.path.islink("/root/.config/gtk-4.0"):
+        #         try:
+        #             os.unlink("/root/.config/gtk-4.0")
+        #         except Exception as error:
+        #             print(error)
 
-            try:
-                Functions.shutil.copytree(
-                    Functions.home + "/.config/gtk-4.0/", "/root/.config/gtk-4.0/"
-                )
-            except Exception as error:
-                print(error)
+        #     try:
+        #         Functions.shutil.copytree(
+        #             Functions.home + "/.config/gtk-4.0/", "/root/.config/gtk-4.0/"
+        #         )
+        #     except Exception as error:
+        #         print(error)
 
         if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
             try:
