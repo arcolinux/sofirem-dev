@@ -818,6 +818,7 @@ def search(self, term, packages):
         for pkg in packages:
             if term in pkg.name \
              or term in pkg.description:
+                print("Match = %s" % pkg.name)
                 pkg_matches.append(
                     pkg,
                 )

@@ -293,8 +293,6 @@ class Main(Gtk.Window):
                         % Functions.datetime.now().strftime("%H:%M:%S")
                 )
 
-
-
                 th_search.start()
 
                 # get the search_results from the queue
@@ -306,9 +304,13 @@ class Main(Gtk.Window):
                     )
 
                     if len(results) > 0:
+                        total = 0
+                        for val in results.values():
+                            total += len(val)
+
                         print("[INFO] %s Search found %s results"
                                 % (Functions.datetime.now().strftime("%H:%M:%S"),
-                                    len(results),
+                                    total,
                                 )
                         )
                         # use a thread for the search gui, and also pass the search results in
