@@ -421,8 +421,6 @@ class Main(Gtk.Window):
 
                 # Functions.uninstall(package)
 
-        Functions.get_current_installed()
-
         # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
         # self.gui.hide()

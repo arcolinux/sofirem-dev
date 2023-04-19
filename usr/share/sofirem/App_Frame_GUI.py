@@ -5,10 +5,9 @@ from socket import TIPC_ADDR_NAME
 from urllib.parse import scheme_chars
 import Functions
 
-
 def GUI(self, Gtk, vboxStack1, category, package_file):
     try:
-        # Lets set some variables that we know we will need later
+         # Lets set some variables that we know we will need later
         # hboxes and items to make the page look sensible
         cat_name = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         seperator = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -100,6 +99,7 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
                     # packages
                     sep_text = "     "
                     for i in range(len(packages)):
+                        package_name = packages[i].strip()
                         grid.insert_row(i)
                         # hbox_pkg = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
                         lblSep1 = Gtk.Label(xalign=0, yalign=0)
@@ -108,19 +108,18 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
                         lblPkg = Gtk.Label(xalign=0, yalign=0)  # was in for loop
 
                         lblPkg.set_markup(
-                            "<b>%s</b>" % packages[i].strip()
+                            "<b>%s</b>" % package_name
                         )  # was in for loop
                         # hbox_pkg.pack_start(lblPkg, False, False, 100)
                         ###### switch widget starts ######
 
                         # construct new switch
                         switch = Gtk.Switch()
-
-                        switch.set_active(Functions.query_pkg(packages[i]))
+                        switch.set_active(Functions.query_pkg(package_name))
                         switch.connect(
                             "notify::active",
                             self.app_toggle,
-                            packages[i],
+                            package_name,
                             Gtk,
                             vboxStack1,
                             Functions,
@@ -231,6 +230,10 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
     except Exception as e:
         print("Exception in App_Frame_GUI.GUI(): %s" % e)
 
+    except Exception as e:
+        print("Exception in App_Frame_GUI.GUI(): %s" % e)
+
+
 def GUISearch(self, Gtk, vboxStack1, category, category_desc, packages):
     try:
         # Lets set some variables that we know we will need later
@@ -308,7 +311,6 @@ def GUISearch(self, Gtk, vboxStack1, category, category_desc, packages):
                 lblPkg.set_markup("<b>%s</b>" % packages[i].name)  # was in for loop
                 # hbox_pkg.pack_start(lblPkg, False, False, 100)
                 ###### switch widget starts ######
-
 
                 # construct new switch
                 switch = Gtk.Switch()

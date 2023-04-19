@@ -210,6 +210,8 @@ def install(self,pkg_queue,signal,switch):
                 print(
                     "---------------------------------------------------------------------------"
                 )
+
+
             else:
                 # deactivate switch widget, install failed
                 switch.set_active(False)
@@ -220,7 +222,7 @@ def install(self,pkg_queue,signal,switch):
                 if out:
                     out = out.decode("utf-8")
                     install_state[pkg] = out
-                    print(out)
+                    print(install_state[pkg])
                 print(
                     "---------------------------------------------------------------------------"
                 )
@@ -240,37 +242,33 @@ def install(self,pkg_queue,signal,switch):
     finally:
         '''
             Now check install_state for any packages which failed to install
-            If there are any lock db issues put the package onto the queue, then retry the install
         '''
-        if install_state[pkg] is not None:
-            if "error: failed to init transaction (unable to lock database)" in install_state[pkg].splitlines():
-                print("[WARN] %s Failed to install package : %s" %
-                    datetime.now().strftime("%H:%M:%S"), pkg
-                )
-                print("[WARN] %s Retrying install of package: %s" %
-                    datetime.now().strftime("%H:%M:%S"), pkg
-                )
-
-                pkg_queue.put(pkg)
-                install(pkg_queue,"install")
-
             # display dependencies notification to user here
-            if "error: failed to prepare transaction (could not satisfy dependencies)" in install_state[pkg].splitlines():
-                msg_dialog = message_dialog("Error installing package",
-                    "Failed to install package: %s" % pkg,
-                    install_state[pkg],
-                    Gtk.MessageType.ERROR,
-                )
-                result = msg_dialog.run()
-
-                if result == Gtk.ResponseType.OK:
-                    msg_dialog.close()
 
 
+        #print("error" in install_state[pkg].splitlines())
+        if install_state[pkg] != "INSTALLED":
+            msg_dialog = message_dialog(
+                self,
+                "Error installing package",
+                "Failed to install package: %s" % pkg,
+                str(install_state[pkg]),
+                Gtk.MessageType.ERROR,
+            )
+            result = msg_dialog.run()
+
+            if result == Gtk.ResponseType.OK:
+                msg_dialog.close()
+
+        get_current_installed()
+
+        if install_state[pkg] == "INSTALLED":
+            switch.set_active(True)
         else:
-            print("[ERROR] This is a bug!")
+            switch.set_active(False)
 
         pkg_queue.task_done()
+
 
 
 # =====================================================
@@ -314,6 +312,7 @@ def uninstall(self,pkg_queue,signal,switch):
                     print(
                         "---------------------------------------------------------------------------"
                     )
+
                 else:
                     # reactivate switch widget, the package has not been removed
                     switch.set_active(True)
@@ -323,7 +322,7 @@ def uninstall(self,pkg_queue,signal,switch):
                     )
                     if out:
                         out = out.decode("utf-8")
-                        uninstall_state[pkg] = out
+                        uninstall_state[pkg] = out.splitlines()
                         print(out)
                     print(
                         "---------------------------------------------------------------------------"
@@ -346,39 +345,30 @@ def uninstall(self,pkg_queue,signal,switch):
     finally:
         '''
             Now check uninstall_state for any packages which failed to uninstall
-            If there are any lock db issues put the package onto the queue, then retry the uninstall
         '''
-        if uninstall_state[pkg] is not None:
-            if "error: failed to init transaction (unable to lock database)" in uninstall_state[pkg].splitlines():
-                print("[WARN] %s Failed to remove package : %s" %
-                    (datetime.now().strftime("%H:%M:%S"), pkg)
-                )
-                print("[WARN] %s Retrying removal of package: %s" %
-                    (datetime.now().strftime("%H:%M:%S"), pkg)
-                )
-
-                pkg_queue.put(pkg)
-                uninstall(pkg_queue,"uninstall")
-
             # display dependencies notification to user here
 
-            if "error: failed to prepare transaction (could not satisfy dependencies)" in uninstall_state[pkg].splitlines():
+        if uninstall_state[pkg] != "REMOVED":
 
-                msg_dialog = message_dialog(
-                    self,
-                    "Error removing package",
-                    "Failed to remove package: %s" % pkg,
-                    uninstall_state[pkg],
-                    Gtk.MessageType.ERROR,
-                )
+            msg_dialog = message_dialog(
+                self,
+                "Error removing package",
+                "Failed to remove package: %s" % pkg,
+                str(uninstall_state[pkg]),
+                Gtk.MessageType.ERROR,
+            )
 
-                result = msg_dialog.run()
+            result = msg_dialog.run()
 
-                if result == Gtk.ResponseType.OK:
-                    msg_dialog.close()
+            if result == Gtk.ResponseType.OK:
+                msg_dialog.close()
+
+        get_current_installed()
+
+        if uninstall_state[pkg] == "REMOVED":
+            switch.set_active(False)
         else:
-            print("[ERROR] This is a bug!")
-
+            switch.set_active(True)
 
         pkg_queue.task_done()
 
@@ -818,7 +808,6 @@ def search(self, term, packages):
         for pkg in packages:
             if term in pkg.name \
              or term in pkg.description:
-                print("Match = %s" % pkg.name)
                 pkg_matches.append(
                     pkg,
                 )
