@@ -179,6 +179,17 @@ class Main(Gtk.Window):
                     "---------------------------------------------------------------------------"
                 )
 
+            # store package information into memory, and use the list returned to search in for quicker retrieval
+            print(
+                "[INFO] %s Storing package metadata started" % now
+            )
+
+            self.packages = Functions.storePackages()
+
+            print(
+                "[INFO] %s Storing package metadata completed" % now
+            )
+
             splScr = Splash.splashScreen()
 
             while Gtk.events_pending():
@@ -272,9 +283,10 @@ class Main(Gtk.Window):
 
                 th_search = Functions.threading.Thread(
                     name="thread_search",
-                    target=Functions.userSearch,
+                    target=Functions.search,
                     args=(self,
-                        search_term
+                        search_term,
+                        self.packages,
                     ),
                 )
                 print("[INFO] %s Starting search"

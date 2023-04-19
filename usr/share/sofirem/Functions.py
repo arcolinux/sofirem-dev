@@ -382,6 +382,67 @@ def uninstall(self,pkg_queue,signal,switch):
 
         pkg_queue.task_done()
 
+# =====================================================
+#               SEARCH INDEXING
+# =====================================================
+
+# store a list of package metadata into memory for fast retrieval
+def storePackages():
+    path = base_dir + "/yaml/"
+    yaml_files = []
+    packages = []
+
+    category_dict = {}
+
+    try:
+
+        # get a list of yaml files
+        for file in os.listdir(path):
+            if file.endswith(".yaml"):
+                yaml_files.append(path + file)
+
+        if len(yaml_files) > 0:
+            for yaml_file in yaml_files:
+                cat_desc = ""
+                package_name = ""
+                package_cat = ""
+
+                # read contents of each yaml file
+
+                with open(yaml_file, "r") as yaml:
+                    content = yaml.readlines()
+
+                for line in content:
+                    if line.startswith("  packages:"):
+                        continue
+                    elif line.startswith("  description: "):
+                        # Set the label text for the description line
+                        cat_desc = (
+                            line.strip("  description: ").strip().strip('"').strip("\n").strip()
+                        )
+                    elif line.startswith("- name:"):
+                        # category
+                        package_cat = line.strip("- name: ").strip().strip('"').strip("\n").strip()
+                    elif line.startswith("    - "):
+                        # add the package to the packages list
+
+                        package_name = line.strip("    - ").strip()
+                        # get the package description
+                        package_desc = obtain_pkg_description(package_name)
+
+                        package = Package(
+                                package_name,
+                                package_desc,
+                                package_cat,
+                                cat_desc
+                        )
+
+                        packages.append(package)
+        return packages
+    except Exception as e:
+        print("Exception in searchIndexer() : %s" % e)
+
+
 
 # =====================================================
 #               CREATE MESSAGE DIALOG
@@ -742,7 +803,7 @@ def messageBox(self, title, message):
 # =====================================================
 
 
-def userSearch(self,term):
+def search(self, term, packages):
     try:
         print("[INFO] %s Searching for: \"%s\"" % (
                 datetime.now().strftime("%H:%M:%S"),
@@ -750,97 +811,38 @@ def userSearch(self,term):
             )
         )
 
-        path = base_dir + "/yaml/"
-        yaml_files = []
-        package_matches = []
+        pkg_matches = []
 
         category_dict = {}
 
-        # get a list of yaml files
-        for file in os.listdir(path):
-            if file.endswith(".yaml"):
-                yaml_files.append(path + file)
-
-        if len(yaml_files) > 0:
-            for yaml_file in yaml_files:
-                cat_desc = ""
-                package_name = ""
-                package_cat = ""
-
-                # read contents of each yaml file
-
-                with open(yaml_file, "r") as yaml:
-                    content = yaml.readlines()
-
-                for line in content:
-                    if line.startswith("  packages:"):
-                        continue
-                    elif line.startswith("  description: "):
-                        # Set the label text for the description line
-                        cat_desc = (
-                            line.strip("  description: ").strip().strip('"').strip("\n").strip()
-                        )
-                    elif line.startswith("- name:"):
-                        # category
-                        package_cat = line.strip("- name: ").strip().strip('"').strip("\n").strip()
-                    elif line.startswith("    - "):
-                        # add the package to the packages list
-
-                        package_name = line.strip("    - ").strip()
-                        # get the package description
-                        package_desc = obtain_pkg_description(package_name)
-                        if term in package_name \
-                         or term in package_desc:
-                            package_matches.append(
-                                package_name +
-                                "," +
-                                package_cat +
-                                "," +
-                                cat_desc +
-                                "," +
-                                package_desc
-                            )
+        for pkg in packages:
+            if term in pkg.name \
+             or term in pkg.description:
+                pkg_matches.append(
+                    pkg,
+                )
 
 
         # filter the results so that each category holds a list of package
 
         category_name = None
-        packages = []
-        for p in package_matches:
-            line = p.split(',')
-            if category_name == line[1]:
-                package = Package(
-                    line[0],
-                    line[3],
-                    category_name,
-                    line[2],
-                )
-                packages.append(package)
-                category_dict[category_name] = packages
+        packages_cat = []
+        for pkg_match in pkg_matches:
+            if category_name == pkg_match.category:
+                packages_cat.append(pkg_match)
+                category_dict[category_name] = packages_cat
             elif category_name == None:
-                package = Package(
-                    line[0],
-                    line[3],
-                    category_name,
-                    line[2],
-                )
-                packages.append(package)
-                category_dict[line[1]] = packages
+                packages_cat.append(pkg_match)
+                category_dict[pkg_match.category] = packages_cat
             else:
                 # reset packages, new category
-                packages = []
-                package = Package(
-                    line[0],
-                    line[3],
-                    category_name,
-                    line[2],
-                )
+                packages_cat = []
 
-                packages.append(package)
+                packages_cat.append(pkg_match)
 
-                category_dict[line[1]] = packages
+                category_dict[pkg_match.category] = packages_cat
 
-            category_name = line[1]
+            category_name = pkg_match.category
 
         if len(category_dict) == 0:
             self.search_queue.put(None)
