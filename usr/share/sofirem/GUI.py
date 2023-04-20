@@ -30,13 +30,27 @@ class GUI_Worker(Thread):
 
                 # make sure we have the required number of items on the queue
                 if len(items) == 5:
-                    self, Gtk, vboxStack1, category, package_file = items
-                    App_Frame_GUI.GUI(self, Gtk, vboxStack1, category, package_file)
+                    #self, Gtk, vboxStack1, category, package_file = items
+                    self, Gtk, vboxStack1, category, packages = items
+                    App_Frame_GUI.GUI(
+                        self, 
+                        Gtk, 
+                        vboxStack1,
+                        category,
+                        packages,
+                    )
 
                 # make sure we have the required number of items on the queue
                 if len(items) == 6:
                     self, Gtk, vboxStack1, category, category_description, search_results = items
-                    App_Frame_GUI.GUISearch(self, Gtk, vboxStack1, category, category_description, search_results)
+                    App_Frame_GUI.GUISearch(
+                        self, 
+                        Gtk, 
+                        vboxStack1, 
+                        category, 
+                        category_description, 
+                        search_results,
+                    )
 
             except Exception as e:
                 print("Exception in GUI_Worker(): %s" % e)
@@ -44,10 +58,6 @@ class GUI_Worker(Thread):
                 self.queue.task_done()
 
 def GUISearch(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, search_term):
-    #print("search gui %s" % search_term)
-
-    # build gui
-
     try:
 
         # remove previous vbox
@@ -122,15 +132,17 @@ def GUISearch(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, se
 
         # This code section might look a little weird. It is because it was
         # derived from another function before this version was required.
+
         for category in search_results:
             # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
 
+            subcategory = search_results[category][0].subcategory
             vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
             stack.add_titled(
-                vboxStack[stack_item], str("stack" + str(len(vboxStack))), category
+                vboxStack[stack_item], str("stack" + str(len(vboxStack))), subcategory
             )
 
-            category_desc = search_results[category][0].category_description
+            subcategory_desc = search_results[category][0].subcategory_description
 
             # Multithreading!
             self.queue.put(
@@ -138,8 +150,8 @@ def GUISearch(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, se
                     self,
                     Gtk,
                     vboxStack[stack_item],
-                    category,
-                    category_desc,
+                    subcategory,
+                    subcategory_desc,
                     search_results[category],
                 )
             )
@@ -243,12 +255,6 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             self.remove(self.vbox_search)
             self.show_all()
 
-        process = Functions.subprocess.run(
-            ["sh", "-c", 'echo "$SHELL"'], stdout=Functions.subprocess.PIPE
-        )
-
-        output = process.stdout.decode().strip()
-
         # lets quickly create the latest installed list.
         # Functions.get_current_installed()
 
@@ -302,6 +308,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # Need to sort the list (Or do we? I choose to)
         yaml_files = sorted(yaml_files_unsorted)
 
+
         # Check github for updated files
         # Functions.check_github(yaml_files)
         # ==========================================================
@@ -329,11 +336,39 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         worker.daemon = True
         worker.start()
 
+
+        for category in self.packages:
+            # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
+
+            # this is the side stack listing all categories
+            vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
+            stack.add_titled(
+                vboxStack[stack_item], str("stack" + str(len(vboxStack))), category
+            )
+
+            packages_lst = self.packages[category]
+
+            # Multithreading!
+            self.queue.put(
+                (
+                    self,
+                    Gtk,
+                    vboxStack[stack_item],
+                    category,
+                    packages_lst,
+                )
+            )
+            stack_item += 1
+
+        '''
+
         # This code section might look a little weird. It is because it was
         # derived from another function before this version was required.
         for item in yaml_files:
             # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
             name = item[11:-5].strip().capitalize()  # .strip(".yaml")
+
+            
             vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
             stack.add_titled(
                 vboxStack[stack_item], str("stack" + str(len(vboxStack))), name
@@ -349,7 +384,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
                 )
             )
             stack_item += 1
-
+        '''
         # send a signal that no further items are to be put on the queue
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.

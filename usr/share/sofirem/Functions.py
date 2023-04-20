@@ -201,6 +201,7 @@ def install(self,pkg_queue,signal,switch):
             out, err = process_pkg_inst.communicate(timeout=60)
 
             if process_pkg_inst.returncode == 0:
+                get_current_installed()
                 install_state[pkg] = "INSTALLED"
 
                 print(
@@ -215,7 +216,7 @@ def install(self,pkg_queue,signal,switch):
             else:
                 # deactivate switch widget, install failed
                 switch.set_active(False)
-
+                get_current_installed()
                 print("[ERROR] %s Package install : %s status = failed" %
                         (datetime.now().strftime("%H:%M:%S"),pkg)
                 )
@@ -260,8 +261,6 @@ def install(self,pkg_queue,signal,switch):
             if result == Gtk.ResponseType.OK:
                 msg_dialog.close()
 
-        get_current_installed()
-
         if install_state[pkg] == "INSTALLED":
             switch.set_active(True)
         else:
@@ -304,6 +303,7 @@ def uninstall(self,pkg_queue,signal,switch):
                 out, err = process_pkg_rem.communicate(timeout=60)
 
                 if process_pkg_rem.returncode == 0:
+                    get_current_installed()
                     uninstall_state[pkg] = "REMOVED"
                     print(
                         "[INFO] %s Package removal : %s status = completed" %
@@ -316,6 +316,7 @@ def uninstall(self,pkg_queue,signal,switch):
                 else:
                     # reactivate switch widget, the package has not been removed
                     switch.set_active(True)
+                    get_current_installed()
                     print(
                         "[ERROR] %s Package removal : %s status = failed" %
                             (datetime.now().strftime("%H:%M:%S"),pkg)
@@ -363,7 +364,6 @@ def uninstall(self,pkg_queue,signal,switch):
             if result == Gtk.ResponseType.OK:
                 msg_dialog.close()
 
-        get_current_installed()
 
         if uninstall_state[pkg] == "REMOVED":
             switch.set_active(False)
@@ -389,7 +389,7 @@ def storePackages():
         # get a list of yaml files
         for file in os.listdir(path):
             if file.endswith(".yaml"):
-                yaml_files.append(path + file)
+                yaml_files.append(file)
 
         if len(yaml_files) > 0:
             for yaml_file in yaml_files:
@@ -397,22 +397,23 @@ def storePackages():
                 package_name = ""
                 package_cat = ""
 
+                category_name = yaml_file[11:-5].strip().capitalize()
+
                 # read contents of each yaml file
 
-                with open(yaml_file, "r") as yaml:
+                with open(path+yaml_file, "r") as yaml:
                     content = yaml.readlines()
-
                 for line in content:
                     if line.startswith("  packages:"):
                         continue
                     elif line.startswith("  description: "):
                         # Set the label text for the description line
-                        cat_desc = (
+                        subcat_desc = (
                             line.strip("  description: ").strip().strip('"').strip("\n").strip()
                         )
                     elif line.startswith("- name:"):
                         # category
-                        package_cat = line.strip("- name: ").strip().strip('"').strip("\n").strip()
+                        subcat_name = line.strip("- name: ").strip().strip('"').strip("\n").strip()
                     elif line.startswith("    - "):
                         # add the package to the packages list
 
@@ -423,14 +424,56 @@ def storePackages():
                         package = Package(
                                 package_name,
                                 package_desc,
-                                package_cat,
-                                cat_desc
+                                category_name,
+                                subcat_name,
+                                subcat_desc,
                         )
 
                         packages.append(package)
-        return packages
+                
+
+        # filter the results so that each category holds a list of package
+
+        category_name = None
+        packages_cat = []
+        for pkg in packages:
+            if category_name == pkg.category:
+                packages_cat.append(pkg)
+                category_dict[category_name] = packages_cat
+            elif category_name == None:
+                packages_cat.append(pkg)
+                category_dict[pkg.category] = packages_cat
+            else:
+                # reset packages, new category
+                packages_cat = []
+
+                packages_cat.append(pkg)
+
+                category_dict[pkg.category] = packages_cat
+
+            category_name = pkg.category
+
+        '''
+        for key in category_dict.keys():
+            print("Category = %s" % key)
+            pkg_list = category_dict[key]
+
+            for pkg in pkg_list:
+                print(pkg.name)
+                #print(pkg.category)
+
+            
+            print("++++++++++++++++++++++++++++++")
+        '''
+
+        sorted_dict = None
+
+        sorted_dict = dict(sorted(category_dict.items()))
+
+
+        return sorted_dict
     except Exception as e:
-        print("Exception in searchIndexer() : %s" % e)
+        print("Exception in storePackages() : %s" % e)
 
 
 
@@ -793,7 +836,7 @@ def messageBox(self, title, message):
 # =====================================================
 
 
-def search(self, term, packages):
+def search(self, term):
     try:
         print("[INFO] %s Searching for: \"%s\"" % (
                 datetime.now().strftime("%H:%M:%S"),
@@ -805,12 +848,13 @@ def search(self, term, packages):
 
         category_dict = {}
 
-        for pkg in packages:
-            if term in pkg.name \
-             or term in pkg.description:
-                pkg_matches.append(
-                    pkg,
-                )
+        for pkg_list in self.packages.values():
+            for pkg in pkg_list:
+                if term in pkg.name \
+                or term in pkg.description:
+                    pkg_matches.append(
+                        pkg,
+                    )
 
 
         # filter the results so that each category holds a list of package
@@ -839,15 +883,13 @@ def search(self, term, packages):
             msg_dialog = message_dialog(
                 self,
                 "Find Package",
-                "\"%s\" was not found in the available sources." % term,
+                "\"%s\" was not found in the available sources" % term,
                 "Please try another search query",
                 Gtk.MessageType.ERROR,
             )
 
-            result = msg_dialog.run()
-
-            if result == Gtk.ResponseType.OK:
-                msg_dialog.close()
+            msg_dialog.run()
+            msg_dialog.hide()
 
         # debug console output to display package info
         '''
@@ -865,10 +907,18 @@ def search(self, term, packages):
         '''
 
         # sort dictionary so the category names are displayed in alphabetical order
-        sorted_dict = dict(sorted(category_dict.items()))
-        self.search_queue.put(sorted_dict)
+        sorted_dict = None
+
+        if len(category_dict) > 0:
+            sorted_dict = dict(sorted(category_dict.items()))
+            self.search_queue.put(
+                sorted_dict,
+            )
+        else:
+            return
 
     except Exception as e:
         print("Exception in search(): %s", e)
+        sys.exit(0)
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!

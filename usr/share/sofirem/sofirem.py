@@ -159,6 +159,7 @@ class Main(Gtk.Window):
                     print(error)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
+            '''
             if Functions.sync() == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
@@ -178,6 +179,7 @@ class Main(Gtk.Window):
                 print(
                     "---------------------------------------------------------------------------"
                 )
+            '''
 
             # store package information into memory, and use the list returned to search in for quicker retrieval
             print(
@@ -185,6 +187,13 @@ class Main(Gtk.Window):
             )
 
             self.packages = Functions.storePackages()
+
+            print(
+                "[INFO] %s Categories = %s" % (
+                    now,
+                    len(self.packages.keys()),
+                )
+            )
 
             print(
                 "[INFO] %s Storing package metadata completed" % now
@@ -265,11 +274,15 @@ class Main(Gtk.Window):
     # =====================================================
 
     def on_search_activated(self,searchentry):
-        if searchentry.get_text_length() == 0 and self.search_activated:
-            print("reload gui")
-        elif searchentry.get_text_length() == 0:
-            print("do nothing here")
-            return
+        
+        if searchentry.get_text_length() == 0 \
+            and self.search_activated:
+            self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            self.search_activated = False
+        
+        
+        if searchentry.get_text_length() == 0:
+            self.search_activated = False
 
         search_term = searchentry.get_text().strip()
 
@@ -286,7 +299,6 @@ class Main(Gtk.Window):
                     target=Functions.search,
                     args=(self,
                         search_term,
-                        self.packages,
                     ),
                 )
                 print("[INFO] %s Starting search"
@@ -294,7 +306,7 @@ class Main(Gtk.Window):
                 )
 
                 th_search.start()
-
+                
                 # get the search_results from the queue
                 results = self.search_queue.get()
 
@@ -313,7 +325,6 @@ class Main(Gtk.Window):
                                     total,
                                 )
                         )
-                        # use a thread for the search gui, and also pass the search results in
                         # make sure the gui search only displays the pkgs inside the results
 
                         self.vbox_search =  GUI.GUISearch(
@@ -327,7 +338,17 @@ class Main(Gtk.Window):
                                 results,
                                 search_term,
                         )
+
                         self.search_activated = True
+                else:
+                    print("[INFO] %s Search found %s results"
+                                % (Functions.datetime.now().strftime("%H:%M:%S"),
+                                    0,
+                                )
+                    )
+                    self.searchEntry.grab_focus()
+                    #self.search_activated = True
+
 
             elif self.search_activated == True:
                 self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
