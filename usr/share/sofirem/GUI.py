@@ -330,7 +330,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         """
 
         # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
-
+        
         worker = GUI_Worker(self.queue)
         # Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
@@ -360,31 +360,6 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             )
             stack_item += 1
 
-        '''
-
-        # This code section might look a little weird. It is because it was
-        # derived from another function before this version was required.
-        for item in yaml_files:
-            # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
-            name = item[11:-5].strip().capitalize()  # .strip(".yaml")
-
-            
-            vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
-            stack.add_titled(
-                vboxStack[stack_item], str("stack" + str(len(vboxStack))), name
-            )
-            # Multithreading!
-            self.queue.put(
-                (
-                    self,
-                    Gtk,
-                    vboxStack[stack_item],
-                    name,
-                    path + yaml_files[stack_item],
-                )
-            )
-            stack_item += 1
-        '''
         # send a signal that no further items are to be put on the queue
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.
@@ -436,18 +411,6 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         self.searchEntry.connect("icon-release", self.on_search_cleared)
 
         ivSearchbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-
-
-        # =====================================================
-        #                      PACKS
-        # =====================================================
-
-        # hbox1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
-        # hbox2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
-        # hbox3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
-
-        # hbox3.pack_start(btnReCache, False, False, 0)
-
 
         ivSearchbox.pack_start(self.searchEntry, False, False, 0)
 

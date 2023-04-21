@@ -139,6 +139,7 @@ def permissions(dst):
 # =====================================================
 def sync():
     try:
+        pacman_lock_file = "/var/lib/pacman/db.lck"
         sync_str = ["pacman", "-Sy"]
         now = datetime.now().strftime("%H:%M:%S")
         print("[INFO] %s Synchronising package databases" % now)
@@ -148,9 +149,20 @@ def sync():
         )
 
         # Pacman will not work if there is a lock file
-        if os.path.exists("/var/lib/pacman/db.lck"):
+        if os.path.exists(pacman_lock_file):
             print("[ERROR] Pacman lock file found")
             print("[ERROR] Sync failed")
+
+            msg_dialog = Functions.message_dialog(
+                            self,
+                            "pacman -Sy",
+                            "Pacman database synchronisation failed",
+                            "Pacman lock file found inside %s" % pacman_lock_file,
+                            Gtk.MessageType.ERROR,
+            )
+
+            msg_dialog.run()
+            msg_dialog.hide()
             sys.exit(1)
         else:
 
@@ -256,10 +268,9 @@ def install(self,pkg_queue,signal,switch):
                 str(install_state[pkg]),
                 Gtk.MessageType.ERROR,
             )
-            result = msg_dialog.run()
-
-            if result == Gtk.ResponseType.OK:
-                msg_dialog.close()
+            msg_dialog.run()
+            msg_dialog.hide()
+            
 
         if install_state[pkg] == "INSTALLED":
             switch.set_active(True)
@@ -359,10 +370,9 @@ def uninstall(self,pkg_queue,signal,switch):
                 Gtk.MessageType.ERROR,
             )
 
-            result = msg_dialog.run()
+            msg_dialog.run()
+            msg_dialog.hide()
 
-            if result == Gtk.ResponseType.OK:
-                msg_dialog.close()
 
 
         if uninstall_state[pkg] == "REMOVED":

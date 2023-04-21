@@ -159,7 +159,7 @@ class Main(Gtk.Window):
                     print(error)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
-            '''
+            
             if Functions.sync() == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
@@ -168,6 +168,7 @@ class Main(Gtk.Window):
                     "[INFO] %s Synchronising complete" % now + "\n",
                 )
             else:
+                # Should the app continue to load here, given the fact that the pacman sync failed
                 now = datetime.now().strftime("%H:%M:%S")
                 print(
                     "[ERROR] %s Synchronising failed" % now,
@@ -179,9 +180,20 @@ class Main(Gtk.Window):
                 print(
                     "---------------------------------------------------------------------------"
                 )
-            '''
 
-            # store package information into memory, and use the list returned to search in for quicker retrieval
+                msg_dialog = Functions.message_dialog(
+                                self,
+                                "pacman -Sy",
+                                "Pacman database synchronisation failed",
+                                "Please verify the pacman logs for more details",
+                                Gtk.MessageType.ERROR,
+                            )
+
+                msg_dialog.run()
+                msg_dialog.hide()
+            
+
+            # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print(
                 "[INFO] %s Storing package metadata started" % now
             )
@@ -194,6 +206,19 @@ class Main(Gtk.Window):
                     len(self.packages.keys()),
                 )
             )
+
+            total_packages = 0
+
+            for category in self.packages:
+                total_packages += len(self.packages[category])
+
+            print(
+                "[INFO] %s Total packages = %s" % (
+                    now,
+                    total_packages,
+                )
+            )
+
 
             print(
                 "[INFO] %s Storing package metadata completed" % now
@@ -239,6 +264,7 @@ class Main(Gtk.Window):
 
             self.search_activated = False
 
+            # Save reference to the vbox generated from the main GUI view
             self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
             print("[INFO] %s Completed GUI" % Functions.datetime.now().strftime("%H:%M:%S"))
@@ -327,8 +353,9 @@ class Main(Gtk.Window):
                         )
                         # make sure the gui search only displays the pkgs inside the results
 
-                        self.vbox_search =  GUI.GUISearch(
-                            self,
+                        self.vbox_search = \
+                            GUI.GUISearch(
+                                self,
                                 Gtk,
                                 Gdk,
                                 GdkPixbuf,
@@ -347,8 +374,6 @@ class Main(Gtk.Window):
                                 )
                     )
                     self.searchEntry.grab_focus()
-                    #self.search_activated = True
-
 
             elif self.search_activated == True:
                 self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
