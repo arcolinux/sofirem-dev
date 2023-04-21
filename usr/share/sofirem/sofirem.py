@@ -310,80 +310,81 @@ class Main(Gtk.Window):
         if searchentry.get_text_length() == 0:
             self.search_activated = False
 
-        search_term = searchentry.get_text().strip()
+        search_term = searchentry.get_text()
+        # if the string is completely whitespace ignore searching
+        if not search_term.isspace():
+            try:
+                if len(search_term) > 0:
+                    # test if the string entered by the user is in the package name
+                    # results is a dictionary, which holds a list of packages
+                    # results[category]=pkg_list
 
-        try:
-            if len(search_term) > 0:
-                # test if the string entered by the user is in the package name
-                # results is a dictionary, which holds a list of packages
-                # results[category]=pkg_list
+                    # searching is processed inside a thread
 
-                # searching is processed inside a thread
-
-                th_search = Functions.threading.Thread(
-                    name="thread_search",
-                    target=Functions.search,
-                    args=(self,
-                        search_term,
-                    ),
-                )
-                print("[INFO] %s Starting search"
-                        % Functions.datetime.now().strftime("%H:%M:%S")
-                )
-
-                th_search.start()
-                
-                # get the search_results from the queue
-                results = self.search_queue.get()
-
-                if results is not None:
-                    print("[INFO] %s Search complete"
+                    th_search = Functions.threading.Thread(
+                        name="thread_search",
+                        target=Functions.search,
+                        args=(self,
+                            search_term,
+                        ),
+                    )
+                    print("[INFO] %s Starting search"
                             % Functions.datetime.now().strftime("%H:%M:%S")
                     )
 
-                    if len(results) > 0:
-                        total = 0
-                        for val in results.values():
-                            total += len(val)
+                    th_search.start()
+                                    
+                    # get the search_results from the queue
+                    results = self.search_queue.get()
 
+                    if results is not None:
+                        print("[INFO] %s Search complete"
+                                % Functions.datetime.now().strftime("%H:%M:%S")
+                        )
+
+                        if len(results) > 0:
+                            total = 0
+                            for val in results.values():
+                                total += len(val)
+
+                            print("[INFO] %s Search found %s results"
+                                    % (Functions.datetime.now().strftime("%H:%M:%S"),
+                                        total,
+                                    )
+                            )
+                            # make sure the gui search only displays the pkgs inside the results
+
+                            self.vbox_search = \
+                                GUI.GUISearch(
+                                    self,
+                                    Gtk,
+                                    Gdk,
+                                    GdkPixbuf,
+                                    base_dir,
+                                    os,
+                                    Pango,
+                                    results,
+                                    search_term,
+                            )
+
+                            self.search_activated = True
+                    else:
                         print("[INFO] %s Search found %s results"
-                                % (Functions.datetime.now().strftime("%H:%M:%S"),
-                                    total,
-                                )
+                                    % (Functions.datetime.now().strftime("%H:%M:%S"),
+                                        0,
+                                    )
                         )
-                        # make sure the gui search only displays the pkgs inside the results
+                        self.searchEntry.grab_focus()
 
-                        self.vbox_search = \
-                            GUI.GUISearch(
-                                self,
-                                Gtk,
-                                Gdk,
-                                GdkPixbuf,
-                                base_dir,
-                                os,
-                                Pango,
-                                results,
-                                search_term,
-                        )
+                elif self.search_activated == True:
+                    self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+                    self.search_activated = False
+            except Exception as err:
+                print("Exception in on_search_activated(): %s" % err)
 
-                        self.search_activated = True
-                else:
-                    print("[INFO] %s Search found %s results"
-                                % (Functions.datetime.now().strftime("%H:%M:%S"),
-                                    0,
-                                )
-                    )
-                    self.searchEntry.grab_focus()
-
-            elif self.search_activated == True:
-                self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-                self.search_activated = False
-        except Exception as err:
-            print("Exception in on_search_activated(): %s" % err)
-
-        finally:
-            if self.search_activated == True:
-                self.search_queue.task_done()
+            finally:
+                if self.search_activated == True:
+                    self.search_queue.task_done()
 
     def on_search_cleared(self,searchentry,icon_pos,event):
         if self.search_activated:

@@ -522,9 +522,13 @@ def get_current_installed():
     query_str = ["pacman", "-Q"]
     # run the query - using Popen because it actually suits this use case a bit better.
 
-    subprocess_query = subprocess.Popen(query_str, shell=False, stdout=subprocess.PIPE)
+    subprocess_query = subprocess.Popen(
+        query_str, 
+        shell=False, 
+        stdout=subprocess.PIPE,
+    )
 
-    out, err = subprocess_query.communicate()
+    out, err = subprocess_query.communicate(timeout=60)
 
     # added validation on process result
     if subprocess_query.returncode == 0:
@@ -858,13 +862,26 @@ def search(self, term):
 
         category_dict = {}
 
+        whitespace = False
+
+        if term.strip():
+            whitespace = True
+
         for pkg_list in self.packages.values():
             for pkg in pkg_list:
-                if term in pkg.name \
-                or term in pkg.description:
-                    pkg_matches.append(
-                        pkg,
-                    )
+                if whitespace:
+                    for te in term.split(" "):
+                        if te in pkg.name \
+                            or te in pkg.description:
+                            pkg_matches.append(
+                                pkg,
+                            )
+                else:    
+                    if term in pkg.name \
+                        or term in pkg.description:
+                            pkg_matches.append(
+                                pkg,
+                            )
 
 
         # filter the results so that each category holds a list of package
@@ -929,6 +946,6 @@ def search(self, term):
 
     except Exception as e:
         print("Exception in search(): %s", e)
-        sys.exit(0)
+
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
