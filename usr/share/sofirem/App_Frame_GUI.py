@@ -676,5 +676,5 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
     except Exception as e:
         print("Exception in App_Frame_GUI.GUI(): %s" % e)
 
-########## OLD GUI CODE START ##########
+########## OLD GUI CODE END ##########
 '''

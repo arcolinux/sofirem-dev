@@ -66,6 +66,9 @@ def GUISearch(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, se
         else:
             self.remove(self.vbox_search)
 
+        # lets quickly create the latest installed list.
+        Functions.get_current_installed()
+
         # =======================================================
         #                       App Notifications
         # =======================================================
@@ -256,7 +259,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             self.show_all()
 
         # lets quickly create the latest installed list.
-        # Functions.get_current_installed()
+        Functions.get_current_installed()
 
         # =======================================================
         #                       App Notifications
