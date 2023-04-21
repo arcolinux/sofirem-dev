@@ -224,6 +224,12 @@ def install(self,pkg_queue,signal,switch):
                     "---------------------------------------------------------------------------"
                 )
 
+                GLib.idle_add(
+                    show_in_app_notification, 
+                    self,
+                    "Package: %s installed" % pkg,
+                )
+
 
             else:
                 # deactivate switch widget, install failed
@@ -239,6 +245,13 @@ def install(self,pkg_queue,signal,switch):
                 print(
                     "---------------------------------------------------------------------------"
                 )
+
+                GLib.idle_add(
+                    show_in_app_notification, 
+                    self,
+                    "[ERROR] Failed to install package: %s" % pkg,
+                )
+
                 raise SystemError("Pacman failed to install package = %s" % pkg)
 
 
@@ -324,6 +337,12 @@ def uninstall(self,pkg_queue,signal,switch):
                         "---------------------------------------------------------------------------"
                     )
 
+                    GLib.idle_add(
+                        show_in_app_notification, 
+                        self,
+                        "Package: %s removed" % pkg,
+                    )
+
                 else:
                     # reactivate switch widget, the package has not been removed
                     switch.set_active(True)
@@ -339,6 +358,12 @@ def uninstall(self,pkg_queue,signal,switch):
                     print(
                         "---------------------------------------------------------------------------"
                     )
+
+                    GLib.idle_add(
+                    show_in_app_notification, 
+                    self,
+                    "[ERROR] Failed to remove package: %s" % pkg,
+                )
 
                     raise SystemError("Pacman failed to remove package = %s" % pkg)
 
@@ -952,5 +977,29 @@ def search(self, term):
     except Exception as e:
         print("Exception in search(): %s", e)
 
+# =====================================================
+#               NOTIFICATIONS
+# =====================================================
+
+def show_in_app_notification(self, message):
+    if self.timeout_id is not None:
+        GLib.source_remove(self.timeout_id)
+        self.timeout_id = None
+
+    self.notification_label.set_markup(
+        '<span foreground="white">' + message + "</span>"
+    )
+    self.notification_revealer.set_reveal_child(True)
+    self.timeout_id = GLib.timeout_add(3000, timeOut, self)
+
+
+def timeOut(self):
+    close_in_app_notification(self)
+
+
+def close_in_app_notification(self):
+    self.notification_revealer.set_reveal_child(False)
+    GLib.source_remove(self.timeout_id)
+    self.timeout_id = None
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
