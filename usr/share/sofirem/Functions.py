@@ -873,16 +873,21 @@ def search(self, term):
                     for te in term.split(" "):
                         if te in pkg.name \
                             or te in pkg.description:
-                            pkg_matches.append(
-                                pkg,
-                            )
+                            # only unique name matches
+                            if pkg not in pkg_matches:
+                                pkg_matches.append(
+                                    pkg,
+                                )
                 else:    
                     if term in pkg.name \
                         or term in pkg.description:
                             pkg_matches.append(
                                 pkg,
                             )
-
+        '''
+        for p in pkg_matches:
+            print(p.name)
+        '''
 
         # filter the results so that each category holds a list of package
 

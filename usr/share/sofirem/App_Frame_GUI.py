@@ -200,7 +200,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     '''
                         UI note.
-                        If you don't won't the extra padding around the switch buttons
+                        To remove the extra padding around the switch buttons
                         Comment out the references to grid_sc
                         Then just have page.pack_start(grid,True, True, 0)
                     ''' 
@@ -416,7 +416,7 @@ def GUISearch(self, Gtk, vboxStack1, category, category_desc, search_lst):
             # reset the things that we need to.
             search_lst.clear()
             grid = Gtk.Grid()
-        # category change
+            # category change
 
             # Generate the vboxStack item and name for use later (and in packing)
 

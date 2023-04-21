@@ -40,18 +40,6 @@ class GUI_Worker(Thread):
                         packages,
                     )
 
-                # make sure we have the required number of items on the queue
-                if len(items) == 6:
-                    self, Gtk, vboxStack1, category, category_description, search_results = items
-                    App_Frame_GUI.GUISearch(
-                        self, 
-                        Gtk, 
-                        vboxStack1, 
-                        category, 
-                        category_description, 
-                        search_results,
-                    )
-
             except Exception as e:
                 print("Exception in GUI_Worker(): %s" % e)
             finally:
@@ -139,25 +127,27 @@ def GUISearch(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, se
         for category in search_results:
             # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
 
-            subcategory = search_results[category][0].subcategory
+            #subcategory = search_results[category][0].subcategory
             vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
             stack.add_titled(
-                vboxStack[stack_item], str("stack" + str(len(vboxStack))), subcategory
+                vboxStack[stack_item], str("stack" + str(len(vboxStack))), category
             )
 
-            subcategory_desc = search_results[category][0].subcategory_description
+            #subcategory_desc = search_results[category][0].subcategory_description
+            search_res_lst = search_results[category]
 
             # Multithreading!
+
             self.queue.put(
                 (
                     self,
                     Gtk,
                     vboxStack[stack_item],
-                    subcategory,
-                    subcategory_desc,
-                    search_results[category],
+                    category,
+                    search_res_lst,
                 )
             )
+
             stack_item += 1
 
         # send a signal that no further items are to be put on the queue
@@ -299,6 +289,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # ==========================================================
 
         # This section sets up the tabs, and the array for dealing with the tab content
+        '''
         yaml_files_unsorted = []
         path = base_dir + "/yaml/"
         for file in os.listdir(path):
@@ -310,6 +301,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
                 )
         # Need to sort the list (Or do we? I choose to)
         yaml_files = sorted(yaml_files_unsorted)
+        '''
 
 
         # Check github for updated files
