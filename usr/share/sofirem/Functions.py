@@ -946,38 +946,6 @@ def search(self, term):
         print("Exception in search(): %s", e)
 
 
-def get_package_info(package):
-    try:
-        query_str = ["pacman", "-Si", package]
-
-        process_query = subprocess.Popen(
-            query_str,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        out, err = process_query.communicate(timeout=60)
-
-        if process_query.returncode == 0:
-            output = out.decode("utf-8")
-            return output
-
-        else:
-            msg_dialog = message_dialog(
-                self,
-                "Find Package",
-                '"%s" was not found in the available sources' % package,
-                "Please try another search query",
-                Gtk.MessageType.ERROR,
-            )
-
-            msg_dialog.run()
-            msg_dialog.hide()
-    except Exception as e:
-        print("Exception in checkPackageInstalled(): %s", e)
-
-
 # =====================================================
 #               NOTIFICATIONS
 # =====================================================
@@ -1008,47 +976,6 @@ def close_in_app_notification(self):
     self.notification_revealer.set_reveal_child(False)
     GLib.source_remove(self.timeout_id)
     self.timeout_id = None
-
-
-# =====================================================
-#               DISPLAY PACKAGE INFO DIALOG BOX
-# =====================================================
-
-
-def show_package_info(self):
-    self.pkg_info_dialog = Gtk.MessageDialog(
-        self,
-        parent=self,
-        flags=0,
-    )
-
-    self.pkg_info_dialog.set_title("Search for a specific package")
-
-    self.pkg_info_dialog.add_button("Close", Gtk.ResponseType.CLOSE)
-
-    self.pkg_info_dialog.set_modal(True)
-    self.pkg_info_dialog.set_default_size(600, 500)
-
-    pkg_info_entry = Gtk.SearchEntry()
-    pkg_info_entry.set_placeholder_text(
-        "Search using the exact name of package here..."
-    )
-    pkg_info_entry.connect("activate", self.on_pkginfo_search_activated)
-
-    box = self.pkg_info_dialog.get_content_area()
-
-    ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-    ivbox.set_property("can-focus", True)
-    Gtk.Window.grab_focus(ivbox)
-
-    ivbox.pack_start(pkg_info_entry, False, False, 0)
-
-    box.add(ivbox)
-
-    self.pkg_info_dialog.show_all()
-
-    self.pkg_info_dialog.run()
-    self.pkg_info_dialog.hide()
 
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!

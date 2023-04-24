@@ -145,7 +145,7 @@ class Main(Gtk.Window):
                     print(error)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
-            """
+
             if Functions.sync() == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
@@ -177,7 +177,6 @@ class Main(Gtk.Window):
 
                 msg_dialog.run()
                 msg_dialog.hide()
-            """
 
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print("[INFO] %s Storing package metadata started" % now)
@@ -206,10 +205,6 @@ class Main(Gtk.Window):
             )
 
             print("[INFO] %s Storing package metadata completed" % now)
-
-            # Functions.show_package_info(self)
-
-            # sys.exit(0)
 
             splScr = Splash.splashScreen()
 
@@ -375,43 +370,6 @@ class Main(Gtk.Window):
         self.searchEntry.set_placeholder_text("Search...")
 
         self.search_activated = False
-
-    # this is for searching inside the dialog box, if a user presses the Package Info button
-    def on_pkginfo_search_activated(self, entry):
-        pkg_info_search_term = entry.get_text()
-        if not pkg_info_search_term.isspace():
-            output = Functions.get_package_info(pkg_info_search_term)
-            if output != "ERROR":
-                grid = Gtk.Grid()
-                # grid.set_row_spacing(1)
-
-                textbuffer = Gtk.TextBuffer()
-                textbuffer.set_text(output)
-
-                textview = Gtk.TextView(buffer=textbuffer)
-                textview.set_vexpand(True)
-                textview.set_hexpand(True)
-
-                scrolledwindow = Gtk.ScrolledWindow()
-                scrolledwindow.set_propagate_natural_height(True)
-
-                scrolledwindow.add(textview)
-
-                grid.attach(scrolledwindow, 0, 0, 1, 1)
-
-                box = self.pkg_info_dialog.get_content_area()
-                box.remove(box.get_children()[2])
-
-                results_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-                scrolledwindow.set_property("can-focus", True)
-                Gtk.Window.grab_focus(scrolledwindow)
-
-                results_box.pack_start(grid, False, False, 0)
-
-                box.add(results_box)
-                self.pkg_info_dialog.add_button("Close", Gtk.ResponseType.CLOSE)
-
-                self.pkg_info_dialog.show_all()
 
     # =====================================================
     #               RESTART/QUIT BUTTON
