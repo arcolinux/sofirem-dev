@@ -23,7 +23,6 @@ class GUI_Worker(Thread):
             # pull what we need from the queue so we can process properly.
             items = self.queue.get()
             try:
-
                 # reached the end of items on the queue
                 if items is None:
                     break
@@ -50,7 +49,6 @@ def GUISearch(
     self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, search_term
 ):
     try:
-
         # remove previous vbox
         if self.search_activated == False:
             self.remove(self.vbox_main)
@@ -177,6 +175,14 @@ def GUISearch(
         Gtk.Window.grab_focus(ivbox)
 
         # =====================================================
+        #               PACKAGE INFO BUTTON
+        # =====================================================
+
+        btnPkgInfo = Gtk.Button(label="Package Info")
+        btnPkgInfo.set_size_request(100, 30)
+        btnPkgInfo.connect("clicked", self.pkgInfo_clicked)
+
+        # =====================================================
         #               RECACHE BUTTON
         # =====================================================
 
@@ -220,6 +226,7 @@ def GUISearch(
         ivbox.pack_start(stack_switcher, True, True, 0)
 
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnPkgInfo, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
@@ -377,6 +384,14 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         Gtk.Window.grab_focus(ivbox)
 
         # =====================================================
+        #               PACKAGE INFO BUTTON
+        # =====================================================
+
+        btnPkgInfo = Gtk.Button(label="Package Info")
+        btnPkgInfo.set_size_request(100, 30)
+        btnPkgInfo.connect("clicked", self.pkgInfo_clicked)
+
+        # =====================================================
         #               RECACHE BUTTON
         # =====================================================
 
@@ -411,6 +426,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnPkgInfo, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)

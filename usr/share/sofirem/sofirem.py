@@ -15,6 +15,7 @@ import App_Frame_GUI
 from subprocess import PIPE, STDOUT
 from time import sleep
 from datetime import datetime
+import sys
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -144,7 +145,7 @@ class Main(Gtk.Window):
                     print(error)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
-
+            """
             if Functions.sync() == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
@@ -176,6 +177,7 @@ class Main(Gtk.Window):
 
                 msg_dialog.run()
                 msg_dialog.hide()
+            """
 
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print("[INFO] %s Storing package metadata started" % now)
@@ -204,6 +206,10 @@ class Main(Gtk.Window):
             )
 
             print("[INFO] %s Storing package metadata completed" % now)
+
+            # Functions.show_package_info(self)
+
+            # sys.exit(0)
 
             splScr = Splash.splashScreen()
 
@@ -263,12 +269,14 @@ class Main(Gtk.Window):
             # set focus on text entry, select all text if any
             self.searchEntry.grab_focus()
 
+        if shortcut in ("Ctrl+I", "Ctrl+Mod2+I"):
+            Functions.show_package_info(self)
+
     # =====================================================
     #               SEARCH ENTRY
     # =====================================================
 
     def on_search_activated(self, searchentry):
-
         if searchentry.get_text_length() == 0 and self.search_activated:
             self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
             self.search_activated = False
@@ -368,13 +376,53 @@ class Main(Gtk.Window):
 
         self.search_activated = False
 
+    # this is for searching inside the dialog box, if a user presses the Package Info button
+    def on_pkginfo_search_activated(self, entry):
+        pkg_info_search_term = entry.get_text()
+        if not pkg_info_search_term.isspace():
+            output = Functions.get_package_info(pkg_info_search_term)
+            if output != "ERROR":
+                grid = Gtk.Grid()
+                # grid.set_row_spacing(1)
+
+                textbuffer = Gtk.TextBuffer()
+                textbuffer.set_text(output)
+
+                textview = Gtk.TextView(buffer=textbuffer)
+                textview.set_vexpand(True)
+                textview.set_hexpand(True)
+
+                scrolledwindow = Gtk.ScrolledWindow()
+                scrolledwindow.set_propagate_natural_height(True)
+
+                scrolledwindow.add(textview)
+
+                grid.attach(scrolledwindow, 0, 0, 1, 1)
+
+                box = self.pkg_info_dialog.get_content_area()
+                box.remove(box.get_children()[2])
+
+                results_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+                scrolledwindow.set_property("can-focus", True)
+                Gtk.Window.grab_focus(scrolledwindow)
+
+                results_box.pack_start(grid, False, False, 0)
+
+                box.add(results_box)
+                self.pkg_info_dialog.add_button("Close", Gtk.ResponseType.CLOSE)
+
+                self.pkg_info_dialog.show_all()
+
     # =====================================================
     #               RESTART/QUIT BUTTON
     # =====================================================
 
     def on_close(self, widget, data):
-        os.unlink("/tmp/sofirem.lock")
-        os.unlink("/tmp/sofirem.pid")
+        if os.path.exists("/tmp/sofirem.lock"):
+            os.unlink("/tmp/sofirem.lock")
+
+        if os.path.exists("/tmp/sofirem.pid"):
+            os.unlink("/tmp/sofirem.pid")
 
         Gtk.main_quit()
         print(
@@ -396,8 +444,9 @@ class Main(Gtk.Window):
     # Given what this function does, it might be worth considering making it a
     # thread so that the app doesn't block while installing/uninstalling is happening.
     def app_toggle(self, widget, active, package, Gtk, vboxStack1, Functions, category):
-        if widget.get_active():
-            # Install the package
+        # switch widget is currently toggled off
+        if widget.get_state() == False and widget.get_active() == True:
+            widget.set_state(True)
             package = package.strip()
 
             if len(package) > 0:
@@ -406,24 +455,25 @@ class Main(Gtk.Window):
                     % (datetime.now().strftime("%H:%M:%S"), package)
                 )
 
-                self.pkg_queue.put(package)
-
-                th = Functions.threading.Thread(
-                    name="thread_pkginst",
-                    target=Functions.install,
-                    args=(
-                        self,
-                        self.pkg_queue,
+                self.pkg_queue.put(
+                    (
+                        package,
                         "install",
                         widget,
                     ),
                 )
 
-                th.daemon = True
+                th = Functions.threading.Thread(
+                    name="thread_pkginst",
+                    target=Functions.install,
+                    args=(self,),
+                )
+
                 th.start()
 
-            # Functions.install(package)
-        else:
+        # switch widget is currently toggled on
+        if widget.get_state() == True and widget.get_active() == False:
+            widget.set_state(False)
             # Uninstall the package
             package = package.strip()
 
@@ -433,31 +483,35 @@ class Main(Gtk.Window):
                     % (datetime.now().strftime("%H:%M:%S"), package)
                 )
 
-                self.pkg_queue.put(package)
-
-                th = Functions.threading.Thread(
-                    name="thread_pkgrem",
-                    target=Functions.uninstall,
-                    args=(
-                        self,
-                        self.pkg_queue,
+                self.pkg_queue.put(
+                    (
+                        package,
                         "uninstall",
                         widget,
                     ),
                 )
 
-                th.daemon = True
+                th = Functions.threading.Thread(
+                    name="thread_pkgrem",
+                    target=Functions.uninstall,
+                    args=(self,),
+                )
+
                 th.start()
 
-                # Functions.uninstall(package)
-
         Functions.get_current_installed()
+
+        # return True to prevent the default handler from running
+        return True
 
         # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
+
+    def pkgInfo_clicked(self, widget):
+        Functions.show_package_info(self)
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -487,9 +541,14 @@ class Main(Gtk.Window):
 
 
 def signal_handler(sig, frame):
-    print("\nSofirem is closing.")
-    os.unlink("/tmp/sofirem.lock")
-    os.unlink("/tmp/sofirem.pid")
+    print(
+        "[INFO] %s Sofirem is closing." % Functions.datetime.now().strftime("%H:%M:%S")
+    )
+    if os.path.exists("/tmp/sofirem.lock"):
+        os.unlink("/tmp/sofirem.lock")
+
+    if os.path.exists("/tmp/sofirem.pid"):
+        os.unlink("/tmp/sofirem.pid")
     Gtk.main_quit(0)
 
 
