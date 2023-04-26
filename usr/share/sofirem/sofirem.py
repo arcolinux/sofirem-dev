@@ -16,7 +16,7 @@ import App_Frame_GUI
 from subprocess import PIPE, STDOUT
 from time import sleep
 from datetime import datetime
-import sys
+from collections import deque
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -46,6 +46,10 @@ class Main(Gtk.Window):
 
     # Create a queue to handle package install/removal
     pkg_queue = Queue()
+
+    # A dequeue to manage the number of packages we can have stacked up
+    # Max = 5
+    pkg_inst_deque = deque(maxlen=5)
 
     # Create a queue for storing search results
     search_queue = Queue()
@@ -422,22 +426,29 @@ class Main(Gtk.Window):
                     "[INFO] %s Package to install : %s"
                     % (datetime.now().strftime("%H:%M:%S"), package)
                 )
-
-                self.pkg_queue.put(
-                    (
-                        package,
-                        "install",
-                        widget,
-                    ),
+                print(
+                    "[DEBUG] %s Package install queue size : %s"
+                    % (datetime.now().strftime("%H:%M:%S"), len(self.pkg_inst_deque))
                 )
 
-                th = Functions.threading.Thread(
-                    name="thread_pkginst",
-                    target=Functions.install,
-                    args=(self,),
-                )
+                if len(self.pkg_inst_deque) <= 5:
+                    self.pkg_inst_deque.append(package)
 
-                th.start()
+                    self.pkg_queue.put(
+                        (
+                            package,
+                            "install",
+                            widget,
+                        ),
+                    )
+
+                    th = Functions.threading.Thread(
+                        name="thread_pkginst",
+                        target=Functions.install,
+                        args=(self,),
+                    )
+
+                    th.start()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:

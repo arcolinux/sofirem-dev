@@ -155,7 +155,7 @@ def sync():
             print("[ERROR] Pacman lock file found")
             print("[ERROR] Sync failed")
 
-            msg_dialog = Functions.message_dialog(
+            msg_dialog = message_dialog(
                 self,
                 "pacman -Sy",
                 "Pacman database synchronisation failed",
@@ -186,73 +186,91 @@ def sync():
 def install(self):
     pkg, signal, widget = self.pkg_queue.get()
     install_state = {}
-    install_state[pkg] = None
+    install_state[pkg] = "QUEUED"
 
     try:
-        if waitForPacmanLockFile() == False and signal == "install":
-            path = base_dir + "/cache/installed.lst"
+        if len(self.pkg_inst_deque) == 5:
+            print(
+                "[WARN] %s Package install queue size hit limit of 5"
+                % (datetime.now().strftime("%H:%M:%S"))
+            )
+            widget.set_state(False)
 
-            inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
-
-            now = datetime.now().strftime("%H:%M:%S")
-            print("[INFO] %s Installing package %s " % (now, pkg))
-            create_actions_log(
-                launchtime, "[INFO] " + now + " Installing package " + pkg + "\n"
+            msg_dialog = message_dialog(
+                self,
+                "Please wait until previous transactions are completed",
+                "There are a maximum of 5 packages added to the queue",
+                "Waiting for previous transactions to complete",
+                Gtk.MessageType.WARNING,
             )
 
-            process_pkg_inst = subprocess.Popen(
-                inst_str,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
+            msg_dialog.run()
+            msg_dialog.hide()
+        else:
+            if waitForPacmanLockFile(self) == False and signal == "install":
+                path = base_dir + "/cache/installed.lst"
 
-            out, err = process_pkg_inst.communicate(timeout=180)
+                inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
-            if process_pkg_inst.returncode == 0:
-                # activate switch widget, install ok
-                widget.set_state(True)
-
-                get_current_installed()
-                install_state[pkg] = "INSTALLED"
-
-                print(
-                    "[INFO] %s Package install : %s status = completed"
-                    % (datetime.now().strftime("%H:%M:%S"), pkg)
-                )
-                print(
-                    "---------------------------------------------------------------------------"
+                now = datetime.now().strftime("%H:%M:%S")
+                print("[INFO] %s Installing package %s " % (now, pkg))
+                create_actions_log(
+                    launchtime, "[INFO] " + now + " Installing package " + pkg + "\n"
                 )
 
-                GLib.idle_add(
-                    show_in_app_notification,
-                    self,
-                    "Package: %s installed" % pkg,
-                    False,
+                process_pkg_inst = subprocess.Popen(
+                    inst_str,
+                    shell=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                 )
 
-            else:
-                # deactivate switch widget, install failed
-                widget.set_state(False)
+                out, err = process_pkg_inst.communicate(timeout=180)
 
-                get_current_installed()
-                print(
-                    "[ERROR] %s Package install : %s status = failed"
-                    % (datetime.now().strftime("%H:%M:%S"), pkg)
-                )
-                if out:
-                    out = out.decode("utf-8")
-                    install_state[pkg] = out
-                print(
-                    "---------------------------------------------------------------------------"
-                )
+                if process_pkg_inst.returncode == 0:
+                    # activate switch widget, install ok
+                    widget.set_state(True)
 
-                GLib.idle_add(
-                    show_in_app_notification,
-                    self,
-                    "Package install failed for: %s" % pkg,
-                    True,
-                )
+                    get_current_installed()
+                    install_state[pkg] = "INSTALLED"
+
+                    print(
+                        "[INFO] %s Package install : %s status = completed"
+                        % (datetime.now().strftime("%H:%M:%S"), pkg)
+                    )
+                    print(
+                        "---------------------------------------------------------------------------"
+                    )
+
+                    GLib.idle_add(
+                        show_in_app_notification,
+                        self,
+                        "Package: %s installed" % pkg,
+                        False,
+                    )
+
+                else:
+                    # deactivate switch widget, install failed
+                    widget.set_state(False)
+
+                    get_current_installed()
+                    print(
+                        "[ERROR] %s Package install : %s status = failed"
+                        % (datetime.now().strftime("%H:%M:%S"), pkg)
+                    )
+                    if out:
+                        out = out.decode("utf-8")
+                        install_state[pkg] = out
+                    print(
+                        "---------------------------------------------------------------------------"
+                    )
+
+                    GLib.idle_add(
+                        show_in_app_notification,
+                        self,
+                        "Package install failed for: %s" % pkg,
+                        True,
+                    )
 
     except SystemError as s:
         print("SystemError in install(): %s" % s)
@@ -262,7 +280,10 @@ def install(self):
         # Now check install_state for any packages which failed to install
         # display dependencies notification to user here
 
-        if install_state[pkg] != "INSTALLED":
+        # remove the package from the deque
+        self.pkg_inst_deque.remove(pkg)
+
+        if install_state[pkg] != "INSTALLED" and install_state[pkg] != "QUEUED":
             print(
                 "[ERROR] %s Package install failed : %s"
                 % (datetime.now().strftime("%H:%M:%S"), install_state[pkg])
@@ -276,7 +297,7 @@ def install(self):
             )
 
             msg_dialog.run()
-            msg_dialog.hide()
+            msg_dialog.destroy()
 
         self.pkg_queue.task_done()
 
@@ -287,10 +308,10 @@ def install(self):
 def uninstall(self):
     pkg, signal, widget = self.pkg_queue.get()
     uninstall_state = {}
-    uninstall_state[pkg] = None
+    uninstall_state[pkg] = "QUEUED"
 
     try:
-        if waitForPacmanLockFile() == False and signal == "uninstall":
+        if waitForPacmanLockFile(self) == False and signal == "uninstall":
             path = base_dir + "/cache/installed.lst"
             uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
@@ -365,7 +386,14 @@ def uninstall(self):
         # Now check uninstall_state for any packages which failed to uninstall
         # display dependencies notification to user here
 
-        if uninstall_state[pkg] != "REMOVED":
+        if "['error: target not found:" in uninstall_state[pkg]:
+            widget.set_state(False)
+
+        elif (
+            uninstall_state[pkg] != "REMOVED"
+            and uninstall_state[pkg] != "QUEUED"
+            and "['error: target not found:" not in uninstall_state[pkg]
+        ):
             print(
                 "[ERROR] %s Package uninstall failed : %s"
                 % (datetime.now().strftime("%H:%M:%S"), uninstall_state[pkg])
@@ -786,7 +814,7 @@ def checkIfProcessRunning(processName):
 # =====================================================
 
 
-def waitForPacmanLockFile():
+def waitForPacmanLockFile(self):
     timeout = 180
     start = int(time.time())
 
@@ -795,6 +823,10 @@ def waitForPacmanLockFile():
             print(
                 "[INFO] %s Waiting for previous Pacman transaction to complete"
                 % datetime.now().strftime("%H:%M:%S")
+            )
+            print(
+                "[DEBUG] %s Package install queue size : %s"
+                % (datetime.now().strftime("%H:%M:%S"), len(self.pkg_inst_deque))
             )
 
             time.sleep(5)
@@ -985,25 +1017,3 @@ def close_in_app_notification(self):
 # =====================================================
 #               CHECK PACKAGE INSTALLED
 # =====================================================
-
-"""
-def checkPackageInstalled(pkg):
-    try:
-        query_str = ["pacman", "-Q", pkg]
-
-        process_query = subprocess.Popen(
-            query_str,
-            shell=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        out, err = process_query.communicate(timeout=180)
-
-        if process_query.returncode == 0:
-            return True
-        else:
-            return False
-    except Exception as e:
-        print("Exception in checkPackageInstalled(): %s", e)
-"""
