@@ -24,6 +24,7 @@ from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 from sofirem import launchtime
 from Package import Package
+from distro import id
 
 # =====================================================
 #               Base Directory
@@ -39,6 +40,7 @@ home = "/home/" + str(sudo_username)
 path_dir_cache = base_dir + "/cache/"
 packages = []
 debug = False
+distr = id()
 
 # =====================================================
 #               Create log file

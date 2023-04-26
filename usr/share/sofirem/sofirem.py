@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import Splash
 import gi
+import os
 import Functions
 from ProgressBarWindow import ProgressBarWindow
 import signal
@@ -87,6 +88,15 @@ class Main(Gtk.Window):
                 "---------------------------------------------------------------------------"
             )
             print("Some packages are only available on the ArcoLinux repos.")
+            print(
+                "---------------------------------------------------------------------------"
+            )
+            print("[INFO] : pkgver = pkgversion")
+            print("[INFO] : pkgrel = pkgrelease")
+            print(
+                "---------------------------------------------------------------------------"
+            )
+            print("[INFO] : Distro = " + Functions.distr)
             print(
                 "---------------------------------------------------------------------------"
             )
@@ -391,7 +401,7 @@ class Main(Gtk.Window):
         print(
             "---------------------------------------------------------------------------"
         )
-        print("You can report issues on https://discord.gg/R2amEEz")
+        print("You can report issues on https://discord.gg/stBhS4taje")
         print(
             "---------------------------------------------------------------------------"
         )
