@@ -30,6 +30,8 @@
 # reset - commit your changes or stash them before you merge
 # git reset --hard - personal alias - grh
 
+workdir=$(pwd)
+
 # checking if I have the latest files from github
 echo "Checking for newer files online first"
 git pull
@@ -39,6 +41,9 @@ fi
 if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst ]; then
 	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst
 fi
+echo "getting ASA script"
+wget https://raw.githubusercontent.com/arcolinux/arcolinux-spices/master/usr/share/arcolinux-spices/scripts/get-the-keys-and-repos.sh -O $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
+chmod +x $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 
 # Below command will backup everything inside the project folder
 git add --all .
