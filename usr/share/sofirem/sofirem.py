@@ -17,6 +17,7 @@ from subprocess import PIPE, STDOUT
 from time import sleep
 from datetime import datetime
 from collections import deque
+import sys
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -47,7 +48,7 @@ class Main(Gtk.Window):
     # Create a queue to handle package install/removal
     pkg_queue = Queue()
 
-    # A dequeue to manage the number of packages we can have stacked up
+    # A deque to manage the number of packages we can have stacked up
     # Max = 5
     pkg_inst_deque = deque(maxlen=5)
 
@@ -160,7 +161,7 @@ class Main(Gtk.Window):
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-            if Functions.sync() == 0:
+            if Functions.sync(self) == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
                 Functions.create_actions_log(
@@ -191,6 +192,8 @@ class Main(Gtk.Window):
 
                 msg_dialog.run()
                 msg_dialog.hide()
+
+                sys.exit(1)
 
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print("[INFO] %s Storing package metadata started" % now)
@@ -396,6 +399,9 @@ class Main(Gtk.Window):
         if os.path.exists("/tmp/sofirem.pid"):
             os.unlink("/tmp/sofirem.pid")
 
+        # see the comment in Functions.terminate_pacman()
+        Functions.terminate_pacman()
+
         Gtk.main_quit()
         print(
             "---------------------------------------------------------------------------"
@@ -426,13 +432,16 @@ class Main(Gtk.Window):
                     "[INFO] %s Package to install : %s"
                     % (datetime.now().strftime("%H:%M:%S"), package)
                 )
-                print(
-                    "[DEBUG] %s Package install queue size : %s"
-                    % (datetime.now().strftime("%H:%M:%S"), len(self.pkg_inst_deque))
-                )
 
                 if len(self.pkg_inst_deque) <= 5:
                     self.pkg_inst_deque.append(package)
+                    print(
+                        "[DEBUG] %s Package install queue size : %s"
+                        % (
+                            datetime.now().strftime("%H:%M:%S"),
+                            len(self.pkg_inst_deque),
+                        )
+                    )
 
                     self.pkg_queue.put(
                         (
