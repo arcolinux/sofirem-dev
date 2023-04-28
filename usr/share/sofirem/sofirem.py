@@ -435,14 +435,6 @@ class Main(Gtk.Window):
 
                 if len(self.pkg_inst_deque) <= 5:
                     self.pkg_inst_deque.append(package)
-                    print(
-                        "[DEBUG] %s Package install queue size : %s"
-                        % (
-                            datetime.now().strftime("%H:%M:%S"),
-                            len(self.pkg_inst_deque),
-                        )
-                    )
-
                     self.pkg_queue.put(
                         (
                             package,
@@ -458,6 +450,17 @@ class Main(Gtk.Window):
                     )
 
                     th.start()
+                else:
+                    msg_dialog = message_dialog(
+                        self,
+                        "Please wait until previous Pacman transactions are completed",
+                        "There are a maximum of 5 packages added to the queue",
+                        "Waiting for previous Pacman transactions to complete",
+                        Gtk.MessageType.WARNING,
+                    )
+
+                    msg_dialog.run()
+                    msg_dialog.hide()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
