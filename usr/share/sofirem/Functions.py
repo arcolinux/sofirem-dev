@@ -188,12 +188,36 @@ def install(self):
     pkg, signal, widget = self.pkg_queue.get()
     install_state = {}
     install_state[pkg] = "QUEUED"
+    thread_alive = False
+    lockfile_thread = "thread_waitForPacmanLockFile"
 
-    th = Thread(
-        target=waitForPacmanLockFile,
-    )
+    # check the pacman lock file thread isn't already running
+    for thread in threading.enumerate():
+        if thread.name == lockfile_thread and thread.is_alive():
+            thread_alive = True
+            break
 
-    th.start()
+    if thread_alive == False:
+        print(
+            "[DEBUG] %s Starting waitForPacmanLockFile thread."
+            % datetime.now().strftime("%H:%M:%S")
+        )
+        th = Thread(
+            name=lockfile_thread,
+            target=waitForPacmanLockFile,
+        )
+
+        th.start()
+    else:
+        print(
+            "[DEBUG] %s waitForPacmanLockFile thread is already running."
+            % datetime.now().strftime("%H:%M:%S")
+        )
+
+        print(
+            "[INFO] %s Another Package install is in progress."
+            % datetime.now().strftime("%H:%M:%S")
+        )
 
     try:
         print(
