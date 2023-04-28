@@ -16,6 +16,7 @@ import App_Frame_GUI
 from subprocess import PIPE, STDOUT
 from time import sleep
 from datetime import datetime
+from collections import deque
 import sys
 
 gi.require_version("Gtk", "3.0")
@@ -46,6 +47,9 @@ class Main(Gtk.Window):
 
     # Create a queue to handle package install/removal
     pkg_queue = Queue()
+
+    # A deque to manage the number of packages to install we can have stacked up
+    pkg_inst_deque = deque(maxlen=5)
 
     # Create a queue for storing search results
     search_queue = Queue()
@@ -156,7 +160,7 @@ class Main(Gtk.Window):
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-            if Functions.sync() == 0:
+            if Functions.sync(self) == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
                 Functions.create_actions_log(
@@ -187,6 +191,8 @@ class Main(Gtk.Window):
 
                 msg_dialog.run()
                 msg_dialog.hide()
+
+                sys.exit(1)
 
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print("[INFO] %s Storing package metadata started" % now)
@@ -392,6 +398,9 @@ class Main(Gtk.Window):
         if os.path.exists("/tmp/sofirem.pid"):
             os.unlink("/tmp/sofirem.pid")
 
+        # see the comment in Functions.terminate_pacman()
+        Functions.terminate_pacman()
+
         Gtk.main_quit()
         print(
             "---------------------------------------------------------------------------"
@@ -423,21 +432,34 @@ class Main(Gtk.Window):
                     % (datetime.now().strftime("%H:%M:%S"), package)
                 )
 
-                self.pkg_queue.put(
-                    (
-                        package,
-                        "install",
-                        widget,
-                    ),
-                )
+                if len(self.pkg_inst_deque) <= 5:
+                    self.pkg_inst_deque.append(package)
+                    self.pkg_queue.put(
+                        (
+                            package,
+                            "install",
+                            widget,
+                        ),
+                    )
 
-                th = Functions.threading.Thread(
-                    name="thread_pkginst",
-                    target=Functions.install,
-                    args=(self,),
-                )
+                    th = Functions.threading.Thread(
+                        name="thread_pkginst",
+                        target=Functions.install,
+                        args=(self,),
+                    )
 
-                th.start()
+                    th.start()
+                else:
+                    msg_dialog = message_dialog(
+                        self,
+                        "Please wait until previous Pacman transactions are completed",
+                        "There are a maximum of 5 packages added to the queue",
+                        "Waiting for previous Pacman transactions to complete",
+                        Gtk.MessageType.WARNING,
+                    )
+
+                    msg_dialog.run()
+                    msg_dialog.hide()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
