@@ -48,8 +48,7 @@ class Main(Gtk.Window):
     # Create a queue to handle package install/removal
     pkg_queue = Queue()
 
-    # A deque to manage the number of packages we can have stacked up
-    # Max = 5
+    # A deque to manage the number of packages to install we can have stacked up
     pkg_inst_deque = deque(maxlen=5)
 
     # Create a queue for storing search results

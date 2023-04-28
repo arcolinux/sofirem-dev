@@ -21,6 +21,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk  # noqa
 from queue import Queue  # Multithreading the caching
 from threading import Thread
+from threading import Timer
 from ProgressBarWindow import ProgressBarWindow
 from sofirem import launchtime
 from Package import Package
@@ -185,7 +186,7 @@ def sync(self):
 #               APP INSTALLATION
 # =====================================================
 def install(self):
-    pkg, signal, widget = self.pkg_queue.get()
+    pkg, action, widget = self.pkg_queue.get()
     install_state = {}
     install_state[pkg] = "QUEUED"
     thread_alive = False
@@ -199,9 +200,10 @@ def install(self):
 
     if thread_alive == False:
         print(
-            "[DEBUG] %s Starting waitForPacmanLockFile thread."
+            "[DEBUG] %s Starting waitForPacmanLockFile thread"
             % datetime.now().strftime("%H:%M:%S")
         )
+
         th = Thread(
             name=lockfile_thread,
             target=waitForPacmanLockFile,
@@ -210,12 +212,12 @@ def install(self):
         th.start()
     else:
         print(
-            "[DEBUG] %s waitForPacmanLockFile thread is already running."
+            "[DEBUG] %s waitForPacmanLockFile thread is already running"
             % datetime.now().strftime("%H:%M:%S")
         )
 
         print(
-            "[INFO] %s Another Package install is in progress."
+            "[INFO] %s Another Package install is in progress"
             % datetime.now().strftime("%H:%M:%S")
         )
 
@@ -247,7 +249,7 @@ def install(self):
             Running waitForPacmanLockFile() inside a separate thread
             will not add further packages to the queue
             """
-            if signal == "install":  # and waitForPacmanLockFile() == False:
+            if action == "install":
                 path = base_dir + "/cache/installed.lst"
 
                 inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
@@ -304,18 +306,26 @@ def install(self):
                     print(
                         "---------------------------------------------------------------------------"
                     )
-
-                    GLib.idle_add(
-                        show_in_app_notification,
-                        self,
-                        "Package install failed for: %s" % pkg,
-                        True,
-                    )
-
+                    if (
+                        "error: could not lock database: File exists"
+                        not in install_state[pkg]
+                    ):
+                        GLib.idle_add(
+                            show_in_app_notification,
+                            self,
+                            "Package install failed for: %s" % pkg,
+                            True,
+                        )
+                    raise SystemError("Pacman failed to install package = %s" % pkg)
+    except TimeoutError as t:
+        print("TimeoutError in install(): %s" % t)
+        process_pkg_inst.terminate()
     except SystemError as s:
         print("SystemError in install(): %s" % s)
+        process_pkg_inst.terminate()
     except Exception as e:
         print("Exception in install(): %s" % e)
+        process_pkg_inst.terminate()
     finally:
         # Now check install_state for any packages which failed to install
         # display dependencies notification to user here
@@ -370,12 +380,12 @@ def install(self):
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(self):
-    pkg, signal, widget = self.pkg_queue.get()
+    pkg, action, widget = self.pkg_queue.get()
     uninstall_state = {}
     uninstall_state[pkg] = "QUEUED"
 
     try:
-        if signal == "uninstall":  # and waitForPacmanLockFile() == False:
+        if action == "uninstall":
             path = base_dir + "/cache/installed.lst"
             uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
@@ -442,12 +452,16 @@ def uninstall(self):
                                 "[ERROR] %s Package removal : %s status = failed"
                                 % (datetime.now().strftime("%H:%M:%S"), pkg)
                             )
-                            GLib.idle_add(
-                                show_in_app_notification,
-                                self,
-                                "Package removal failed for: %s" % pkg,
-                                True,
-                            )
+                            if (
+                                "error: could not lock database: File exists"
+                                not in uninstall_state[pkg]
+                            ):
+                                GLib.idle_add(
+                                    show_in_app_notification,
+                                    self,
+                                    "Package removal failed for: %s" % pkg,
+                                    True,
+                                )
 
                             raise SystemError(
                                 "Pacman failed to remove package = %s" % pkg
@@ -460,12 +474,15 @@ def uninstall(self):
                 print(
                     "---------------------------------------------------------------------------"
                 )
-
+    except TimeoutError as t:
+        print("TimeoutError in install(): %s" % t)
+        process_pkg_rem.terminate()
     except SystemError as s:
         print("SystemError in uninstall(): %s" % s)
-
+        process_pkg_rem.terminate()
     except Exception as e:
         print("Exception in uninstall(): %s" % e)
+        process_pkg_rem.terminate()
 
     finally:
         # Now check uninstall_state for any packages which failed to uninstall
@@ -909,7 +926,7 @@ def waitForPacmanLockFile():
                 elapsed = int(time.time()) + 5
 
                 print(
-                    "[DEBUG] %s Database locked.. elapsed duration: %ss"
+                    "[DEBUG] %s Pacman is busy.. elapsed duration: %ss"
                     % (datetime.now().strftime("%H:%M:%S"), (elapsed - start))
                 )
 
@@ -922,7 +939,7 @@ def waitForPacmanLockFile():
                     )
                 else:
                     print(
-                        "[DEBUG] %s Pacman process completed, continuing.."
+                        "[DEBUG] %s Process completed, Pacman is ready"
                         % datetime.now().strftime("%H:%M:%S")
                     )
                     return
@@ -935,8 +952,7 @@ def waitForPacmanLockFile():
                     return
             else:
                 print(
-                    "[DEBUG] %s Database unlocked, continuing.."
-                    % datetime.now().strftime("%H:%M:%S")
+                    "[DEBUG] %s Pacman is ready" % datetime.now().strftime("%H:%M:%S")
                 )
                 return
     except Exception as e:
@@ -950,7 +966,7 @@ def get_pacman_process():
             try:
                 pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
                 if pinfo["name"] == "pacman":
-                    return str(proc.cmdline())
+                    return " ".join(proc.cmdline())
 
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
