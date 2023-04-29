@@ -45,10 +45,10 @@ echo "getting ASA script"
 wget https://raw.githubusercontent.com/arcolinux/arcolinux-spices/master/usr/share/arcolinux-spices/scripts/get-the-keys-and-repos.sh -O $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 chmod +x $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 
-echo "Keyring and mirror from ArcoLinux"
+echo "Keyring from ArcoLinux"
 cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-keyring*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/
 
-echo "Keyring and mirror from ArcoLinux"
+echo "Mirror from ArcoLinux"
 cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-mirror*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/
 
 
