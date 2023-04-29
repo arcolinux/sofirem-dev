@@ -46,10 +46,10 @@ wget https://raw.githubusercontent.com/arcolinux/arcolinux-spices/master/usr/sha
 chmod +x $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 
 echo "Keyring from ArcoLinux"
-cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-keyring*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/
+cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-keyring*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-keyring
 
 echo "Mirror from ArcoLinux"
-cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-mirror*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/
+cp /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-mirror*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-mirrorlist
 
 
 # Below command will backup everything inside the project folder
