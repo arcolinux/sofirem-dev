@@ -53,7 +53,6 @@ echo "Mirror from ArcoLinux"
 rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-mirrorlist/*
 cp -v /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-mirror*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-mirrorlist/
 
-
 # Below command will backup everything inside the project folder
 git add --all .
 

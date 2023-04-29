@@ -185,14 +185,6 @@ def GUISearch(
         #           "Refresh the application cache")
 
         # =====================================================
-        #                   REPOS
-        # =====================================================
-
-        btnRepos = Gtk.Button(label="Add repos")
-        btnRepos.set_size_request(100, 30)
-        btnRepos.connect("clicked", self.repos_clicked)
-
-        # =====================================================
         #               QUIT BUTTON
         # =====================================================
 
@@ -228,6 +220,7 @@ def GUISearch(
         ivbox.pack_start(stack_switcher, True, True, 0)
 
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
@@ -395,6 +388,14 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #           "Refresh the application cache")
 
         # =====================================================
+        #                   REPOS
+        # =====================================================
+
+        btnRepos = Gtk.Button(label="Add repos")
+        btnRepos.set_size_request(100, 30)
+        btnRepos.connect("clicked", self.on_repos_clicked)
+
+        # =====================================================
         #               QUIT BUTTON
         # =====================================================
         btnQuitSofi = Gtk.Button(label="Quit")
@@ -419,6 +420,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
