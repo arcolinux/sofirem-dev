@@ -185,8 +185,17 @@ def GUISearch(
         #           "Refresh the application cache")
 
         # =====================================================
+        #                   REPOS
+        # =====================================================
+
+        btnRepos = Gtk.Button(label="Add repos")
+        btnRepos.set_size_request(100, 30)
+        btnRepos.connect("clicked", self.repos_clicked)
+
+        # =====================================================
         #               QUIT BUTTON
         # =====================================================
+
         btnQuitSofi = Gtk.Button(label="Quit")
         btnQuitSofi.set_size_request(100, 30)
         btnQuitSofi.connect("clicked", self.on_close, "delete-event")
@@ -194,6 +203,7 @@ def GUISearch(
         # =====================================================
         #               SEARCH BOX
         # =====================================================
+
         self.searchEntry = Gtk.SearchEntry()
         self.searchEntry.set_text(search_term)
         self.searchEntry.connect("activate", self.on_search_activated)
