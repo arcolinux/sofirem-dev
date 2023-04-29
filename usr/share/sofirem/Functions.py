@@ -386,90 +386,109 @@ def uninstall(self):
 
     try:
         if action == "uninstall":
-            path = base_dir + "/cache/installed.lst"
-            uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
+            # peek at the install queue
 
-            now = datetime.now().strftime("%H:%M:%S")
-            print("[INFO] %s Removing package : %s" % (now, pkg))
-            create_actions_log(
-                launchtime, "[INFO] " + now + " Removing package " + pkg + "\n"
-            )
-
-            process_pkg_rem = subprocess.Popen(
-                uninst_str,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
-
-            out, err = process_pkg_rem.communicate(timeout=300)
-
-            if process_pkg_rem.returncode == 0:
-                # deactivate switch widget, uninstall ok
-                widget.set_state(False)
-
-                get_current_installed()
-                uninstall_state[pkg] = "REMOVED"
-                print(
-                    "[INFO] %s Package removal : %s status = completed"
-                    % (datetime.now().strftime("%H:%M:%S"), pkg)
-                )
-                print(
-                    "---------------------------------------------------------------------------"
-                )
-
-                GLib.idle_add(
-                    show_in_app_notification,
+            # do not allow a package to be uninstalled while it is being installed
+            if pkg in self.pkg_inst_deque:
+                widget.set_state(True)
+                msg_dialog = message_dialog(
                     self,
-                    "Package: %s removed" % pkg,
-                    False,
+                    "Error removing package",
+                    "Package: %s is installing / queued to be installed" % pkg,
+                    "Cannot remove a package which is installing",
+                    Gtk.MessageType.ERROR,
                 )
 
+                msg_dialog.run()
+                msg_dialog.hide()
             else:
-                if out:
-                    out = out.decode("utf-8")
-                    if len(out) > 0:
-                        uninstall_state[pkg] = out.splitlines()
-                        get_current_installed()
-                        if "error: target not found: %s" % pkg in uninstall_state[pkg]:
-                            widget.set_state(False)
-                            uninstall_state[pkg] = "REMOVED"
-                            print(
-                                "[INFO] %s Package removal : %s status = completed"
-                                % (datetime.now().strftime("%H:%M:%S"), pkg)
-                            )
-                            GLib.idle_add(
-                                show_in_app_notification,
-                                self,
-                                "Package: %s removed" % pkg,
-                                False,
-                            )
-                        else:
-                            # activate switch widget, uninstall failed
-                            widget.set_state(True)
+                path = base_dir + "/cache/installed.lst"
+                uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
-                            print(
-                                "[ERROR] %s Package removal : %s status = failed"
-                                % (datetime.now().strftime("%H:%M:%S"), pkg)
-                            )
+                now = datetime.now().strftime("%H:%M:%S")
+                print("[INFO] %s Removing package : %s" % (now, pkg))
+                create_actions_log(
+                    launchtime, "[INFO] " + now + " Removing package " + pkg + "\n"
+                )
+
+                process_pkg_rem = subprocess.Popen(
+                    uninst_str,
+                    shell=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+
+                out, err = process_pkg_rem.communicate(timeout=300)
+
+                if process_pkg_rem.returncode == 0:
+                    # deactivate switch widget, uninstall ok
+                    widget.set_state(False)
+
+                    get_current_installed()
+                    uninstall_state[pkg] = "REMOVED"
+                    print(
+                        "[INFO] %s Package removal : %s status = completed"
+                        % (datetime.now().strftime("%H:%M:%S"), pkg)
+                    )
+                    print(
+                        "---------------------------------------------------------------------------"
+                    )
+
+                    GLib.idle_add(
+                        show_in_app_notification,
+                        self,
+                        "Package: %s removed" % pkg,
+                        False,
+                    )
+
+                else:
+                    if out:
+                        out = out.decode("utf-8")
+                        if len(out) > 0:
+                            uninstall_state[pkg] = out.splitlines()
+                            get_current_installed()
                             if (
-                                "error: could not lock database: File exists"
-                                not in uninstall_state[pkg]
+                                "error: target not found: %s" % pkg
+                                in uninstall_state[pkg]
                             ):
+                                widget.set_state(False)
+                                uninstall_state[pkg] = "REMOVED"
+                                print(
+                                    "[INFO] %s Package removal : %s status = completed"
+                                    % (datetime.now().strftime("%H:%M:%S"), pkg)
+                                )
                                 GLib.idle_add(
                                     show_in_app_notification,
                                     self,
-                                    "Package removal failed for: %s" % pkg,
-                                    True,
+                                    "Package: %s removed" % pkg,
+                                    False,
                                 )
+                            else:
+                                # activate switch widget, uninstall failed
+                                widget.set_state(True)
 
-                            raise SystemError(
-                                "Pacman failed to remove package = %s" % pkg
-                            )
-                    else:
-                        # the package was already removed as a dependency from another package
-                        # deactivate the widget
-                        widget.set_state(False)
+                                print(
+                                    "[ERROR] %s Package removal : %s status = failed"
+                                    % (datetime.now().strftime("%H:%M:%S"), pkg)
+                                )
+                                if (
+                                    "error: could not lock database: File exists"
+                                    not in uninstall_state[pkg]
+                                ):
+                                    GLib.idle_add(
+                                        show_in_app_notification,
+                                        self,
+                                        "Package removal failed for: %s" % pkg,
+                                        True,
+                                    )
+
+                                raise SystemError(
+                                    "Pacman failed to remove package = %s" % pkg
+                                )
+                        else:
+                            # the package was already removed as a dependency from another package
+                            # deactivate the widget
+                            widget.set_state(False)
 
                 print(
                     "---------------------------------------------------------------------------"
