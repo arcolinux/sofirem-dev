@@ -45,6 +45,14 @@ echo "getting ASA script"
 wget https://raw.githubusercontent.com/arcolinux/arcolinux-spices/master/usr/share/arcolinux-spices/scripts/get-the-keys-and-repos.sh -O $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 chmod +x $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 
+echo "Keyring from ArcoLinux"
+rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-keyring/*
+cp -v /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-keyring*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-keyring/
+
+echo "Mirror from ArcoLinux"
+rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-mirrorlist/*
+cp -v /home/erik/ARCO/ARCOLINUX-REPO/arcolinux_repo/x86_64/arcolinux-mirror*pkg.tar.zst /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/packages/arcolinux-mirrorlist/
+
 # Below command will backup everything inside the project folder
 git add --all .
 

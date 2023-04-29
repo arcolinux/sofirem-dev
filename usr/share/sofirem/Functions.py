@@ -21,12 +21,10 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk  # noqa
 from queue import Queue  # Multithreading the caching
 from threading import Thread
-from threading import Timer
 from ProgressBarWindow import ProgressBarWindow
 from sofirem import launchtime
 from Package import Package
 from distro import id
-from queue import Queue
 
 # =====================================================
 #               Base Directory
@@ -44,6 +42,25 @@ packages = []
 debug = False
 distr = id()
 pacman_lock_file = "/var/lib/pacman/db.lck"
+
+arcolinux_mirrorlist = "/etc/pacman.d/arcolinux-mirrorlist"
+pacman_conf = "/etc/pacman.conf"
+
+atestrepo = "#[arcolinux_repo_testing]\n\
+#SigLevel = Optional TrustedOnly\n\
+#Include = /etc/pacman.d/arcolinux-mirrorlist"
+
+arepo = "[arcolinux_repo]\n\
+SigLevel = Optional TrustedOnly\n\
+Include = /etc/pacman.d/arcolinux-mirrorlist"
+
+a3prepo = "[arcolinux_repo_3party]\n\
+SigLevel = Optional TrustedOnly\n\
+Include = /etc/pacman.d/arcolinux-mirrorlist"
+
+axlrepo = "[arcolinux_repo_xlarge]\n\
+SigLevel = Optional TrustedOnly\n\
+Include = /etc/pacman.d/arcolinux-mirrorlist"
 
 # =====================================================
 #               Create log file
@@ -1123,6 +1140,68 @@ def search(self, term):
 
     except Exception as e:
         print("Exception in search(): %s", e)
+
+
+# =====================================================
+#               ARCOLINUX REPOS, KEYS AND MIRRORS
+# =====================================================
+
+
+def append_repo(self, text):
+    """Append a new repo"""
+    try:
+        with open(pacman_conf, "a", encoding="utf-8") as f:
+            f.write("\n\n")
+            f.write(text)
+    except Exception as error:
+        print(error)
+
+
+def repo_exist(value):
+    """check repo_exists"""
+    with open(pacman_conf, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        f.close()
+
+    for line in lines:
+        if value in line:
+            return True
+    return False
+
+
+# install ArcoLinux mirrorlist and key package
+def install_arcolinux_key_mirror(self):
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    pathway = base_dir + "/packages/arcolinux-keyring/"
+    file = os.listdir(pathway)
+
+    try:
+        install = "pacman -U " + pathway + str(file).strip("[]'") + " --noconfirm"
+        print("[INFO] : " + install)
+        subprocess.call(
+            install.split(" "),
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        print("[INFO] : ArcoLinux keyring is now installed")
+    except Exception as error:
+        print(error)
+
+    pathway = base_dir + "/packages/arcolinux-mirrorlist/"
+    file = os.listdir(pathway)
+    try:
+        install = "pacman -U " + pathway + str(file).strip("[]'") + " --noconfirm"
+        print("[INFO] : " + install)
+        subprocess.call(
+            install.split(" "),
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        print("[INFO] : ArcoLinux mirrorlist is now installed")
+    except Exception as error:
+        print(error)
 
 
 # =====================================================

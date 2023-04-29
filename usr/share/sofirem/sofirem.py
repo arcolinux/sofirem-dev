@@ -2,7 +2,7 @@
 import Splash
 import gi
 import os
-import Functions
+import Functions as fn
 from ProgressBarWindow import ProgressBarWindow
 import signal
 import datetime
@@ -100,46 +100,46 @@ class Main(Gtk.Window):
             print(
                 "---------------------------------------------------------------------------"
             )
-            print("[INFO] : Distro = " + Functions.distr)
+            print("[INFO] : Distro = " + fn.distr)
             print(
                 "---------------------------------------------------------------------------"
             )
 
             # Create installed.lst file for first time
             now = datetime.now().strftime("%H:%M:%S")
-            Functions.get_current_installed()
+            fn.get_current_installed()
             print("[INFO] %s Created installed.lst" % now)
-            Functions.create_actions_log(
+            fn.create_actions_log(
                 launchtime,
                 "[INFO] %s Created installed.lst" % now + "\n",
             )
 
             # Creating directories
-            if not os.path.isdir(Functions.log_dir):
+            if not os.path.isdir(fn.log_dir):
                 try:
-                    os.mkdir(Functions.log_dir)
+                    os.mkdir(fn.log_dir)
                 except Exception as e:
                     print(e)
 
-            if not os.path.isdir(Functions.sof_log_dir):
+            if not os.path.isdir(fn.sof_log_dir):
                 try:
-                    os.mkdir(Functions.sof_log_dir)
+                    os.mkdir(fn.sof_log_dir)
                 except Exception as e:
                     print(e)
 
-            if not os.path.isdir(Functions.act_log_dir):
+            if not os.path.isdir(fn.act_log_dir):
                 try:
-                    os.mkdir(Functions.act_log_dir)
+                    os.mkdir(fn.act_log_dir)
                 except Exception as e:
                     print(e)
 
             # start making sure sofirem starts next time with dark or light theme
-            if os.path.isdir(Functions.home + "/.config/gtk-3.0"):
+            if os.path.isdir(fn.home + "/.config/gtk-3.0"):
                 try:
                     if not os.path.islink("/root/.config/gtk-3.0"):
-                        Functions.shutil.rmtree("/root/.config/gtk-3.0")
-                        Functions.shutil.copytree(
-                            Functions.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
+                        fn.shutil.rmtree("/root/.config/gtk-3.0")
+                        fn.shutil.copytree(
+                            fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
                         )
                 except Exception as error:
                     print(error)
@@ -147,12 +147,10 @@ class Main(Gtk.Window):
             if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
                 try:
                     if not os.path.islink("/root/.config/xsettingsd/"):
-                        Functions.shutil.rmtree("/root/.config/xsettingsd/")
-                        if Functions.path.isdir(
-                            Functions.home + "/.config/xsettingsd/"
-                        ):
-                            Functions.shutil.copytree(
-                                Functions.home + "/.config/xsettingsd/",
+                        fn.shutil.rmtree("/root/.config/xsettingsd/")
+                        if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
+                            fn.shutil.copytree(
+                                fn.home + "/.config/xsettingsd/",
                                 "/root/.config/xsettingsd/",
                             )
                 except Exception as error:
@@ -160,10 +158,10 @@ class Main(Gtk.Window):
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-            if Functions.sync(self) == 0:
+            if fn.sync(self) == 0:
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Synchronising complete" % now)
-                Functions.create_actions_log(
+                fn.create_actions_log(
                     launchtime,
                     "[INFO] %s Synchronising complete" % now + "\n",
                 )
@@ -173,7 +171,7 @@ class Main(Gtk.Window):
                 print(
                     "[ERROR] %s Synchronising failed" % now,
                 )
-                Functions.create_actions_log(
+                fn.create_actions_log(
                     launchtime,
                     "[ERROR] %s Synchronising failed" % now + "\n",
                 )
@@ -181,7 +179,7 @@ class Main(Gtk.Window):
                     "---------------------------------------------------------------------------"
                 )
 
-                msg_dialog = Functions.message_dialog(
+                msg_dialog = fn.message_dialog(
                     self,
                     "pacman -Sy",
                     "Pacman database synchronisation failed",
@@ -192,12 +190,10 @@ class Main(Gtk.Window):
                 msg_dialog.run()
                 msg_dialog.hide()
 
-                sys.exit(1)
-
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             print("[INFO] %s Storing package metadata started" % now)
 
-            self.packages = Functions.storePackages()
+            self.packages = fn.storePackages()
 
             print(
                 "[INFO] %s Categories = %s"
@@ -230,15 +226,11 @@ class Main(Gtk.Window):
             sleep(2)
             splScr.destroy()
 
-            print(
-                "[INFO] %s Preparing GUI"
-                % Functions.datetime.now().strftime("%H:%M:%S")
-            )
+            print("[INFO] %s Preparing GUI" % fn.datetime.now().strftime("%H:%M:%S"))
 
-            Functions.create_actions_log(
+            fn.create_actions_log(
                 launchtime,
-                "[INFO] %s Preparing GUI"
-                % Functions.datetime.now().strftime("%H:%M:%S")
+                "[INFO] %s Preparing GUI" % fn.datetime.now().strftime("%H:%M:%S")
                 + "\n",
             )
 
@@ -249,15 +241,11 @@ class Main(Gtk.Window):
             # Save reference to the vbox generated from the main GUI view
             self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-            print(
-                "[INFO] %s Completed GUI"
-                % Functions.datetime.now().strftime("%H:%M:%S")
-            )
+            print("[INFO] %s Completed GUI" % fn.datetime.now().strftime("%H:%M:%S"))
 
-            Functions.create_actions_log(
+            fn.create_actions_log(
                 launchtime,
-                "[INFO] %s Completed GUI"
-                % Functions.datetime.now().strftime("%H:%M:%S")
+                "[INFO] %s Completed GUI" % fn.datetime.now().strftime("%H:%M:%S")
                 + "\n",
             )
 
@@ -281,7 +269,7 @@ class Main(Gtk.Window):
             self.searchEntry.grab_focus()
 
         if shortcut in ("Ctrl+I", "Ctrl+Mod2+I"):
-            Functions.show_package_info(self)
+            fn.show_package_info(self)
 
     # =====================================================
     #               SEARCH ENTRY
@@ -306,9 +294,9 @@ class Main(Gtk.Window):
 
                     # searching is processed inside a thread
 
-                    th_search = Functions.threading.Thread(
+                    th_search = fn.threading.Thread(
                         name="thread_search",
-                        target=Functions.search,
+                        target=fn.search,
                         args=(
                             self,
                             search_term,
@@ -316,7 +304,7 @@ class Main(Gtk.Window):
                     )
                     print(
                         "[INFO] %s Starting search"
-                        % Functions.datetime.now().strftime("%H:%M:%S")
+                        % fn.datetime.now().strftime("%H:%M:%S")
                     )
 
                     th_search.start()
@@ -327,7 +315,7 @@ class Main(Gtk.Window):
                     if results is not None:
                         print(
                             "[INFO] %s Search complete"
-                            % Functions.datetime.now().strftime("%H:%M:%S")
+                            % fn.datetime.now().strftime("%H:%M:%S")
                         )
 
                         if len(results) > 0:
@@ -338,7 +326,7 @@ class Main(Gtk.Window):
                             print(
                                 "[INFO] %s Search found %s results"
                                 % (
-                                    Functions.datetime.now().strftime("%H:%M:%S"),
+                                    fn.datetime.now().strftime("%H:%M:%S"),
                                     total,
                                 )
                             )
@@ -361,7 +349,7 @@ class Main(Gtk.Window):
                         print(
                             "[INFO] %s Search found %s results"
                             % (
-                                Functions.datetime.now().strftime("%H:%M:%S"),
+                                fn.datetime.now().strftime("%H:%M:%S"),
                                 0,
                             )
                         )
@@ -388,6 +376,30 @@ class Main(Gtk.Window):
         self.search_activated = False
 
     # =====================================================
+    #               ARCOLINUX REPOS, KEYS AND MIRRORS
+    # =====================================================
+
+    def on_repos_clicked(self, widget):
+        print("[INFO] : Let's install the ArcoLinux keys and mirrors")
+        fn.install_arcolinux_key_mirror(self)
+
+        print("[INFO] : Checking whether the repos have been added")
+        if not fn.repo_exist("[arcolinux_repo_testing]"):
+            print("[INFO] : Adding ArcoLinux test repo (not used)")
+            fn.append_repo(self, fn.atestrepo)
+        if not fn.repo_exist("[arcolinux_repo]"):
+            print("[INFO] : Adding ArcoLinux repo")
+            fn.append_repo(self, fn.arepo)
+        if not fn.repo_exist("[arcolinux_repo_3party]"):
+            print("[INFO] : Adding ArcoLinux 3th party repo")
+            fn.append_repo(self, fn.a3prepo)
+        if not fn.repo_exist("[arcolinux_repo_xlarge]"):
+            print("[INFO] : Adding ArcoLinux XL repo")
+            fn.append_repo(self, fn.axlrepo)
+        if fn.repo_exist("[arcolinux_repo]"):
+            print("[INFO] : ArcoLinux repos have been installed")
+
+    # =====================================================
     #               RESTART/QUIT BUTTON
     # =====================================================
 
@@ -398,8 +410,8 @@ class Main(Gtk.Window):
         if os.path.exists("/tmp/sofirem.pid"):
             os.unlink("/tmp/sofirem.pid")
 
-        # see the comment in Functions.terminate_pacman()
-        Functions.terminate_pacman()
+        # see the comment in fn.terminate_pacman()
+        fn.terminate_pacman()
 
         Gtk.main_quit()
         print(
@@ -420,7 +432,7 @@ class Main(Gtk.Window):
     # ====================================================================
     # Given what this function does, it might be worth considering making it a
     # thread so that the app doesn't block while installing/uninstalling is happening.
-    def app_toggle(self, widget, active, package, Gtk, vboxStack1, Functions, category):
+    def app_toggle(self, widget, active, package, Gtk, vboxStack1, fn, category):
         # switch widget is currently toggled off
         if widget.get_state() == False and widget.get_active() == True:
             widget.set_state(True)
@@ -442,9 +454,9 @@ class Main(Gtk.Window):
                         ),
                     )
 
-                    th = Functions.threading.Thread(
+                    th = fn.threading.Thread(
                         name="thread_pkginst",
-                        target=Functions.install,
+                        target=fn.install,
                         args=(self,),
                     )
 
@@ -481,27 +493,27 @@ class Main(Gtk.Window):
                     ),
                 )
 
-                th = Functions.threading.Thread(
+                th = fn.threading.Thread(
                     name="thread_pkgrem",
-                    target=Functions.uninstall,
+                    target=fn.uninstall,
                     args=(self,),
                 )
 
                 th.start()
 
-        Functions.get_current_installed()
+        fn.get_current_installed()
 
         # return True to prevent the default handler from running
         return True
 
-        # App_Frame_GUI.GUI(self, Gtk, vboxStack1, Functions, category, package_file)
+        # App_Frame_GUI.GUI(self, Gtk, vboxStack1, fn, category, package_file)
         # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
 
     def pkgInfo_clicked(self, widget):
-        Functions.show_package_info(self)
+        fn.show_package_info(self)
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -512,17 +524,17 @@ class Main(Gtk.Window):
 
         print(
             "[INFO] %s Recache applications - start"
-            % Functions.datetime.now().strftime("%H:%M:%S")
+            % fn.datetime.now().strftime("%H:%M:%S")
         )
 
-        Functions.create_actions_log(
+        fn.create_actions_log(
             launchtime,
             "[INFO] %s Recache applications - start"
-            % Functions.datetime.now().strftime("%H:%M:%S")
+            % fn.datetime.now().strftime("%H:%M:%S")
             + "\n",
         )
 
-        Functions.cache_btn()
+        fn.cache_btn()
 
 
 # ====================================================================
@@ -531,9 +543,7 @@ class Main(Gtk.Window):
 
 
 def signal_handler(sig, frame):
-    print(
-        "[INFO] %s Sofirem is closing." % Functions.datetime.now().strftime("%H:%M:%S")
-    )
+    print("[INFO] %s Sofirem is closing." % fn.datetime.now().strftime("%H:%M:%S"))
     if os.path.exists("/tmp/sofirem.lock"):
         os.unlink("/tmp/sofirem.lock")
 
@@ -561,15 +571,12 @@ if __name__ == "__main__":
             w = Main()
             w.show_all()
 
-            Functions.create_packages_log()
+            fn.create_packages_log()
 
-            print(
-                "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
-            )
-            Functions.create_actions_log(
+            print("[INFO] %s App Started" % fn.datetime.now().strftime("%H:%M:%S"))
+            fn.create_actions_log(
                 launchtime,
-                "[INFO] %s App Started" % Functions.datetime.now().strftime("%H:%M:%S")
-                + "\n",
+                "[INFO] %s App Started" % fn.datetime.now().strftime("%H:%M:%S") + "\n",
             )
             Gtk.main()
         else:
@@ -594,7 +601,7 @@ Click 'Yes' to remove the lock file and try running again"
                     line = f.read()
                     pid = line.rstrip().lstrip()
 
-                if Functions.checkIfProcessRunning(int(pid)):
+                if fn.checkIfProcessRunning(int(pid)):
                     # needs to be fixed - todo
 
                     # md2 = Gtk.MessageDialog(
