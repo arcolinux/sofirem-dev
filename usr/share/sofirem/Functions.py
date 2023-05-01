@@ -679,6 +679,7 @@ def storePackages():
         return sorted_dict
     except Exception as e:
         print("Exception in storePackages() : %s" % e)
+        sys.exit(0)
 
 
 # =====================================================
