@@ -80,44 +80,6 @@ def get_position(lists, value):
 #               END GLOBAL FUNCTIONS
 # =====================================================
 
-
-arcolinux_mirrorlist = "/etc/pacman.d/arcolinux-mirrorlist"
-pacman_conf = "/etc/pacman.conf"
-
-atestrepo = "#[arcolinux_repo_testing]\n\
-#SigLevel = Optional TrustedOnly\n\
-#Include = /etc/pacman.d/arcolinux-mirrorlist"
-
-arepo = "[arcolinux_repo]\n\
-SigLevel = Optional TrustedOnly\n\
-Include = /etc/pacman.d/arcolinux-mirrorlist"
-
-a3prepo = "[arcolinux_repo_3party]\n\
-SigLevel = Optional TrustedOnly\n\
-Include = /etc/pacman.d/arcolinux-mirrorlist"
-
-axlrepo = "[arcolinux_repo_xlarge]\n\
-SigLevel = Optional TrustedOnly\n\
-Include = /etc/pacman.d/arcolinux-mirrorlist"
-
-# =====================================================
-#               BEGIN GLOBAL FUNCTIONS
-# =====================================================
-
-
-# get position in list
-def get_position(lists, value):
-    data = [string for string in lists if value in string]
-    if len(data) != 0:
-        position = lists.index(data[0])
-        return position
-    return 0
-
-
-# =====================================================
-#               END GLOBAL FUNCTIONS
-# =====================================================
-
 # =====================================================
 #               Create log file
 # =====================================================
