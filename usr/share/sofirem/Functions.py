@@ -42,6 +42,9 @@ packages = []
 debug = False
 distr = id()
 pacman_lock_file = "/var/lib/pacman/db.lck"
+# this timeout is only for the pacman lock file, install/uninstall processes
+# 10m timeout
+process_timeout = 600
 
 arcolinux_mirrorlist = "/etc/pacman.d/arcolinux-mirrorlist"
 pacman_conf = "/etc/pacman.conf"
@@ -302,7 +305,7 @@ def install(self):
                     stderr=subprocess.STDOUT,
                 )
 
-                out, err = process_pkg_inst.communicate(timeout=300)
+                out, err = process_pkg_inst.communicate(timeout=process_timeout)
 
                 if process_pkg_inst.returncode == 0:
                     # activate switch widget, install ok
@@ -453,7 +456,7 @@ def uninstall(self):
                     stderr=subprocess.STDOUT,
                 )
 
-                out, err = process_pkg_rem.communicate(timeout=300)
+                out, err = process_pkg_rem.communicate(timeout=process_timeout)
 
                 if process_pkg_rem.returncode == 0:
                     # deactivate switch widget, uninstall ok
@@ -970,7 +973,6 @@ def checkIfProcessRunning(processName):
 
 
 def waitForPacmanLockFile():
-    timeout = 300
     start = int(time.time())
 
     try:
@@ -999,10 +1001,10 @@ def waitForPacmanLockFile():
                     )
                     return
 
-                if (elapsed - start) >= timeout:
+                if (elapsed - start) >= process_timeout:
                     print(
                         "[WARN] %s Waiting for previous Pacman transaction to complete timed out after %ss"
-                        % (datetime.now().strftime("%H:%M:%S"), timeout)
+                        % (datetime.now().strftime("%H:%M:%S"), process_timeout)
                     )
                     return
             else:
@@ -1092,10 +1094,6 @@ def search(self, term):
                         pkg_matches.append(
                             pkg,
                         )
-        """
-        for p in pkg_matches:
-            print(p.name)
-        """
 
         # filter the results so that each category holds a list of package
 
