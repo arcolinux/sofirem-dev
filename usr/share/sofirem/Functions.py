@@ -21,8 +21,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk  # noqa
 from queue import Queue  # Multithreading the caching
 from threading import Thread
-from ProgressBarWindow import ProgressBarWindow
 from sofirem import launchtime
+from ProgressBarWindow import ProgressBarWindow
 from Package import Package
 from distro import id
 
@@ -41,13 +41,15 @@ path_dir_cache = base_dir + "/cache/"
 packages = []
 debug = False
 distr = id()
-pacman_lock_file = "/var/lib/pacman/db.lck"
-# this timeout is only for the pacman lock file, install/uninstall processes
+
+# this timeout is only for the pacman sync, pacman lock file, install/uninstall processes
 # 10m timeout
 process_timeout = 600
 
 arcolinux_mirrorlist = "/etc/pacman.d/arcolinux-mirrorlist"
 pacman_conf = "/etc/pacman.conf"
+pacman_logfile = "/var/log/pacman.log"
+pacman_lockfile = "/var/lib/pacman/db.lck"
 
 atestrepo = "#[arcolinux_repo_testing]\n\
 #SigLevel = Optional TrustedOnly\n\
@@ -95,14 +97,10 @@ act_log_dir = "/var/log/sofirem/actions/"
 def create_packages_log():
     now = datetime.now().strftime("%H:%M:%S")
     print("[INFO] " + now + " Creating a log file in /var/log/sofirem/software")
-    destination = sof_log_dir + "software-log-" + launchtime
-    command = "sudo pacman -Q > " + destination
+    software_log = sof_log_dir + "software-log-" + launchtime + ".log"
+    command = "sudo pacman -Q > " + software_log
     subprocess.call(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    )
-    create_actions_log(
-        launchtime,
-        "[INFO] %s Creating a log file in /var/log/sofirem/software " % now + "\n",
     )
     # GLib.idle_add(
     #     show_in_app_notification, "is already installed - nothing to do", "test"
@@ -110,16 +108,17 @@ def create_packages_log():
 
 
 def create_actions_log(launchtime, message):
-    if not os.path.exists(act_log_dir + launchtime):
+    actions_log = act_log_dir + "actions-log-" + launchtime + ".log"
+    if not os.path.exists(actions_log):
         try:
-            with open(act_log_dir + launchtime, "x", encoding="utf8") as f:
+            with open(actions_log, "x", encoding="utf8") as f:
                 f.close
         except Exception as error:
             print(error)
 
-    if os.path.exists(act_log_dir + launchtime):
+    if os.path.exists(actions_log):
         try:
-            with open(act_log_dir + launchtime, "a", encoding="utf-8") as f:
+            with open(actions_log, "a", encoding="utf-8") as f:
                 f.write(message)
                 f.close()
         except Exception as error:
@@ -180,7 +179,7 @@ def permissions(dst):
 # =====================================================
 #               PACMAN SYNC PACKAGE DB
 # =====================================================
-def sync(self):
+def sync():
     try:
         sync_str = ["pacman", "-Sy"]
         now = datetime.now().strftime("%H:%M:%S")
@@ -190,32 +189,23 @@ def sync(self):
             "[INFO] %s Synchronising package databases " % now + "\n",
         )
 
-        # Pacman will not work if there is a lock file
-        if os.path.exists(pacman_lock_file):
-            print("[ERROR] %s Pacman lock file found: %s" % (now, pacman_lock_file))
-            print("[ERROR] %s Synchronisation failed" % now)
+        process_sync = subprocess.run(
+            sync_str,
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=process_timeout,
+        )
 
-            msg_dialog = message_dialog(
-                self,
-                "pacman -Sy",
-                "Pacman database synchronisation failed",
-                "Pacman lock file found inside %s" % pacman_lock_file,
-                Gtk.MessageType.ERROR,
-            )
-
-            msg_dialog.run()
-            msg_dialog.hide()
-            sys.exit(1)
+        if process_sync.returncode == 0:
+            return None
         else:
-            process_sync = subprocess.run(
-                sync_str,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                timeout=120,
-            )
+            if process_sync.stdout:
+                out = str(process_sync.stdout.decode("utf-8"))
+                print("[ERROR] %s %s" % (datetime.now().strftime("%H:%M:%S"), out))
 
-        return process_sync.returncode
+                return out
+
     except Exception as e:
         print("Exception in sync(): %s" % e)
 
@@ -229,12 +219,10 @@ def install(self):
     install_state[pkg] = "QUEUED"
     thread_alive = False
     lockfile_thread = "thread_waitForPacmanLockFile"
+    inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
     # check the pacman lock file thread isn't already running
-    for thread in threading.enumerate():
-        if thread.name == lockfile_thread and thread.is_alive():
-            thread_alive = True
-            break
+    thread_alive = is_thread_alive(lockfile_thread)
 
     if thread_alive == False:
         print(
@@ -289,8 +277,6 @@ def install(self):
             """
             if action == "install":
                 path = base_dir + "/cache/installed.lst"
-
-                inst_str = ["pacman", "-S", pkg, "--needed", "--noconfirm"]
 
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Installing package %s " % (now, pkg))
@@ -390,26 +376,13 @@ def install(self):
                     % (datetime.now().strftime("%H:%M:%S"), str(proc))
                 )
 
-                msg_dialog = message_dialog(
-                    self,
-                    "Error installing package",
-                    "Failed to install package: %s" % pkg,
-                    str(install_state[pkg])
-                    + "\n"
-                    + "Pacman process currently running: %s " % proc,
-                    Gtk.MessageType.ERROR,
-                )
-            else:
-                msg_dialog = message_dialog(
-                    self,
-                    "Error installing package",
-                    "Failed to install package: %s" % pkg,
-                    str(install_state[pkg]),
-                    Gtk.MessageType.ERROR,
-                )
-
-            msg_dialog.run()
-            msg_dialog.hide()
+            show_message_dialog(
+                self,
+                "Package installation failed",
+                "Failed to install package: %s, using command: %s\n\n"
+                % (pkg, inst_str),
+                "install_state[pkg]",
+            )
 
         self.pkg_queue.task_done()
 
@@ -421,6 +394,7 @@ def uninstall(self):
     pkg, action, widget = self.pkg_queue.get()
     uninstall_state = {}
     uninstall_state[pkg] = "QUEUED"
+    uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
     try:
         if action == "uninstall":
@@ -441,7 +415,6 @@ def uninstall(self):
                 msg_dialog.hide()
             else:
                 path = base_dir + "/cache/installed.lst"
-                uninst_str = ["pacman", "-Rs", pkg, "--noconfirm"]
 
                 now = datetime.now().strftime("%H:%M:%S")
                 print("[INFO] %s Removing package : %s" % (now, pkg))
@@ -556,16 +529,13 @@ def uninstall(self):
                 % (datetime.now().strftime("%H:%M:%S"), str(uninstall_state[pkg]))
             )
 
-            msg_dialog = message_dialog(
+            show_message_dialog(
                 self,
-                "Error removing package",
-                "Failed to remove package: %s" % pkg,
+                "Package uninstallation failed",
+                "Failed to uninstall package: %s, using command: %s\n\n"
+                % (pkg, uninst_str),
                 " ".join(uninstall_state[pkg]),
-                Gtk.MessageType.ERROR,
             )
-
-            msg_dialog.run()
-            msg_dialog.hide()
 
         self.pkg_queue.task_done()
 
@@ -688,6 +658,63 @@ def storePackages():
 # =====================================================
 #               CREATE MESSAGE DIALOG
 # =====================================================
+
+
+# since the msg output from a process doesn't fit properly inside a normal
+# messagebox, use a dialog box to have a textView inside a ScrolledWindow
+
+
+def show_message_dialog(self, title, first_msg, secondary_msg):
+    try:
+        msg_dialog = Gtk.Dialog(self)
+
+        msg_dialog.set_title(title)
+        msg_dialog.set_default_size(800, 600)
+        msg_dialog.set_position(Gtk.WindowPosition.CENTER)
+        btn_msg_dialog_ok = Gtk.Button(label="OK")
+        btn_msg_dialog_ok.connect("clicked", self.on_msg_dialog_ok_response, msg_dialog)
+        msg_dialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
+
+        print("dialog1")
+
+        msg_grid = Gtk.Grid()
+        msg_grid.set_column_homogeneous(True)
+        msg_grid.set_row_homogeneous(True)
+
+        print("dialog2")
+        msg_scrolledwindow = Gtk.ScrolledWindow()
+        print("dialog3")
+        msg_textview = Gtk.TextView()
+        print("dialog311")
+        msg_textview.set_property("editable", False)
+        print("dialog322")
+        msg_textview.set_property("monospace", True)
+        print("dialog333")
+        msg_textview.set_vexpand(True)
+        print("dialog344")
+        msg_textview.set_hexpand(True)
+
+        msg_buffer = msg_textview.get_buffer()
+
+        text_iter_end = msg_buffer.get_end_iter()
+        msg_buffer.insert(text_iter_end, "%s \n" % first_msg)
+        msg_buffer.insert(text_iter_end, secondary_msg)
+
+        msg_scrolledwindow.add(msg_textview)
+        msg_grid.attach(msg_scrolledwindow, 0, 0, 1, 1)
+
+        ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        ivbox.pack_start(btn_msg_dialog_ok, False, False, 0)
+
+        msg_dialog.vbox.add(msg_grid)
+        msg_dialog.vbox.add(ivbox)
+
+        msg_dialog.set_position(Gtk.WindowPosition.CENTER)
+        print("dialog show")
+        return msg_dialog
+        print("dialog44sssss5")
+    except Exception as e:
+        print("Exception in show_message_dialog(): %s" % e)
 
 
 # show the dependencies error here which is stopping the install/uninstall pkg process
@@ -964,7 +991,64 @@ def checkIfProcessRunning(processName):
     return False
 
 
-# get a number of pacman processes are running
+# =====================================================
+#               MONITOR PACMAN LOG FILE
+# =====================================================
+
+
+# write lines from the pacman log onto a queue, this is called from a non-blocking thread
+def addPacmanLogQueue(self):
+    try:
+        lines = []
+        with open(pacman_logfile, "r") as f:
+            while True:
+                line = f.readline()
+                if line:
+                    lines.append(line)
+                    self.pacmanlog_queue.put(lines)
+                else:
+                    time.sleep(0.5)
+
+    except Exception as e:
+        print("Exception in addPacmanLogQueue() : %s" % e)
+
+
+# update the textview called from a non-blocking thread
+def startLogTimer(self):
+    while True:
+        GLib.idle_add(updateTextView, self, priority=GLib.PRIORITY_DEFAULT)
+        time.sleep(2)
+
+        if self.start_logtimer == False:
+            return False
+
+
+# update the textview component with new lines from the pacman log file
+def updateTextView(self):
+    lines = self.pacmanlog_queue.get()
+
+    try:
+        if len(lines) > 0:
+            end_iter = self.buffer.get_end_iter()
+
+            for line in lines:
+                self.buffer.insert(end_iter, "  %s" % line, len("  %s" % line))
+
+    except Exception as e:
+        print("Exception in updateTextView() : %s" % e)
+    finally:
+        self.pacmanlog_queue.task_done()
+
+        if len(lines) > 0:
+            text_mark_end = self.buffer.create_mark(
+                "end", self.buffer.get_end_iter(), False
+            )
+
+            self.pacmanlog_textview.scroll_mark_onscreen(text_mark_end)
+
+        # The following code auto-scrolls the textview to the bottom as new content is added
+
+        lines.clear()
 
 
 # =====================================================
@@ -977,7 +1061,7 @@ def waitForPacmanLockFile():
 
     try:
         while True:
-            if os.path.exists(pacman_lock_file):
+            if check_pacman_lockfile():
                 time.sleep(5)
 
                 elapsed = int(time.time()) + 5
@@ -1381,6 +1465,21 @@ def close_in_app_notification(self):
 
 
 # =====================================================
+#              PACMAN LOCK FILE CHECK
+# =====================================================
+
+
+def check_pacman_lockfile():
+    try:
+        if os.path.exists(pacman_lockfile):
+            return True
+        else:
+            return False
+    except Exception as e:
+        print("Exception in check_pacman_lockfile() : %s" % e)
+
+
+# =====================================================
 #               KILL PACMAN PROCESS
 # =====================================================
 
@@ -1402,10 +1501,24 @@ def terminate_pacman():
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
 
-        if os.path.exists(pacman_lock_file):
+        if check_pacman_lockfile():
             os.unlink(pacman_lock_file)
     except Exception as e:
         print("Exception in terminate_pacman() : %s" % e)
+
+
+# =====================================================
+#               CHECK IF THREAD IS RUNNING
+# =====================================================
+
+
+def is_thread_alive(thread_name):
+    for thread in threading.enumerate():
+        if thread.name == thread_name and thread.is_alive():
+            print(thread.name)
+            return True
+
+    return False
 
 
 #######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!

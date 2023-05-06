@@ -36,9 +36,8 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 debug = True
-now = datetime.now()
 global launchtime
-launchtime = now.strftime("%Y-%m-%d-%H-%M-%S")
+launchtime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 
 class Main(Gtk.Window):
@@ -53,6 +52,9 @@ class Main(Gtk.Window):
 
     # Create a queue for storing search results
     search_queue = Queue()
+
+    # Create a queue for storing Pacman log file contents
+    pacmanlog_queue = Queue()
 
     def __init__(self):
         try:
@@ -105,15 +107,6 @@ class Main(Gtk.Window):
                 "---------------------------------------------------------------------------"
             )
 
-            # Create installed.lst file for first time
-            now = datetime.now().strftime("%H:%M:%S")
-            fn.get_current_installed()
-            print("[INFO] %s Created installed.lst" % now)
-            fn.create_actions_log(
-                launchtime,
-                "[INFO] %s Created installed.lst" % now + "\n",
-            )
-
             # Creating directories
             if not os.path.isdir(fn.log_dir):
                 try:
@@ -132,6 +125,17 @@ class Main(Gtk.Window):
                     os.mkdir(fn.act_log_dir)
                 except Exception as e:
                     print(e)
+
+            # Create installed.lst file for first time
+            fn.get_current_installed()
+            print(
+                "[INFO] %s Created installed.lst" % datetime.now().strftime("%H:%M:%S")
+            )
+            fn.create_actions_log(
+                launchtime,
+                "[INFO] %s Created installed.lst" % datetime.now().strftime("%H:%M:%S")
+                + "\n",
+            )
 
             # start making sure sofirem starts next time with dark or light theme
             if os.path.isdir(fn.home + "/.config/gtk-3.0"):
@@ -156,49 +160,72 @@ class Main(Gtk.Window):
                 except Exception as error:
                     print(error)
 
+            # test there is no pacman lock file on the system
+            if fn.check_pacman_lockfile():
+                msg_dialog = fn.message_dialog(
+                    self,
+                    "Pacman lock file",
+                    "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                    "Is there another Pacman process running?",
+                    Gtk.MessageType.ERROR,
+                )
+
+                msg_dialog.run()
+                msg_dialog.destroy()
+                sys.exit(1)
+
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-            if fn.sync(self) == 0:
-                now = datetime.now().strftime("%H:%M:%S")
-                print("[INFO] %s Synchronising complete" % now)
-                fn.create_actions_log(
-                    launchtime,
-                    "[INFO] %s Synchronising complete" % now + "\n",
-                )
-            else:
-                # Should the app continue to load here, given the fact that the pacman sync failed
-                now = datetime.now().strftime("%H:%M:%S")
+            sync_err = fn.sync()
+
+            if sync_err is not None:
                 print(
-                    "[ERROR] %s Synchronising failed" % now,
+                    "[ERROR] %s Synchronising failed"
+                    % datetime.now().strftime("%H:%M:%S")
                 )
                 fn.create_actions_log(
-                    launchtime,
-                    "[ERROR] %s Synchronising failed" % now + "\n",
+                    fn.launchtime,
+                    "[ERROR] %s Synchronising failed"
+                    % datetime.now().strftime("%H:%M:%S")
+                    + "\n",
                 )
                 print(
                     "---------------------------------------------------------------------------"
                 )
 
-                msg_dialog = fn.message_dialog(
+                dialog = fn.show_message_dialog(
                     self,
-                    "pacman -Sy",
-                    "Pacman database synchronisation failed",
-                    "Please verify the pacman logs for more details",
-                    Gtk.MessageType.ERROR,
+                    "Pacman synchronisation failed (pacman -Sy)",
+                    "Check the synchronisation logs, and verify you can connect to the appropriate mirrors.\n\n",
+                    sync_err,
+                )
+                dialog.show_all()
+                sys.exit(1)
+
+            else:
+                print(
+                    "[INFO] %s Synchronising complete"
+                    % datetime.now().strftime("%H:%M:%S")
+                )
+                fn.create_actions_log(
+                    fn.launchtime,
+                    "[INFO] %s Synchronising complete"
+                    % datetime.now().strftime("%H:%M:%S")
+                    + "\n",
                 )
 
-                msg_dialog.run()
-                msg_dialog.hide()
-
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
-            print("[INFO] %s Storing package metadata started" % now)
+            print(
+                "[INFO] %s Storing package metadata started"
+                % datetime.now().strftime("%H:%M:%S")
+            )
 
             self.packages = fn.storePackages()
 
             print(
                 "[INFO] %s Categories = %s"
                 % (
-                    now,
+                    datetime.now().strftime("%H:%M:%S"),
                     len(self.packages.keys()),
                 )
             )
@@ -211,12 +238,15 @@ class Main(Gtk.Window):
             print(
                 "[INFO] %s Total packages = %s"
                 % (
-                    now,
+                    datetime.now().strftime("%H:%M:%S"),
                     total_packages,
                 )
             )
 
-            print("[INFO] %s Storing package metadata completed" % now)
+            print(
+                "[INFO] %s Storing package metadata completed"
+                % datetime.now().strftime("%H:%M:%S")
+            )
 
             splScr = Splash.splashScreen()
 
@@ -226,12 +256,11 @@ class Main(Gtk.Window):
             sleep(2)
             splScr.destroy()
 
-            print("[INFO] %s Preparing GUI" % fn.datetime.now().strftime("%H:%M:%S"))
+            print("[INFO] %s Preparing GUI" % datetime.now().strftime("%H:%M:%S"))
 
             fn.create_actions_log(
-                launchtime,
-                "[INFO] %s Preparing GUI" % fn.datetime.now().strftime("%H:%M:%S")
-                + "\n",
+                fn.launchtime,
+                "[INFO] %s Preparing GUI" % datetime.now().strftime("%H:%M:%S") + "\n",
             )
 
             # On initial app load search_activated is set to False
@@ -241,12 +270,11 @@ class Main(Gtk.Window):
             # Save reference to the vbox generated from the main GUI view
             self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-            print("[INFO] %s Completed GUI" % fn.datetime.now().strftime("%H:%M:%S"))
+            print("[INFO] %s Completed GUI" % datetime.now().strftime("%H:%M:%S"))
 
             fn.create_actions_log(
-                launchtime,
-                "[INFO] %s Completed GUI" % fn.datetime.now().strftime("%H:%M:%S")
-                + "\n",
+                fn.launchtime,
+                "[INFO] %s Completed GUI" % datetime.now().strftime("%H:%M:%S") + "\n",
             )
 
             if not os.path.isfile("/tmp/sofirem.lock"):
@@ -255,6 +283,116 @@ class Main(Gtk.Window):
 
         except Exception as e:
             print("Exception in Main() : %s" % e)
+
+    # =====================================================
+    #               Pacman Log file button
+    # =====================================================
+
+    def on_pacman_log_clicked(self, widget):
+        try:
+            thread_addlog = "thread_addPacmanLogQueue"
+            thread_add_pacmanlog_alive = fn.is_thread_alive(thread_addlog)
+
+            if thread_add_pacmanlog_alive == False:
+                print(
+                    "[INFO] %s Starting thread to monitor Pacman Log file"
+                    % datetime.now().strftime("%H:%M:%S")
+                )
+
+                th_add_pacmanlog_queue = fn.threading.Thread(
+                    name=thread_addlog,
+                    target=fn.addPacmanLogQueue,
+                    args=(self,),
+                    daemon=True,
+                )
+                th_add_pacmanlog_queue.start()
+
+            else:
+                print(
+                    "[INFO] %s Thread to monitor Pacman Log file is already active"
+                    % datetime.now().strftime("%H:%M:%S")
+                )
+
+            # show dialog
+
+            pacmanlog_dialog = Gtk.Dialog(self)
+            pacmanlog_dialog.set_title("Pacman log file viewer")
+            pacmanlog_dialog.set_default_size(700, 600)
+            btnPacmanLogOk = Gtk.Button(label="OK")
+            btnPacmanLogOk.connect(
+                "clicked", self.on_pacmanlog_response, pacmanlog_dialog
+            )
+            pacmanlog_dialog.set_icon_from_file(
+                os.path.join(base_dir, "images/sofirem.png")
+            )
+
+            pacmanlog_grid = Gtk.Grid()
+            pacmanlog_grid.set_column_homogeneous(True)
+            pacmanlog_grid.set_row_homogeneous(True)
+
+            pacmanlog_scrolledwindow = Gtk.ScrolledWindow()
+
+            if thread_add_pacmanlog_alive == True:
+                # thread already running, textbuffer already populated
+                # re-use the existing textbuffer to repopulate the textviewer
+                self.pacmanlog_textview = Gtk.TextView()
+                self.pacmanlog_textview.set_property("editable", False)
+                self.pacmanlog_textview.set_property("monospace", True)
+                self.pacmanlog_textview.set_vexpand(True)
+                self.pacmanlog_textview.set_hexpand(True)
+                self.pacmanlog_textview.set_buffer(self.buffer)
+            else:
+                self.pacmanlog_textview = Gtk.TextView()
+                self.pacmanlog_textview.set_property("editable", False)
+                self.pacmanlog_textview.set_property("monospace", True)
+                self.pacmanlog_textview.set_vexpand(True)
+                self.pacmanlog_textview.set_hexpand(True)
+                self.buffer = self.pacmanlog_textview.get_buffer()
+                self.pacmanlog_textview.set_buffer(self.buffer)
+
+            pacmanlog_scrolledwindow.add(self.pacmanlog_textview)
+
+            pacmanlog_grid.attach(pacmanlog_scrolledwindow, 0, 0, 1, 1)
+
+            ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+            ivbox.pack_start(btnPacmanLogOk, False, False, 0)
+
+            pacmanlog_dialog.vbox.add(pacmanlog_grid)
+            pacmanlog_dialog.vbox.add(ivbox)
+
+            pacmanlog_dialog.show_all()
+
+            thread_logtimer = "thread_startLogTimer"
+            thread_logtimer_alive = False
+
+            thread_logtimer_alive = fn.is_thread_alive(thread_logtimer)
+
+            # a flag to indicate that the textview will need updating, used inside fn.startLogTimer
+            self.start_logtimer = True
+
+            if thread_logtimer_alive == False:
+                th_logtimer = fn.threading.Thread(
+                    name=thread_logtimer,
+                    target=fn.startLogTimer,
+                    args=(self,),
+                    daemon=True,
+                )
+                th_logtimer.start()
+
+        except Exception as e:
+            print("Exception in on_pacman_log_clicked() : %s" % e)
+
+    # def startLogTimer(self):
+    #     # 20 timeout looks ok for datetime.now().strftime("%H:%M:%S")
+    #     self.timeout_log_id = GLib.timeout_add(20, fn.updateTextView, self)
+
+    def on_pacmanlog_response(self, widget, dialog):
+        dialog.destroy()
+        # stop updating the textview
+        self.start_logtimer = False
+
+    def on_msg_dialog_ok_response(self, widget, dialog):
+        dialog.destroy()
 
     # =====================================================
     #               WINDOW KEY EVENT CTRL + F
@@ -304,7 +442,7 @@ class Main(Gtk.Window):
                     )
                     print(
                         "[INFO] %s Starting search"
-                        % fn.datetime.now().strftime("%H:%M:%S")
+                        % datetime.now().strftime("%H:%M:%S")
                     )
 
                     th_search.start()
@@ -315,7 +453,7 @@ class Main(Gtk.Window):
                     if results is not None:
                         print(
                             "[INFO] %s Search complete"
-                            % fn.datetime.now().strftime("%H:%M:%S")
+                            % datetime.now().strftime("%H:%M:%S")
                         )
 
                         if len(results) > 0:
@@ -326,7 +464,7 @@ class Main(Gtk.Window):
                             print(
                                 "[INFO] %s Search found %s results"
                                 % (
-                                    fn.datetime.now().strftime("%H:%M:%S"),
+                                    datetime.now().strftime("%H:%M:%S"),
                                     total,
                                 )
                             )
@@ -349,7 +487,7 @@ class Main(Gtk.Window):
                         print(
                             "[INFO] %s Search found %s results"
                             % (
-                                fn.datetime.now().strftime("%H:%M:%S"),
+                                datetime.now().strftime("%H:%M:%S"),
                                 0,
                             )
                         )
@@ -524,13 +662,13 @@ class Main(Gtk.Window):
 
         print(
             "[INFO] %s Recache applications - start"
-            % fn.datetime.now().strftime("%H:%M:%S")
+            % datetime.now().strftime("%H:%M:%S")
         )
 
         fn.create_actions_log(
-            launchtime,
+            fn.launchtime,
             "[INFO] %s Recache applications - start"
-            % fn.datetime.now().strftime("%H:%M:%S")
+            % datetime.now().strftime("%H:%M:%S")
             + "\n",
         )
 
@@ -543,7 +681,7 @@ class Main(Gtk.Window):
 
 
 def signal_handler(sig, frame):
-    print("[INFO] %s Sofirem is closing." % fn.datetime.now().strftime("%H:%M:%S"))
+    print("[INFO] %s Sofirem is closing." % datetime.now().strftime("%H:%M:%S"))
     if os.path.exists("/tmp/sofirem.lock"):
         os.unlink("/tmp/sofirem.lock")
 
@@ -573,10 +711,10 @@ if __name__ == "__main__":
 
             fn.create_packages_log()
 
-            print("[INFO] %s App Started" % fn.datetime.now().strftime("%H:%M:%S"))
+            print("[INFO] %s App Started" % datetime.now().strftime("%H:%M:%S"))
             fn.create_actions_log(
-                launchtime,
-                "[INFO] %s App Started" % fn.datetime.now().strftime("%H:%M:%S") + "\n",
+                fn.launchtime,
+                "[INFO] %s App Started" % datetime.now().strftime("%H:%M:%S") + "\n",
             )
             Gtk.main()
         else:

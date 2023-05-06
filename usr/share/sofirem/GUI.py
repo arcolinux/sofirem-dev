@@ -185,6 +185,14 @@ def GUISearch(
         #           "Refresh the application cache")
 
         # =====================================================
+        #               PACMAN LOG BUTTON
+        # =====================================================
+
+        btnPacmanLog = Gtk.Button(label="Pacman Log")
+        btnPacmanLog.set_size_request(100, 30)
+        btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
+
+        # =====================================================
         #                   REPOS
         # =====================================================
 
@@ -237,6 +245,7 @@ def GUISearch(
         ivbox.pack_start(stack_switcher, True, True, 0)
 
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnPacmanLog, False, False, 0)
         ivbox.pack_start(self.btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
@@ -405,6 +414,14 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #           "Refresh the application cache")
 
         # =====================================================
+        #               PACMAN LOG BUTTON
+        # =====================================================
+
+        btnPacmanLog = Gtk.Button(label="Pacman Log")
+        btnPacmanLog.set_size_request(100, 30)
+        btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
+
+        # =====================================================
         #                   REPOS
         # =====================================================
 
@@ -446,6 +463,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
+        ivbox.pack_start(btnPacmanLog, False, False, 0)
         ivbox.pack_start(self.btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
