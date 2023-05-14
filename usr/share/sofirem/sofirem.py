@@ -11,17 +11,17 @@ import subprocess
 from Functions import os
 from queue import Queue
 import App_Frame_GUI
+from About import About
 
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
 from time import sleep
 from datetime import datetime
-from collections import deque
 import sys
+import time
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
-
 
 #      #============================================================
 #      #=  Authors:  Erik Dubois - Cameron Percival   - Fennec     =
@@ -36,8 +36,6 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 debug = True
-global launchtime
-launchtime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 
 class Main(Gtk.Window):
@@ -46,9 +44,6 @@ class Main(Gtk.Window):
 
     # Create a queue to handle package install/removal
     pkg_queue = Queue()
-
-    # A deque to manage the number of packages to install we can have stacked up
-    pkg_inst_deque = deque(maxlen=5)
 
     # Create a queue for storing search results
     search_queue = Queue()
@@ -67,6 +62,25 @@ class Main(Gtk.Window):
             # ctrl+f give focus to search entry
             self.connect("key-press-event", self.on_keypress_event)
             self.timeout_id = None
+            # default: displaying versions are disabled
+            self.display_versions = False
+
+            # pkg = fn.Package(
+            #     "cheese",
+            #     "description",
+            #     "category",
+            #     "subcategory",
+            #     "subcategory_description",
+            #     "version",
+            # )
+            # dialog = fn.create_package_progress_dialog(
+            #     self,
+            #     "install",
+            #     pkg,
+            #     "pacman -s cheese --noconfirm",
+            # )
+            #
+            # sys.exit(0)
 
             print(
                 "---------------------------------------------------------------------------"
@@ -97,46 +111,23 @@ class Main(Gtk.Window):
             print(
                 "---------------------------------------------------------------------------"
             )
-            print("[INFO] : pkgver = pkgversion")
-            print("[INFO] : pkgrel = pkgrelease")
+
+            # Fetch list of packages already installed before the app makes changes
+            fn.create_packages_log()
+
+            fn.logger.info("pkgver = pkgversion")
+            fn.logger.info("pkgrel = pkgrelease")
             print(
                 "---------------------------------------------------------------------------"
             )
-            print("[INFO] : Distro = " + fn.distr)
+            fn.logger.info("Distro = " + fn.distr)
             print(
                 "---------------------------------------------------------------------------"
             )
-
-            # Creating directories
-            if not os.path.isdir(fn.log_dir):
-                try:
-                    os.mkdir(fn.log_dir)
-                except Exception as e:
-                    print(e)
-
-            if not os.path.isdir(fn.sof_log_dir):
-                try:
-                    os.mkdir(fn.sof_log_dir)
-                except Exception as e:
-                    print(e)
-
-            if not os.path.isdir(fn.act_log_dir):
-                try:
-                    os.mkdir(fn.act_log_dir)
-                except Exception as e:
-                    print(e)
 
             # Create installed.lst file for first time
             fn.get_current_installed()
-            print(
-                "[INFO] %s Created installed.lst" % datetime.now().strftime("%H:%M:%S")
-            )
-            fn.create_actions_log(
-                launchtime,
-                "[INFO] %s Created installed.lst" % datetime.now().strftime("%H:%M:%S")
-                + "\n",
-            )
-
+            fn.logger.info("Created installed.lst")
             # start making sure sofirem starts next time with dark or light theme
             if os.path.isdir(fn.home + "/.config/gtk-3.0"):
                 try:
@@ -165,7 +156,7 @@ class Main(Gtk.Window):
                 msg_dialog = fn.message_dialog(
                     self,
                     "Pacman lock file",
-                    "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                    "Pacman lock file found inside %s." % fn.pacman_lockfile,
                     "Is there another Pacman process running?",
                     Gtk.MessageType.ERROR,
                 )
@@ -176,128 +167,376 @@ class Main(Gtk.Window):
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
 
-            sync_err = fn.sync()
+            sync_err = fn.sync_package_db()
 
             if sync_err is not None:
-                print(
-                    "[ERROR] %s Synchronising failed"
-                    % datetime.now().strftime("%H:%M:%S")
-                )
-                fn.create_actions_log(
-                    fn.launchtime,
-                    "[ERROR] %s Synchronising failed"
-                    % datetime.now().strftime("%H:%M:%S")
-                    + "\n",
-                )
+                logger.error("[ERROR] Synchronising failed")
+
                 print(
                     "---------------------------------------------------------------------------"
                 )
 
-                dialog = fn.show_message_dialog(
+                dialog = fn.create_message_dialog(
                     self,
                     "Pacman synchronisation failed (pacman -Sy)",
-                    "Check the synchronisation logs, and verify you can connect to the appropriate mirrors.\n\n",
+                    "Pacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
                     sync_err,
                 )
                 dialog.show_all()
-                sys.exit(1)
+                dialog.run()
+                dialog.destroy()
+                # sys.exit(1)
 
             else:
-                print(
-                    "[INFO] %s Synchronising complete"
-                    % datetime.now().strftime("%H:%M:%S")
-                )
-                fn.create_actions_log(
-                    fn.launchtime,
-                    "[INFO] %s Synchronising complete"
-                    % datetime.now().strftime("%H:%M:%S")
-                    + "\n",
-                )
+                fn.logger.info("Synchronising complete")
 
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
-            print(
-                "[INFO] %s Storing package metadata started"
-                % datetime.now().strftime("%H:%M:%S")
-            )
+            fn.logger.info("Storing package metadata started")
 
             self.packages = fn.storePackages()
 
-            print(
-                "[INFO] %s Categories = %s"
-                % (
-                    datetime.now().strftime("%H:%M:%S"),
-                    len(self.packages.keys()),
-                )
-            )
+            fn.logger.info("Categories = %s" % len(self.packages.keys()))
 
             total_packages = 0
 
             for category in self.packages:
                 total_packages += len(self.packages[category])
 
-            print(
-                "[INFO] %s Total packages = %s"
-                % (
-                    datetime.now().strftime("%H:%M:%S"),
-                    total_packages,
-                )
-            )
+            fn.logger.info("Total packages = %s" % total_packages)
 
-            print(
-                "[INFO] %s Storing package metadata completed"
-                % datetime.now().strftime("%H:%M:%S")
-            )
+            fn.logger.info("Storing package metadata completed")
 
             splScr = Splash.splashScreen()
 
             while Gtk.events_pending():
                 Gtk.main_iteration()
 
-            sleep(2)
+            sleep(3)
             splScr.destroy()
 
-            print("[INFO] %s Preparing GUI" % datetime.now().strftime("%H:%M:%S"))
-
-            fn.create_actions_log(
-                fn.launchtime,
-                "[INFO] %s Preparing GUI" % datetime.now().strftime("%H:%M:%S") + "\n",
-            )
+            fn.logger.info("Preparing GUI")
 
             # On initial app load search_activated is set to False
 
             self.search_activated = False
 
             # Save reference to the vbox generated from the main GUI view
-            self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-            print("[INFO] %s Completed GUI" % datetime.now().strftime("%H:%M:%S"))
-
-            fn.create_actions_log(
-                fn.launchtime,
-                "[INFO] %s Completed GUI" % datetime.now().strftime("%H:%M:%S") + "\n",
-            )
+            fn.logger.info("GUI loaded")
 
             if not os.path.isfile("/tmp/sofirem.lock"):
                 with open("/tmp/sofirem.lock", "w") as f:
                     f.write("")
 
         except Exception as e:
-            print("Exception in Main() : %s" % e)
+            fn.logger.error("Exception in Main() : %s" % e)
 
     # =====================================================
-    #               Pacman Log file button
+    #               WINDOW KEY EVENT CTRL + F
     # =====================================================
+
+    # sets focus on the search entry
+    def on_keypress_event(self, widget, event):
+        shortcut = Gtk.accelerator_get_label(event.keyval, event.state)
+
+        if shortcut in ("Ctrl+F", "Ctrl+Mod2+F"):
+            # set focus on text entry, select all text if any
+            self.searchEntry.grab_focus()
+
+        if shortcut in ("Ctrl+I", "Ctrl+Mod2+I"):
+            fn.show_package_info(self)
+
+    # =====================================================
+    #               SEARCH ENTRY
+    # =====================================================
+
+    def on_search_activated(self, searchentry):
+        if searchentry.get_text_length() == 0 and self.search_activated:
+            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            self.search_activated = False
+
+        if searchentry.get_text_length() == 0:
+            self.search_activated = False
+
+        search_term = searchentry.get_text()
+        # if the string is completely whitespace ignore searching
+        if not search_term.isspace():
+            try:
+                if len(search_term) > 0:
+                    # test if the string entered by the user is in the package name
+                    # results is a dictionary, which holds a list of packages
+                    # results[category]=pkg_list
+
+                    # searching is processed inside a thread
+
+                    th_search = fn.threading.Thread(
+                        name="thread_search",
+                        target=fn.search,
+                        args=(
+                            self,
+                            search_term,
+                        ),
+                    )
+                    fn.logger.info("Starting search")
+
+                    th_search.start()
+
+                    # get the search_results from the queue
+                    results = self.search_queue.get()
+
+                    if results is not None:
+                        fn.logger.info("Search complete")
+
+                        if len(results) > 0:
+                            total = 0
+                            for val in results.values():
+                                total += len(val)
+
+                            fn.logger.info("Search found %s results" % total)
+                            # make sure the gui search only displays the pkgs inside the results
+
+                            GUI.GUISearch(
+                                self,
+                                Gtk,
+                                Gdk,
+                                GdkPixbuf,
+                                base_dir,
+                                os,
+                                Pango,
+                                results,
+                                search_term,
+                            )
+
+                            self.search_activated = True
+                    else:
+                        fn.logger.info("Search found %s results" % 0)
+                        self.searchEntry.grab_focus()
+
+                        msg_dialog = fn.message_dialog(
+                            self,
+                            "Search returned 0 results",
+                            "Failed to find search term inside either the package name / description.",
+                            "Try searching for something else.",
+                        )
+
+                        msg_dialog.show_all()
+                        msg_dialog.run()
+                        msg_dialog.hide()
+
+                elif self.search_activated == True:
+                    GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+                    self.search_activated = False
+            except Exception as err:
+                fn.logger.error("Exception in on_search_activated(): %s" % err)
+
+            finally:
+                if self.search_activated == True:
+                    self.search_queue.task_done()
+
+    def on_search_cleared(self, searchentry, icon_pos, event):
+        if self.search_activated:
+            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+
+        self.searchEntry.set_placeholder_text("Search...")
+
+        self.search_activated = False
+
+    # =====================================================
+    #               ARCOLINUX REPOS, KEYS AND MIRRORS
+    # =====================================================
+
+    def on_repos_clicked(self, widget):
+        if self.btnRepos._value == 1:
+            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
+            fn.install_arcolinux_key_mirror(self)
+
+            fn.logger.info("Checking whether the repos have been added")
+            fn.add_repos()
+
+            self.btnRepos.set_label("Remove ArcoLinux Repos")
+            self.btnRepos._value = 2
+
+        else:
+            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
+            fn.remove_arcolinux_key_mirror(self)
+            fn.logger.info("Removing the ArcoLinux repos in /etc/pacman.conf")
+            fn.remove_repos()
+
+            self.btnRepos.set_label("Add ArcoLinux Repos")
+            self.btnRepos._value = 1
+
+    # =====================================================
+    #               RESTART/QUIT BUTTON
+    # =====================================================
+
+    def on_close(self, widget, data):
+        if os.path.exists("/tmp/sofirem.lock"):
+            os.unlink("/tmp/sofirem.lock")
+
+        if os.path.exists("/tmp/sofirem.pid"):
+            os.unlink("/tmp/sofirem.pid")
+
+        # see the comment in fn.terminate_pacman()
+        fn.terminate_pacman()
+
+        Gtk.main_quit()
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print("Thanks for using Sofirem")
+        print("Report issues to make it even better")
+        print(
+            "---------------------------------------------------------------------------"
+        )
+        print("You can report issues on https://discord.gg/stBhS4taje")
+        print(
+            "---------------------------------------------------------------------------"
+        )
+
+    # ====================================================================
+    #                     Button Functions
+    # ====================================================================
+    # Given what this function does, it might be worth considering making it a
+    # thread so that the app doesn't block while installing/uninstalling is happening.
+    def app_toggle(self, widget, active, package):
+        # switch widget is currently toggled off
+        if widget.get_state() == False and widget.get_active() == True:
+            widget.set_active(True)
+            widget.set_state(True)
+
+            if len(package.name) > 0:
+                # start pacman lock file detection thread in the background
+
+                # fn.start_pacmanlock_thread()
+                self.package_metadata = fn.get_package_information(self, package.name)
+                fn.logger.info("Package to install : %s" % package.name)
+
+                self.pkg_queue.put(
+                    (
+                        package,
+                        "install",
+                        widget,
+                    ),
+                )
+
+                th = fn.threading.Thread(
+                    name="thread_pkginst",
+                    target=fn.install,
+                    args=(self,),
+                )
+
+                th.start()
+
+        # switch widget is currently toggled on
+        if widget.get_state() == True and widget.get_active() == False:
+            widget.set_active(False)
+            widget.set_state(False)
+
+            # Uninstall the package
+
+            if len(package.name) > 0:
+                self.package_metadata = fn.get_package_information(self, package.name)
+                fn.logger.info("Package to remove : %s" % package.name)
+
+                self.pkg_queue.put(
+                    (
+                        package,
+                        "uninstall",
+                        widget,
+                    ),
+                )
+
+                th = fn.threading.Thread(
+                    name="thread_pkgrem",
+                    target=fn.uninstall,
+                    args=(self,),
+                )
+
+                th.start()
+
+        fn.get_current_installed()
+
+        # return True to prevent the default handler from running
+        return True
+
+        # App_Frame_GUI.GUI(self, Gtk, vboxStack1, fn, category, package_file)
+        # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
+        # self.gui.hide()
+        # self.gui.queue_redraw()
+        # self.gui.show_all()
+
+    def pkgInfo_clicked(self, widget):
+        fn.show_package_info(self)
+
+    def recache_clicked(self, widget):
+        # Check if cache is out of date. If so, run the re-cache, if not, don't.
+        # pb = ProgressBarWindow()
+        # pb.show_all()
+        # pb.set_text("Updating Cache")
+        # pb.reset_timer()
+
+        fn.logger.info("Recache applications - start")
+
+        fn.cache_btn()
+
+    # ================================================================
+    #                   SETTINGS
+    # ================================================================
+
+    def on_about_app_clicked(self, widget):
+        logger.info("Showing App About dialog")
+        self.toggle_popover()
+
+        about = About()
+        about.run()
+
+    def on_packages_export_clicked(self, widget):
+        self.toggle_popover()
+        GLib.idle_add(
+            fn.export_installed_packages,
+            self,
+            priority=GLib.PRIORITY_DEFAULT,
+        )
+
+    def toggle_popover(self):
+        if self.popover.get_visible():
+            self.popover.hide()
+        else:
+            self.popover.show_all()
+
+    def on_settings_clicked(self, widget):
+        self.toggle_popover()
+
+    def version_toggle(self, widget, data):
+        if widget.get_active() == True:
+            fn.logger.info("Showing package versions")
+            self.display_versions = True
+            GLib.idle_add(
+                self.refresh_main_gui,
+                priority=GLib.PRIORITY_DEFAULT,
+            )
+        else:
+            fn.logger.info("Hiding package versions")
+            self.display_versions = False
+            GLib.idle_add(
+                self.refresh_main_gui,
+                priority=GLib.PRIORITY_DEFAULT,
+            )
+
+    def refresh_main_gui(self):
+        self.remove(self.vbox_main)
+        self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+        self.show_all()
 
     def on_pacman_log_clicked(self, widget):
         try:
+            self.toggle_popover()
             thread_addlog = "thread_addPacmanLogQueue"
             thread_add_pacmanlog_alive = fn.is_thread_alive(thread_addlog)
 
             if thread_add_pacmanlog_alive == False:
-                print(
-                    "[INFO] %s Starting thread to monitor Pacman Log file"
-                    % datetime.now().strftime("%H:%M:%S")
-                )
+                fn.logger.info("Starting thread to monitor Pacman Log file")
 
                 th_add_pacmanlog_queue = fn.threading.Thread(
                     name=thread_addlog,
@@ -308,19 +547,22 @@ class Main(Gtk.Window):
                 th_add_pacmanlog_queue.start()
 
             else:
-                print(
-                    "[INFO] %s Thread to monitor Pacman Log file is already active"
-                    % datetime.now().strftime("%H:%M:%S")
-                )
+                fn.logger.info("Thread to monitor Pacman Log file is already active")
 
             # show dialog
 
             pacmanlog_dialog = Gtk.Dialog(self)
+            pacmanlog_headerbar = Gtk.HeaderBar()
+
+            pacmanlog_headerbar.set_show_close_button(True)
+
+            pacmanlog_dialog.set_titlebar(pacmanlog_headerbar)
+
             pacmanlog_dialog.set_title("Pacman log file viewer")
             pacmanlog_dialog.set_default_size(700, 600)
             btnPacmanLogOk = Gtk.Button(label="OK")
             btnPacmanLogOk.connect(
-                "clicked", self.on_pacmanlog_response, pacmanlog_dialog
+                "clicked", self.onPacmanlogResponse, pacmanlog_dialog
             )
             pacmanlog_dialog.set_icon_from_file(
                 os.path.join(base_dir, "images/sofirem.png")
@@ -380,299 +622,12 @@ class Main(Gtk.Window):
                 th_logtimer.start()
 
         except Exception as e:
-            print("Exception in on_pacman_log_clicked() : %s" % e)
+            fn.logger.error("Exception in on_pacman_log_clicked() : %s" % e)
 
-    # def startLogTimer(self):
-    #     # 20 timeout looks ok for datetime.now().strftime("%H:%M:%S")
-    #     self.timeout_log_id = GLib.timeout_add(20, fn.updateTextView, self)
-
-    def on_pacmanlog_response(self, widget, dialog):
+    def onPacmanlogResponse(self, widget, dialog):
         dialog.destroy()
         # stop updating the textview
         self.start_logtimer = False
-
-    def on_msg_dialog_ok_response(self, widget, dialog):
-        dialog.destroy()
-
-    # =====================================================
-    #               WINDOW KEY EVENT CTRL + F
-    # =====================================================
-
-    # sets focus on the search entry
-    def on_keypress_event(self, widget, event):
-        shortcut = Gtk.accelerator_get_label(event.keyval, event.state)
-
-        if shortcut in ("Ctrl+F", "Ctrl+Mod2+F"):
-            # set focus on text entry, select all text if any
-            self.searchEntry.grab_focus()
-
-        if shortcut in ("Ctrl+I", "Ctrl+Mod2+I"):
-            fn.show_package_info(self)
-
-    # =====================================================
-    #               SEARCH ENTRY
-    # =====================================================
-
-    def on_search_activated(self, searchentry):
-        if searchentry.get_text_length() == 0 and self.search_activated:
-            self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-            self.search_activated = False
-
-        if searchentry.get_text_length() == 0:
-            self.search_activated = False
-
-        search_term = searchentry.get_text()
-        # if the string is completely whitespace ignore searching
-        if not search_term.isspace():
-            try:
-                if len(search_term) > 0:
-                    # test if the string entered by the user is in the package name
-                    # results is a dictionary, which holds a list of packages
-                    # results[category]=pkg_list
-
-                    # searching is processed inside a thread
-
-                    th_search = fn.threading.Thread(
-                        name="thread_search",
-                        target=fn.search,
-                        args=(
-                            self,
-                            search_term,
-                        ),
-                    )
-                    print(
-                        "[INFO] %s Starting search"
-                        % datetime.now().strftime("%H:%M:%S")
-                    )
-
-                    th_search.start()
-
-                    # get the search_results from the queue
-                    results = self.search_queue.get()
-
-                    if results is not None:
-                        print(
-                            "[INFO] %s Search complete"
-                            % datetime.now().strftime("%H:%M:%S")
-                        )
-
-                        if len(results) > 0:
-                            total = 0
-                            for val in results.values():
-                                total += len(val)
-
-                            print(
-                                "[INFO] %s Search found %s results"
-                                % (
-                                    datetime.now().strftime("%H:%M:%S"),
-                                    total,
-                                )
-                            )
-                            # make sure the gui search only displays the pkgs inside the results
-
-                            self.vbox_search = GUI.GUISearch(
-                                self,
-                                Gtk,
-                                Gdk,
-                                GdkPixbuf,
-                                base_dir,
-                                os,
-                                Pango,
-                                results,
-                                search_term,
-                            )
-
-                            self.search_activated = True
-                    else:
-                        print(
-                            "[INFO] %s Search found %s results"
-                            % (
-                                datetime.now().strftime("%H:%M:%S"),
-                                0,
-                            )
-                        )
-                        self.searchEntry.grab_focus()
-
-                elif self.search_activated == True:
-                    self.vbox_main = GUI.GUI(
-                        self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango
-                    )
-                    self.search_activated = False
-            except Exception as err:
-                print("Exception in on_search_activated(): %s" % err)
-
-            finally:
-                if self.search_activated == True:
-                    self.search_queue.task_done()
-
-    def on_search_cleared(self, searchentry, icon_pos, event):
-        if self.search_activated:
-            self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-
-        self.searchEntry.set_placeholder_text("Search...")
-
-        self.search_activated = False
-
-    # =====================================================
-    #               ARCOLINUX REPOS, KEYS AND MIRRORS
-    # =====================================================
-
-    def on_repos_clicked(self, widget):
-        if self.btnRepos._value == 1:
-            print("[INFO] : Let's install the ArcoLinux keys and mirrors")
-            fn.install_arcolinux_key_mirror(self)
-
-            print("[INFO] : Checking whether the repos have been added")
-            fn.add_repos()
-
-            self.btnRepos.set_label("Remove repos")
-            self.btnRepos._value = 2
-
-        else:
-            print("[INFO] : Let's remove the ArcoLinux keys and mirrors")
-            fn.remove_arcolinux_key_mirror(self)
-            print("[INFO] : Removing the ArcoLinux repos in /etc/pacman.conf")
-            fn.remove_repos()
-
-            self.btnRepos.set_label("Add repos")
-            self.btnRepos._value = 1
-
-    # =====================================================
-    #               RESTART/QUIT BUTTON
-    # =====================================================
-
-    def on_close(self, widget, data):
-        if os.path.exists("/tmp/sofirem.lock"):
-            os.unlink("/tmp/sofirem.lock")
-
-        if os.path.exists("/tmp/sofirem.pid"):
-            os.unlink("/tmp/sofirem.pid")
-
-        # see the comment in fn.terminate_pacman()
-        fn.terminate_pacman()
-
-        Gtk.main_quit()
-        print(
-            "---------------------------------------------------------------------------"
-        )
-        print("Thanks for using Sofirem")
-        print("Report issues to make it even better")
-        print(
-            "---------------------------------------------------------------------------"
-        )
-        print("You can report issues on https://discord.gg/stBhS4taje")
-        print(
-            "---------------------------------------------------------------------------"
-        )
-
-    # ====================================================================
-    #                     Button Functions
-    # ====================================================================
-    # Given what this function does, it might be worth considering making it a
-    # thread so that the app doesn't block while installing/uninstalling is happening.
-    def app_toggle(self, widget, active, package, Gtk, vboxStack1, fn, category):
-        # switch widget is currently toggled off
-        if widget.get_state() == False and widget.get_active() == True:
-            widget.set_state(True)
-            package = package.strip()
-
-            if len(package) > 0:
-                print(
-                    "[INFO] %s Package to install : %s"
-                    % (datetime.now().strftime("%H:%M:%S"), package)
-                )
-
-                if len(self.pkg_inst_deque) <= 5:
-                    self.pkg_inst_deque.append(package)
-                    self.pkg_queue.put(
-                        (
-                            package,
-                            "install",
-                            widget,
-                        ),
-                    )
-
-                    th = fn.threading.Thread(
-                        name="thread_pkginst",
-                        target=fn.install,
-                        args=(self,),
-                    )
-
-                    th.start()
-                else:
-                    msg_dialog = message_dialog(
-                        self,
-                        "Please wait until previous Pacman transactions are completed",
-                        "There are a maximum of 5 packages added to the queue",
-                        "Waiting for previous Pacman transactions to complete",
-                        Gtk.MessageType.WARNING,
-                    )
-
-                    msg_dialog.run()
-                    msg_dialog.hide()
-
-        # switch widget is currently toggled on
-        if widget.get_state() == True and widget.get_active() == False:
-            widget.set_state(False)
-            # Uninstall the package
-            package = package.strip()
-
-            if len(package) > 0:
-                print(
-                    "[INFO] %s Package to remove : %s"
-                    % (datetime.now().strftime("%H:%M:%S"), package)
-                )
-
-                self.pkg_queue.put(
-                    (
-                        package,
-                        "uninstall",
-                        widget,
-                    ),
-                )
-
-                th = fn.threading.Thread(
-                    name="thread_pkgrem",
-                    target=fn.uninstall,
-                    args=(self,),
-                )
-
-                th.start()
-
-        fn.get_current_installed()
-
-        # return True to prevent the default handler from running
-        return True
-
-        # App_Frame_GUI.GUI(self, Gtk, vboxStack1, fn, category, package_file)
-        # widget.get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().get_parent().queue_redraw()
-        # self.gui.hide()
-        # self.gui.queue_redraw()
-        # self.gui.show_all()
-
-    def pkgInfo_clicked(self, widget):
-        fn.show_package_info(self)
-
-    def recache_clicked(self, widget):
-        # Check if cache is out of date. If so, run the re-cache, if not, don't.
-        # pb = ProgressBarWindow()
-        # pb.show_all()
-        # pb.set_text("Updating Cache")
-        # pb.reset_timer()
-
-        print(
-            "[INFO] %s Recache applications - start"
-            % datetime.now().strftime("%H:%M:%S")
-        )
-
-        fn.create_actions_log(
-            fn.launchtime,
-            "[INFO] %s Recache applications - start"
-            % datetime.now().strftime("%H:%M:%S")
-            + "\n",
-        )
-
-        fn.cache_btn()
 
 
 # ====================================================================
@@ -681,7 +636,7 @@ class Main(Gtk.Window):
 
 
 def signal_handler(sig, frame):
-    print("[INFO] %s Sofirem is closing." % datetime.now().strftime("%H:%M:%S"))
+    fn.logger.info("Sofirem is closing.")
     if os.path.exists("/tmp/sofirem.lock"):
         os.unlink("/tmp/sofirem.lock")
 
@@ -694,6 +649,7 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     try:
         signal.signal(signal.SIGINT, signal_handler)
+
         if not os.path.isfile("/tmp/sofirem.lock"):
             with open("/tmp/sofirem.pid", "w") as f:
                 f.write(str(os.getpid()))
@@ -709,13 +665,8 @@ if __name__ == "__main__":
             w = Main()
             w.show_all()
 
-            fn.create_packages_log()
+            fn.logger.info("App Started")
 
-            print("[INFO] %s App Started" % datetime.now().strftime("%H:%M:%S"))
-            fn.create_actions_log(
-                fn.launchtime,
-                "[INFO] %s App Started" % datetime.now().strftime("%H:%M:%S") + "\n",
-            )
             Gtk.main()
         else:
             md = Gtk.MessageDialog(
@@ -727,7 +678,7 @@ if __name__ == "__main__":
             )
             md.format_secondary_markup(
                 "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
-Click 'Yes' to remove the lock file and try running again"
+                Click 'Yes' to remove the lock file and try running again"
             )  # noqa
 
             result = md.run()
@@ -754,8 +705,8 @@ Click 'Yes' to remove the lock file and try running again"
                     #     "You first need to close the existing application"
                     # )
                     # md2.run()
-                    print("You first need to close the existing application")
+                    fn.logger.info("You first need to close the existing application")
                 else:
                     os.unlink("/tmp/sofirem.lock")
     except Exception as e:
-        print("Exception in __main__: %s" % e)
+        fn.logger.error("Exception in __main__: %s" % e)

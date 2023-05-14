@@ -21,3 +21,24 @@ label#title {
     font-size: 20px;
     font-weight: 600;
 }
+
+label#lbl_pkgversion {
+	color: white;
+	background-color: #3584e4;
+	border: 3px solid #3584e4;
+	border-radius: 100px;
+	font-size: 80%;
+	font-weight: bold;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+infobar#infobar_info {
+  background-color: #3584e4;
+  color: white;
+}
+
+infobar#infobar_err {
+  background-color: red;
+  color: white;
+}

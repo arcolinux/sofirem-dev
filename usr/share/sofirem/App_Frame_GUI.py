@@ -3,7 +3,7 @@
 # =================================================================
 from socket import TIPC_ADDR_NAME
 from urllib.parse import scheme_chars
-import Functions
+import Functions as fn
 
 
 def GUI(self, Gtk, vboxStack1, category, packages_lst):
@@ -110,6 +110,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     # construct new switch
                     switch = Gtk.Switch()
+                    switch.set_halign(Gtk.Align(1))
 
                     """
                         Changed to use signal state-set for switch widget.
@@ -120,15 +121,11 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
                         caused a never-ending loop which would call app_toggle.
 
                     """
-                    switch.set_state(Functions.query_pkg(package.name))
+                    switch.set_state(fn.query_pkg(package.name))
                     switch.connect(
                         "state-set",
                         self.app_toggle,
-                        package.name,
-                        Gtk,
-                        vboxStack1,
-                        Functions,
-                        category,
+                        package,
                     )
 
                     # add switch widget to grid
@@ -192,6 +189,30 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     ###### pkg desc label widget ends
 
+                    ##### add pkg version label widet starts #####
+
+                    if self.display_versions == True:
+                        lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
+                        lbl_pkg_version.set_text(package.version)
+                        lbl_pkg_version.set_name("lbl_pkg_version")
+
+                        lblSepPkgVersion = Gtk.Label(xalign=0, yalign=0)
+                        lblSepPkgVersion.set_text(sep_text)
+
+                        grid.attach_next_to(
+                            lblSepPkgVersion, lblPkgDesc, Gtk.PositionType.RIGHT, 1, 1
+                        )
+
+                        grid.attach_next_to(
+                            lbl_pkg_version,
+                            lblSepPkgVersion,
+                            Gtk.PositionType.RIGHT,
+                            1,
+                            1,
+                        )
+
+                    ##### pkg version ends #####
+
                     # make the page scrollable
                     grid_sc = Gtk.ScrolledWindow()
                     grid_sc.add(grid)
@@ -241,7 +262,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
         vboxStack1.pack_start(vbox, False, False, 0)
 
     except Exception as e:
-        print("Exception in App_Frame_GUI.GUI(): %s" % e)
+        fn.logger.error("Exception in App_Frame_GUI.GUI(): %s" % e)
 
 
 ########## PREVIOUS GUI CODE START ##########

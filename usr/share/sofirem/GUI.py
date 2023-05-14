@@ -40,7 +40,7 @@ class GUI_Worker(Thread):
                     )
 
             except Exception as e:
-                print("Exception in GUI_Worker(): %s" % e)
+                fn.logger.error("Exception in GUI_Worker(): %s" % e)
             finally:
                 self.queue.task_done()
 
@@ -51,12 +51,18 @@ def GUISearch(
     try:
         # remove previous vbox
         if self.search_activated == False:
-            self.remove(self.vbox_main)
+            self.remove(self.vbox)
         else:
             self.remove(self.vbox_search)
 
         # lets quickly create the latest installed list.
         fn.get_current_installed()
+
+        # =======================================================
+        #                       HeaderBar
+        # =======================================================
+
+        setup_headerbar(self, Gtk)
 
         # =======================================================
         #                       App Notifications
@@ -84,12 +90,12 @@ def GUISearch(
         #                       CONTAINER
         # ==========================================================
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.vbox_search = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         vbox1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
-        vbox.pack_start(hbox, True, True, 0)
-        self.add(vbox)
+        self.vbox_search.pack_start(hbox, True, True, 0)
+        self.add(self.vbox_search)
 
         # ==========================================================
         #                    PREP WORK
@@ -185,14 +191,6 @@ def GUISearch(
         #           "Refresh the application cache")
 
         # =====================================================
-        #               PACMAN LOG BUTTON
-        # =====================================================
-
-        btnPacmanLog = Gtk.Button(label="Pacman Log")
-        btnPacmanLog.set_size_request(100, 30)
-        btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
-
-        # =====================================================
         #                   REPOS
         # =====================================================
 
@@ -200,10 +198,10 @@ def GUISearch(
             fn.check_package_installed("arcolinux-keyring")
             or fn.check_package_installed("arcolinux-mirrorlist-git")
         ):
-            self.btnRepos = Gtk.Button(label="Add repos")
+            self.btnRepos = Gtk.Button(label="Add ArcoLinux Repo")
             self.btnRepos._value = 1
         else:
-            self.btnRepos = Gtk.Button(label="Remove repos")
+            self.btnRepos = Gtk.Button(label="Remove ArcoLinux Repo")
             self.btnRepos._value = 2
 
         self.btnRepos.set_size_request(100, 30)
@@ -245,7 +243,6 @@ def GUISearch(
         ivbox.pack_start(stack_switcher, True, True, 0)
 
         # ivbox.pack_start(btnReCache, False, False, 0)
-        ivbox.pack_start(btnPacmanLog, False, False, 0)
         ivbox.pack_start(self.btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
@@ -260,16 +257,13 @@ def GUISearch(
 
         self.show_all()
 
-        return vbox
-
     except Exception as err:
-        print("Exception in GUISearch(): %s" % err)
+        fn.logger.error("Exception in GUISearch(): %s" % err)
 
 
 def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     try:
         # reset back to main box
-
         if self.search_activated:
             # remove the search vbox
             self.remove(self.vbox_search)
@@ -277,6 +271,12 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # lets quickly create the latest installed list.
         fn.get_current_installed()
+
+        # =======================================================
+        #                       HeaderBar
+        # =======================================================
+
+        setup_headerbar(self, Gtk)
 
         # =======================================================
         #                       App Notifications
@@ -304,12 +304,12 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #                       CONTAINER
         # ==========================================================
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         vbox1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
-        vbox.pack_start(hbox, True, True, 0)
-        self.add(vbox)
+        self.vbox.pack_start(hbox, True, True, 0)
+        self.add(self.vbox)
 
         # ==========================================================
         #                    PREP WORK
@@ -414,29 +414,8 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #           "Refresh the application cache")
 
         # =====================================================
-        #               PACMAN LOG BUTTON
-        # =====================================================
-
-        btnPacmanLog = Gtk.Button(label="Pacman Log")
-        btnPacmanLog.set_size_request(100, 30)
-        btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
-
-        # =====================================================
         #                   REPOS
         # =====================================================
-
-        if not (
-            fn.check_package_installed("arcolinux-keyring")
-            or fn.check_package_installed("arcolinux-mirrorlist-git")
-        ):
-            self.btnRepos = Gtk.Button(label="Add repos")
-            self.btnRepos._value = 1
-        else:
-            self.btnRepos = Gtk.Button(label="Remove repos")
-            self.btnRepos._value = 2
-
-        self.btnRepos.set_size_request(100, 30)
-        self.btnRepos.connect("clicked", self.on_repos_clicked)
 
         # =====================================================
         #               QUIT BUTTON
@@ -463,8 +442,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
-        ivbox.pack_start(btnPacmanLog, False, False, 0)
-        ivbox.pack_start(self.btnRepos, False, False, 0)
+        # ivbox.pack_start(self.btnRepos, False, False, 0)
         ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
@@ -479,6 +457,158 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         if self.search_activated:
             self.show_all()
 
-        return vbox
     except Exception as e:
-        print("Exception in GUI(): %s" % e)
+        fn.logger.error("Exception in GUI(): %s" % e)
+
+
+def setup_headerbar(self, Gtk):
+    header_bar_title = "Sofirem"
+    headerbar = Gtk.HeaderBar()
+    headerbar.set_title(header_bar_title)
+    headerbar.set_show_close_button(True)
+
+    self.set_titlebar(headerbar)
+
+    toolbuttonSettings = Gtk.ToolButton()
+    toolbuttonSettings.set_icon_name("open-menu-symbolic.symbolic")
+    # toolbuttonSettings.set_icon_name(Gtk.STOCK_PREFERENCES)
+    toolbuttonSettings.connect("clicked", self.on_settings_clicked)
+
+    headerbar.pack_end(toolbuttonSettings)
+
+    self.popover = Gtk.PopoverMenu.new()
+    self.popover.set_relative_to(toolbuttonSettings)
+
+    vbox = Gtk.Box(spacing=1, orientation=Gtk.Orientation.VERTICAL)
+    vbox.set_border_width(10)
+
+    # switch to display package versions
+    switchSettingsVersion = Gtk.Switch()
+    switchSettingsVersion.set_halign(Gtk.Align(1))
+
+    # button to open the pacman log monitoring dialog
+    btnPacmanLog = Gtk.Button(label="Open Pacman Log File")
+    btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
+    btnPacmanLog.set_size_request(100, 30)
+
+    # button to export list of installed packages to disk
+    btn_packages_export = Gtk.Button(label="Show Installed Packages")
+    btn_packages_export.connect("clicked", self.on_packages_export_clicked)
+    btn_packages_export.set_size_request(100, 30)
+
+    # button to show about dialog
+    btn_about_app = Gtk.Button(label="About")
+    btn_about_app.connect("clicked", self.on_about_app_clicked)
+    btn_about_app.set_size_request(100, 30)
+
+    if self.display_versions == True:
+        switchSettingsVersion.set_active(True)
+    else:
+        switchSettingsVersion.set_active(False)
+    switchSettingsVersion.connect("notify::active", self.version_toggle)
+
+    if not (
+        fn.check_package_installed("arcolinux-keyring")
+        or fn.check_package_installed("arcolinux-mirrorlist-git")
+    ):
+        self.btnRepos = Gtk.Button(label="Add ArcoLinux Repos")
+        self.btnRepos._value = 1
+    else:
+        self.btnRepos = Gtk.Button(label="Remove ArcoLinux Repos")
+        self.btnRepos._value = 2
+
+    self.btnRepos.set_size_request(100, 30)
+    self.btnRepos.connect("clicked", self.on_repos_clicked)
+
+    lblSettingsVersion = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsVersion.set_text("Display package version")
+
+    lblSettingsPadding1 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding1.set_text("    ")
+
+    lblSettingsPadding2 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding2.set_text("    ")
+
+    gridSettings = Gtk.Grid()
+
+    # attach_next_to(new,existing)
+    # attach (self, child:Gtk.Widget, left:int, top:int, width:int, height:int)
+    gridSettings.attach(lblSettingsPadding1, 0, 0, 1, 1)
+
+    gridSettings.attach_next_to(
+        lblSettingsVersion, lblSettingsPadding1, Gtk.PositionType.RIGHT, 1, 1
+    )
+
+    gridSettings.attach_next_to(
+        lblSettingsPadding2, lblSettingsVersion, Gtk.PositionType.RIGHT, 1, 1
+    )
+
+    gridSettings.attach_next_to(
+        switchSettingsVersion, lblSettingsPadding2, Gtk.PositionType.RIGHT, 1, 1
+    )
+
+    # add the repos button
+
+    lblSettingsPaddingRow1 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPaddingRow1.set_text("    ")
+
+    gridSettings.attach(lblSettingsPaddingRow1, 0, 1, 1, 1)
+
+    lblSettingsPadding3 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding3.set_text("    ")
+
+    gridSettings.attach(lblSettingsPadding3, 0, 2, 1, 1)
+
+    gridSettings.attach_next_to(
+        self.btnRepos, lblSettingsPadding3, Gtk.PositionType.RIGHT, 20, 1
+    )
+
+    # add the pacman log button
+    lblSettingsPaddingRow2 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPaddingRow2.set_text("    ")
+
+    gridSettings.attach(lblSettingsPaddingRow2, 0, 3, 1, 1)
+
+    lblSettingsPadding4 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding4.set_text("    ")
+
+    gridSettings.attach(lblSettingsPadding4, 0, 4, 1, 1)
+
+    gridSettings.attach_next_to(
+        btnPacmanLog, lblSettingsPadding4, Gtk.PositionType.RIGHT, 20, 1
+    )
+
+    # add export package list button
+    lblSettingsPaddingRow3 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPaddingRow3.set_text("    ")
+
+    gridSettings.attach(lblSettingsPaddingRow3, 0, 5, 1, 1)
+
+    lblSettingsPadding5 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding5.set_text("    ")
+
+    gridSettings.attach(lblSettingsPadding5, 0, 6, 1, 1)
+
+    gridSettings.attach_next_to(
+        btn_packages_export, lblSettingsPadding5, Gtk.PositionType.RIGHT, 20, 1
+    )
+
+    # add about dialog button
+    lblSettingsPaddingRow4 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPaddingRow4.set_text("    ")
+
+    gridSettings.attach(lblSettingsPaddingRow4, 0, 7, 1, 1)
+
+    lblSettingsPadding6 = Gtk.Label(xalign=0, yalign=0)
+    lblSettingsPadding6.set_text("    ")
+
+    gridSettings.attach(lblSettingsPadding6, 0, 8, 1, 1)
+
+    gridSettings.attach_next_to(
+        btn_about_app, lblSettingsPadding6, Gtk.PositionType.RIGHT, 20, 1
+    )
+
+    vbox.pack_start(gridSettings, True, True, 0)
+
+    self.popover.add(vbox)
+    self.popover.set_position(Gtk.PositionType.BOTTOM)
