@@ -66,7 +66,7 @@ class Main(Gtk.Window):
             self.display_versions = False
 
             # pkg = fn.Package(
-            #     "cheese",
+            #     "wine-staging",
             #     "description",
             #     "category",
             #     "subcategory",
@@ -77,7 +77,7 @@ class Main(Gtk.Window):
             #     self,
             #     "install",
             #     pkg,
-            #     "pacman -s cheese --noconfirm",
+            #     "pacman -s paru --noconfirm",
             # )
             #
             # sys.exit(0)
@@ -485,7 +485,7 @@ class Main(Gtk.Window):
     # ================================================================
 
     def on_about_app_clicked(self, widget):
-        logger.info("Showing App About dialog")
+        fn.logger.info("Showing About dialog")
         self.toggle_popover()
 
         about = About()

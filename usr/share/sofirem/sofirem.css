@@ -33,6 +33,10 @@ label#lbl_pkgversion {
 	padding-right: 5px;
 }
 
+label#lbl_btn_padding_right{
+  padding-right: 700px;
+}
+
 infobar#infobar_info {
   background-color: #3584e4;
   color: white;

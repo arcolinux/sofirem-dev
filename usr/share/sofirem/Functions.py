@@ -123,7 +123,7 @@ def create_packages_log():
     try:
         logger.info("Creating a list of currently installed packages")
         packages_log = log_dir + "%s-packages.log" % datetime.now().strftime("%H-%M-%S")
-        logger.info("Packages list will be saved in %s" % packages_log)
+        logger.info("Saving in %s" % packages_log)
         cmd = ["pacman", "-Q"]
 
         with subprocess.Popen(
@@ -138,10 +138,6 @@ def create_packages_log():
                     f.write("%s\n" % line)
     except Exception as e:
         logger.error("Exception in create_packages_log(): %s" % e)
-
-    # GLib.idle_add(
-    #     show_in_app_notification, "is already installed - nothing to do", "test"
-    # )
 
 
 # =====================================================
@@ -439,7 +435,9 @@ def create_package_progress_dialog(self, action, pkg, command):
         lbl_package_url_title.set_markup("<b>URL: </b>")
 
         lbl_package_url_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_url_value.set_text(self.package_metadata["url"])
+        lbl_package_url_value.set_markup(
+            "<a href=''>%s</a>" % self.package_metadata["url"]
+        )
 
         grid_package_metadata.attach(lbl_package_url_title, 0, 6, 1, 1)
         grid_package_metadata.attach_next_to(
@@ -453,37 +451,98 @@ def create_package_progress_dialog(self, action, pkg, command):
         lbl_package_depends_title = Gtk.Label(xalign=0, yalign=0)
         lbl_package_depends_title.set_markup("<b>Depends on: </b>")
 
-        listbox_depends_on = Gtk.ListBox()
-        listbox_depends_on.set_placeholder(Gtk.Label(label="None"))
-        for i in range(len(self.package_metadata["depends_on"])):
-            lbl_package_depends_value = Gtk.Label(
-                label="%s. %s" % (i + 1, self.package_metadata["depends_on"][i])
-            )
-            listbox_depends_on.add(lbl_package_depends_value)
+        if len(self.package_metadata["depends_on"]) > 0:
+            treestore_depends = Gtk.TreeStore(str, str)
 
-        grid_package_metadata.attach(lbl_package_depends_title, 0, 7, 1, 1)
-        grid_package_metadata.attach_next_to(
-            listbox_depends_on,
-            lbl_package_depends_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
+            for item in self.package_metadata["depends_on"]:
+                treestore_depends.append(None, list(item))
+
+            treeview_depends = Gtk.TreeView()
+            treeview_depends.set_model(treestore_depends)
+
+            for i, col_title in enumerate(["Packages"]):
+                renderer = Gtk.CellRendererText()
+                col = Gtk.TreeViewColumn(col_title, renderer, text=i)
+                treeview_depends.append_column(col)
+
+            path = Gtk.TreePath.new_from_indices([0])
+
+            selection = treeview_depends.get_selection()
+
+            selection.select_path(path)
+
+            grid_package_metadata.attach(lbl_package_depends_title, 0, 7, 1, 1)
+
+            grid_package_metadata.attach_next_to(
+                treeview_depends,
+                lbl_package_depends_title,
+                Gtk.PositionType.RIGHT,
+                1,
+                1,
+            )
+        else:
+            lbl_package_depends_value = Gtk.Label(xalign=0, yalign=0)
+            lbl_package_depends_value.set_text("None")
+
+            grid_package_metadata.attach(lbl_package_depends_title, 0, 7, 1, 1)
+
+            grid_package_metadata.attach_next_to(
+                lbl_package_depends_value,
+                lbl_package_depends_title,
+                Gtk.PositionType.RIGHT,
+                1,
+                1,
+            )
+
+        lbl_padding5 = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding5.set_text("")
+
+        grid_package_metadata.attach(lbl_padding5, 0, 9, 1, 1)
 
         lbl_package_conflicts_title = Gtk.Label(xalign=0, yalign=0)
         lbl_package_conflicts_title.set_markup("<b>Conflicts with: </b>")
 
-        lbl_package_conflicts_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_conflicts_value.set_text(self.package_metadata["conflicts_with"])
+        if len(self.package_metadata["conflicts_with"]) > 0:
+            treestore_conflicts = Gtk.TreeStore(str, str)
+            for item in self.package_metadata["conflicts_with"]:
+                treestore_conflicts.append(None, list(item))
 
-        grid_package_metadata.attach(lbl_package_conflicts_title, 0, 8, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_conflicts_value,
-            lbl_package_conflicts_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
+            treeview_conflicts = Gtk.TreeView()
+            treeview_conflicts.set_model(treestore_conflicts)
+
+            for i, col_title in enumerate(["Packages"]):
+                renderer = Gtk.CellRendererText()
+                col = Gtk.TreeViewColumn(col_title, renderer, text=i)
+                treeview_conflicts.append_column(col)
+
+            path = Gtk.TreePath.new_from_indices([0])
+
+            selection = treeview_conflicts.get_selection()
+
+            selection.select_path(path)
+
+            grid_package_metadata.attach(lbl_package_conflicts_title, 0, 10, 1, 1)
+
+            grid_package_metadata.attach_next_to(
+                treeview_conflicts,
+                lbl_package_conflicts_title,
+                Gtk.PositionType.RIGHT,
+                1,
+                1,
+            )
+        else:
+            lbl_package_conflicts_value = Gtk.Label(xalign=0, yalign=0)
+            lbl_package_conflicts_value.set_text("None")
+
+            grid_package_metadata.attach(lbl_package_conflicts_title, 0, 10, 1, 1)
+
+            grid_package_metadata.attach_next_to(
+                lbl_package_conflicts_value,
+                lbl_package_conflicts_title,
+                Gtk.PositionType.RIGHT,
+                1,
+                1,
+            )
 
         lbl_package_download_size_title = Gtk.Label(xalign=0, yalign=0)
         lbl_package_download_size_title.set_markup("<b>Download size: </b>")
@@ -491,7 +550,7 @@ def create_package_progress_dialog(self, action, pkg, command):
         lbl_package_download_size_value = Gtk.Label(xalign=0, yalign=0)
         lbl_package_download_size_value.set_text(self.package_metadata["download_size"])
 
-        grid_package_metadata.attach(lbl_package_download_size_title, 0, 9, 1, 1)
+        grid_package_metadata.attach(lbl_package_download_size_title, 0, 11, 1, 1)
         grid_package_metadata.attach_next_to(
             lbl_package_download_size_value,
             lbl_package_download_size_title,
@@ -508,7 +567,7 @@ def create_package_progress_dialog(self, action, pkg, command):
             self.package_metadata["installed_size"]
         )
 
-        grid_package_metadata.attach(lbl_package_installed_size_title, 0, 10, 1, 1)
+        grid_package_metadata.attach(lbl_package_installed_size_title, 0, 12, 1, 1)
         grid_package_metadata.attach_next_to(
             lbl_package_installed_size_value,
             lbl_package_installed_size_title,
@@ -523,7 +582,7 @@ def create_package_progress_dialog(self, action, pkg, command):
         lbl_package_build_date_value = Gtk.Label(xalign=0, yalign=0)
         lbl_package_build_date_value.set_text(self.package_metadata["build_date"])
 
-        grid_package_metadata.attach(lbl_package_build_date_title, 0, 11, 1, 1)
+        grid_package_metadata.attach(lbl_package_build_date_title, 0, 13, 1, 1)
         grid_package_metadata.attach_next_to(
             lbl_package_build_date_value,
             lbl_package_build_date_title,
@@ -538,7 +597,7 @@ def create_package_progress_dialog(self, action, pkg, command):
         lbl_package_packager_value = Gtk.Label(xalign=0, yalign=0)
         lbl_package_packager_value.set_text(self.package_metadata["packager"])
 
-        grid_package_metadata.attach(lbl_package_packager_title, 0, 12, 1, 1)
+        grid_package_metadata.attach(lbl_package_packager_title, 0, 14, 1, 1)
         grid_package_metadata.attach_next_to(
             lbl_package_packager_value,
             lbl_package_packager_title,
@@ -1070,6 +1129,7 @@ def get_installed_package_data():
         pkg_name = None
         pkg_version = None
         pkg_install_date = None
+        pkg_installed_size = None
 
         with subprocess.Popen(
             query_str,
@@ -1085,11 +1145,14 @@ def get_installed_package_data():
                 if "Version         :" in line.strip():
                     pkg_version = line.replace(" ", "").split("Version:")[1].strip()
 
+                if "Installed Size  :" in line.strip():
+                    pkg_installed_size = line.split("Installed Size  :")[1].strip()
+
                 if "Install Date    :" in line.strip():
                     pkg_install_date = line.split("Install Date    :")[1].strip()
 
                     installed_packages_lst.append(
-                        (pkg_name, pkg_version, pkg_install_date)
+                        (pkg_name, pkg_version, pkg_install_date, pkg_installed_size)
                     )
 
         return installed_packages_lst
@@ -1111,7 +1174,7 @@ def get_package_information(self, package_name):
         pkg_arch = None
         pkg_url = None
         pkg_depends_on = []
-        pkg_conflicts_with = None
+        pkg_conflicts_with = []
         pkg_download_size = None
         pkg_installed_size = None
         pkg_build_date = None
@@ -1144,11 +1207,24 @@ def get_package_information(self, package_name):
                     pkg_url = line.split("URL             :")[1].strip()
 
                 if "Depends On      :" in line.strip():
-                    pkg_depends_on_str = line.split("Depends On      :")[1].strip()
-                    pkg_depends_on = pkg_depends_on_str.split("  ")
+                    if line.split("Depends On      :")[1].strip() != "None":
+                        pkg_depends_on_str = line.split("Depends On      :")[1].strip()
+
+                        for pkg_dep in pkg_depends_on_str.split("  "):
+                            pkg_depends_on.append((pkg_dep, None))
+                    else:
+                        pkg_depends_on = []
 
                 if "Conflicts With  :" in line.strip():
-                    pkg_conflicts_with = line.split("Conflicts With  :")[1].strip()
+                    if line.split("Conflicts With  :")[1].strip() != "None":
+                        pkg_conflicts_with_str = line.split("Conflicts With  :")[
+                            1
+                        ].strip()
+
+                        for pkg_con in pkg_conflicts_with_str.split("  "):
+                            pkg_conflicts_with.append((pkg_con, None))
+                    else:
+                        pkg_conflicts_with = []
 
                 if "Download Size   :" in line.strip():
                     pkg_download_size = line.split("Download Size   :")[1].strip()
@@ -1180,7 +1256,7 @@ def get_package_information(self, package_name):
             return package_metadata
 
     except Exception as e:
-        logger.error("Exception in get_remote_package_information(): %e" % e)
+        logger.error("Exception in get_package_information(): %e" % e)
 
 
 # =====================================================
@@ -2024,9 +2100,11 @@ def on_dialog_export_clicked(self, dialog, packages_lst):
             msg_dialog = message_dialog(
                 self,
                 "Package export complete",
-                "Package list exported to %s." % filename,
+                "Package list exported to %s" % filename,
                 "",
             )
+
+            msg_dialog.set_modal(True)
 
             msg_dialog.show_all()
             msg_dialog.run()
@@ -2059,7 +2137,7 @@ def export_installed_packages(self):
 
         export_dialog = Gtk.Dialog()
         export_dialog.set_resizable(False)
-        export_dialog.set_size_request(750, 700)
+        export_dialog.set_size_request(900, 700)
         export_dialog.set_modal(True)
         export_dialog.set_border_width(10)
 
@@ -2074,23 +2152,35 @@ def export_installed_packages(self):
         # export_grid.set_row_homogeneous(True)
 
         # get a list of installed packages on the system
-        query_str = ["pacman", "-Q"]
+
         packages_lst = get_installed_package_data()
 
         if len(packages_lst) > 0:
+            export_dialog.set_title("Showing %s installed packages" % len(packages_lst))
             logger.debug("List of installed packages obtained")
 
-            packages_liststore = Gtk.ListStore(str, str, str)
+            treestore_packages = Gtk.TreeStore(str, str, str, str)
             for item in packages_lst:
-                packages_liststore.append(list(item))
+                treestore_packages.append(None, list(item))
 
-            treeview = Gtk.TreeView(model=packages_liststore)
+            treeview_packages = Gtk.TreeView()
 
-            for i, col_title in enumerate(["Name", "Version", "Installed Date"]):
+            treeview_packages.set_model(treestore_packages)
+
+            for i, col_title in enumerate(
+                ["Name", "Version", "Installed Date", "Installed Size"]
+            ):
                 renderer = Gtk.CellRendererText()
                 col = Gtk.TreeViewColumn(col_title, renderer, text=i)
-                treeview.append_column(col)
-                # col.set_sort_column_id(0)
+                treeview_packages.append_column(col)
+
+            path = Gtk.TreePath.new_from_indices([0])
+
+            selection = treeview_packages.get_selection()
+            selection.select_path(path)
+
+            treeview_packages.expand_all()
+            treeview_packages.columns_autosize()
 
             scrolled_window = Gtk.ScrolledWindow()
             scrolled_window.set_vexpand(True)
@@ -2109,6 +2199,7 @@ def export_installed_packages(self):
                 "clicked", on_dialog_export_clicked, export_dialog, packages_lst
             )
             btn_dialog_export.set_size_request(100, 30)
+            # btn_dialog_export.set_halign(Gtk.Align.END)
 
             btn_dialog_export_close = Gtk.Button(label="Close")
             btn_dialog_export_close.connect(
@@ -2118,30 +2209,37 @@ def export_installed_packages(self):
 
             btn_grid = Gtk.Grid()
 
+            lbl_btn_padding_right = Gtk.Label(xalign=0, yalign=0)
+
+            # padding to make the buttons move across to the right of the dialog
+            # set the name of the label using the value set inside the sofirem.css file
+
+            lbl_btn_padding_right.set_name("lbl_btn_padding_right")
+
+            btn_grid.attach(lbl_btn_padding_right, 0, 0, 1, 1)
+
             lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding2.set_text("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t")
-            btn_grid.attach(lbl_padding2, 0, 0, 1, 1)
-
-            lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding3.set_text("     ")
+            lbl_padding2.set_text("     ")
 
             btn_grid.attach_next_to(
-                btn_dialog_export, lbl_padding2, Gtk.PositionType.RIGHT, 1, 1
+                btn_dialog_export, lbl_btn_padding_right, Gtk.PositionType.RIGHT, 1, 1
             )
 
             btn_grid.attach_next_to(
-                lbl_padding3, btn_dialog_export, Gtk.PositionType.RIGHT, 1, 1
+                lbl_padding2, btn_dialog_export, Gtk.PositionType.RIGHT, 1, 1
             )
 
             btn_grid.attach_next_to(
-                btn_dialog_export_close, lbl_padding3, Gtk.PositionType.RIGHT, 1, 1
+                btn_dialog_export_close, lbl_padding2, Gtk.PositionType.RIGHT, 1, 1
             )
 
-            scrolled_window.add(treeview)
+            scrolled_window.add(treeview_packages)
 
             export_dialog.vbox.add(export_grid)
             export_dialog.vbox.add(btn_grid)
             export_dialog.show_all()
+            export_dialog.run()
+
         else:
             logger.error("Failed to obtain list of installed packages")
 
