@@ -54,6 +54,7 @@ class Main(Gtk.Window):
     def __init__(self):
         try:
             super(Main, self).__init__(title="Sofirem")
+
             self.set_border_width(10)
             self.connect("delete-event", self.on_close)
             self.set_position(Gtk.WindowPosition.CENTER)
@@ -65,7 +66,7 @@ class Main(Gtk.Window):
             # default: displaying versions are disabled
             self.display_versions = False
 
-            # self.package_metadata = fn.get_package_information(self, "gimp")
+            # self.package_metadata = fn.get_package_information(self, "steam")
             # pkg = fn.Package(
             #     "wine-staging",
             #     "description",
@@ -129,28 +130,29 @@ class Main(Gtk.Window):
             # Create installed.lst file for first time
             fn.get_current_installed()
             fn.logger.info("Created installed.lst")
-            # start making sure sofirem starts next time with dark or light theme
-            if os.path.isdir(fn.home + "/.config/gtk-3.0"):
-                try:
-                    if not os.path.islink("/root/.config/gtk-3.0"):
-                        fn.shutil.rmtree("/root/.config/gtk-3.0")
-                        fn.shutil.copytree(
-                            fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
-                        )
-                except Exception as error:
-                    print(error)
 
-            if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
-                try:
-                    if not os.path.islink("/root/.config/xsettingsd/"):
-                        fn.shutil.rmtree("/root/.config/xsettingsd/")
-                        if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
-                            fn.shutil.copytree(
-                                fn.home + "/.config/xsettingsd/",
-                                "/root/.config/xsettingsd/",
-                            )
-                except Exception as error:
-                    print(error)
+            # start making sure sofirem starts next time with dark or light theme
+            # if os.path.isdir(fn.home + "/.config/gtk-3.0"):
+            #     try:
+            #         if not os.path.islink("/root/.config/gtk-3.0"):
+            #             fn.shutil.rmtree("/root/.config/gtk-3.0")
+            #             fn.shutil.copytree(
+            #                 fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
+            #             )
+            #     except Exception as error:
+            #         print(error)
+            #
+            # if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
+            #     try:
+            #         if not os.path.islink("/root/.config/xsettingsd/"):
+            #             fn.shutil.rmtree("/root/.config/xsettingsd/")
+            #             if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
+            #                 fn.shutil.copytree(
+            #                     fn.home + "/.config/xsettingsd/",
+            #                     "/root/.config/xsettingsd/",
+            #                 )
+            #     except Exception as error:
+            #         print(error)
 
             # test there is no pacman lock file on the system
             if fn.check_pacman_lockfile():
@@ -428,6 +430,7 @@ class Main(Gtk.Window):
 
                     th.start()
                 else:
+                    widget.set_state(False)
                     proc = fn.get_pacman_process()
                     dialog = fn.message_dialog(
                         self,
@@ -467,6 +470,7 @@ class Main(Gtk.Window):
 
                     th.start()
                 else:
+                    widget.set_state(True)
                     proc = fn.get_pacman_process()
                     dialog = fn.message_dialog(
                         self,
@@ -581,12 +585,10 @@ class Main(Gtk.Window):
 
             pacmanlog_dialog.set_title("Pacman log file viewer")
             pacmanlog_dialog.set_default_size(700, 600)
+            pacmanlog_dialog.set_resizable(True)
             btnPacmanLogOk = Gtk.Button(label="OK")
             btnPacmanLogOk.connect(
                 "clicked", self.onPacmanlogResponse, pacmanlog_dialog
-            )
-            pacmanlog_dialog.set_icon_from_file(
-                os.path.join(base_dir, "images/sofirem.png")
             )
 
             pacmanlog_grid = Gtk.Grid()

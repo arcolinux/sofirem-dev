@@ -110,7 +110,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     # construct new switch
                     switch = Gtk.Switch()
-                    switch.set_halign(Gtk.Align(1))
+                    switch.set_valign(Gtk.Align.CENTER)
 
                     """
                         Changed to use signal state-set for switch widget.

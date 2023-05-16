@@ -25,6 +25,7 @@ from threading import Thread
 from ProgressBarWindow import ProgressBarWindow
 from Package import Package
 from distro import id
+from os import mkdir, path, makedirs
 
 # =====================================================
 #               Base Directory
@@ -43,8 +44,10 @@ debug = False
 distr = id()
 # limit the amount of threads to run
 # this limit is set for the install/uninstall package thread
-max_number_threads = 5
-thread_limiter = threading.BoundedSemaphore(max_number_threads)
+max_number_threads_pkg_install_rem = 5
+thread_limiter_pkg_install_rem = threading.BoundedSemaphore(
+    max_number_threads_pkg_install_rem
+)
 
 # this timeout is for the pacman sync, pacman lock file, install/uninstall processes
 # 10m timeout
@@ -80,7 +83,7 @@ event_log_file = "%s/%s-event.log" % (
 # Create log directory and the event log file
 try:
     if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+        makedirs(log_dir)
 
     print("[INFO] Log directory = %s" % log_dir)
 
@@ -229,20 +232,12 @@ def on_package_progress_close_response(self, widget, dialog):
     dialog.destroy()
     self.pkg_dialog_closed = True
 
-    # time.sleep(0.5)
-
 
 def package_progress_dialog_on_close(widget, data, self, action):
-    # closing package progress dialog, check if pacman is running terminate it
-    # if the progress dialog is closed mid install attempt to terminate pacman process
     self.pkg_dialog_closed = True
     logger.debug("Closing package progress dialog window")
     widget.hide()
     widget.destroy()
-
-    # time.sleep(0.5)
-
-    # return GLib.SOURCE_REMOVE
 
 
 def create_package_progress_dialog(self, action, pkg, command):
@@ -252,6 +247,9 @@ def create_package_progress_dialog(self, action, pkg, command):
         package_progress_dialog_headerbar = Gtk.HeaderBar()
         package_progress_dialog_headerbar.set_show_close_button(True)
         self.package_progress_dialog.set_titlebar(package_progress_dialog_headerbar)
+
+        package_progress_dialog_headerbar.set_property("can-focus", True)
+        Gtk.Window.grab_focus(package_progress_dialog_headerbar)
 
         self.package_progress_dialog.connect(
             "delete-event", package_progress_dialog_on_close, self, action
@@ -339,9 +337,14 @@ def create_package_progress_dialog(self, action, pkg, command):
         package_progress_btn_grid = Gtk.Grid()
 
         lbl_padding_btn = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding_btn.set_text("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t")
+        lbl_padding_btn.set_name("lbl_btn_padding_right")
 
-        package_progress_btn_grid.attach(lbl_padding_btn, 0, 1, 1, 1)
+        lbl_padding_btn_top = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding_btn_top.set_text("")
+
+        package_progress_btn_grid.attach(lbl_padding_btn_top, 0, 1, 1, 1)
+
+        package_progress_btn_grid.attach(lbl_padding_btn, 0, 2, 5, 1)
 
         package_progress_btn_grid.attach_next_to(
             btn_package_progress_close,
@@ -354,95 +357,175 @@ def create_package_progress_dialog(self, action, pkg, command):
         stack.add_titled(package_progress_grid, "Progress", "Package Progress")
 
         # package information
+        box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 
-        grid_package_metadata = Gtk.Grid()
-        package_metadata_scrolled_window = Gtk.ScrolledWindow()
+        listbox = Gtk.ListBox()
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        box_outer.pack_start(listbox, True, True, 0)
 
-        lbl_package_padding1 = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_padding1.set_text("")
+        # package name
+        row_package_title = Gtk.ListBoxRow()
+        vbox_package_title = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_package_title.add(vbox_package_title)
+        lbl_package_name_title = Gtk.Label(xalign=0)
+        lbl_package_name_title.set_markup("<b>Package Name</b>")
 
-        lbl_package_name_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_name_title.set_markup("<b>Name: </b>")
-
-        grid_package_metadata.attach(lbl_package_padding1, 0, 1, 1, 1)
-        grid_package_metadata.attach(lbl_package_name_title, 0, 2, 1, 1)
-
-        lbl_package_name_value = Gtk.Label(xalign=0, yalign=0)
+        lbl_package_name_value = Gtk.Label(xalign=0)
         lbl_package_name_value.set_text(self.package_metadata["name"])
+        vbox_package_title.pack_start(lbl_package_name_title, True, True, 0)
+        vbox_package_title.pack_start(lbl_package_name_value, True, True, 0)
 
-        grid_package_metadata.attach_next_to(
-            lbl_package_name_value,
-            lbl_package_name_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
+        listbox.add(row_package_title)
+
+        # repository
+
+        row_package_repo = Gtk.ListBoxRow()
+        vbox_package_repo = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_package_repo.add(vbox_package_repo)
+        lbl_package_repo_title = Gtk.Label(xalign=0)
+        lbl_package_repo_title.set_markup("<b>Repository</b>")
+
+        lbl_package_repo_value = Gtk.Label(xalign=0)
+        lbl_package_repo_value.set_text(self.package_metadata["repository"])
+        vbox_package_repo.pack_start(lbl_package_repo_title, True, True, 0)
+        vbox_package_repo.pack_start(lbl_package_repo_value, True, True, 0)
+
+        listbox.add(row_package_repo)
+
+        # description
+
+        row_package_description = Gtk.ListBoxRow()
+        vbox_package_description = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
         )
+        row_package_description.add(vbox_package_description)
+        lbl_package_description_title = Gtk.Label(xalign=0)
+        lbl_package_description_title.set_markup("<b>Description</b>")
 
-        lbl_package_repository_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_repository_title.set_markup("<b>Repository: </b>")
-
-        lbl_package_repository_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_repository_value.set_text(self.package_metadata["repository"])
-
-        grid_package_metadata.attach(lbl_package_repository_title, 0, 3, 1, 1)
-
-        grid_package_metadata.attach_next_to(
-            lbl_package_repository_value,
-            lbl_package_repository_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
-
-        lbl_package_description_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_description_title.set_markup("<b>Description: </b>")
-
-        lbl_package_description_value = Gtk.Label(xalign=0, yalign=0)
+        lbl_package_description_value = Gtk.Label(xalign=0)
         lbl_package_description_value.set_text(self.package_metadata["description"])
-
-        grid_package_metadata.attach(lbl_package_description_title, 0, 4, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_description_value,
-            lbl_package_description_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
+        vbox_package_description.pack_start(
+            lbl_package_description_title, True, True, 0
+        )
+        vbox_package_description.pack_start(
+            lbl_package_description_value, True, True, 0
         )
 
-        lbl_package_arch_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_arch_title.set_markup("<b>Architecture: </b>")
+        listbox.add(row_package_description)
 
-        lbl_package_arch_value = Gtk.Label(xalign=0, yalign=0)
+        # arch
+
+        row_package_arch = Gtk.ListBoxRow()
+        vbox_package_arch = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_package_arch.add(vbox_package_arch)
+        lbl_package_arch_title = Gtk.Label(xalign=0)
+        lbl_package_arch_title.set_markup("<b>Architecture</b>")
+
+        lbl_package_arch_value = Gtk.Label(xalign=0)
         lbl_package_arch_value.set_text(self.package_metadata["arch"])
+        vbox_package_arch.pack_start(lbl_package_arch_title, True, True, 0)
+        vbox_package_arch.pack_start(lbl_package_arch_value, True, True, 0)
 
-        grid_package_metadata.attach(lbl_package_arch_title, 0, 5, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_arch_value,
-            lbl_package_arch_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
+        listbox.add(row_package_arch)
 
-        lbl_package_url_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_url_title.set_markup("<b>URL: </b>")
+        # url
 
-        lbl_package_url_value = Gtk.Label(xalign=0, yalign=0)
+        row_package_url = Gtk.ListBoxRow()
+        vbox_package_url = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_package_url.add(vbox_package_url)
+        lbl_package_url_title = Gtk.Label(xalign=0)
+        lbl_package_url_title.set_markup("<b>URL</b>")
+
+        lbl_package_url_value = Gtk.Label(xalign=0)
         lbl_package_url_value.set_markup(
             "<a href=''>%s</a>" % self.package_metadata["url"]
         )
+        vbox_package_url.pack_start(lbl_package_url_title, True, True, 0)
+        vbox_package_url.pack_start(lbl_package_url_value, True, True, 0)
 
-        grid_package_metadata.attach(lbl_package_url_title, 0, 6, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_url_value,
-            lbl_package_url_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
+        listbox.add(row_package_url)
+
+        # download size
+
+        row_package_size = Gtk.ListBoxRow()
+        vbox_package_size = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_package_size.add(vbox_package_size)
+        lbl_package_size_title = Gtk.Label(xalign=0)
+        lbl_package_size_title.set_markup("<b>Download size</b>")
+
+        lbl_package_size_value = Gtk.Label(xalign=0)
+        lbl_package_size_value.set_text(self.package_metadata["download_size"])
+        vbox_package_size.pack_start(lbl_package_size_title, True, True, 0)
+        vbox_package_size.pack_start(lbl_package_size_value, True, True, 0)
+
+        listbox.add(row_package_size)
+
+        # installed size
+
+        row_package_installed_size = Gtk.ListBoxRow()
+        vbox_package_installed_size = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        row_package_installed_size.add(vbox_package_installed_size)
+        lbl_package_installed_size_title = Gtk.Label(xalign=0)
+        lbl_package_installed_size_title.set_markup("<b>Installed size</b>")
+
+        lbl_package_installed_size_value = Gtk.Label(xalign=0)
+        lbl_package_installed_size_value.set_text(
+            self.package_metadata["installed_size"]
+        )
+        vbox_package_installed_size.pack_start(
+            lbl_package_installed_size_title, True, True, 0
+        )
+        vbox_package_installed_size.pack_start(
+            lbl_package_installed_size_value, True, True, 0
         )
 
-        lbl_package_depends_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_depends_title.set_markup("<b>Depends on: </b>")
+        listbox.add(row_package_installed_size)
+
+        # build date
+
+        row_package_build_date = Gtk.ListBoxRow()
+        vbox_package_build_date = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        row_package_build_date.add(vbox_package_build_date)
+        lbl_package_build_date_title = Gtk.Label(xalign=0)
+        lbl_package_build_date_title.set_markup("<b>Build date</b>")
+
+        lbl_package_build_date_value = Gtk.Label(xalign=0)
+        lbl_package_build_date_value.set_text(self.package_metadata["build_date"])
+        vbox_package_build_date.pack_start(lbl_package_build_date_title, True, True, 0)
+        vbox_package_build_date.pack_start(lbl_package_build_date_value, True, True, 0)
+
+        listbox.add(row_package_build_date)
+
+        # packager
+
+        row_package_maintainer = Gtk.ListBoxRow()
+        vbox_package_maintainer = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        row_package_maintainer.add(vbox_package_maintainer)
+        lbl_package_maintainer_title = Gtk.Label(xalign=0)
+        lbl_package_maintainer_title.set_markup("<b>Packager</b>")
+
+        lbl_package_maintainer_value = Gtk.Label(xalign=0)
+        lbl_package_maintainer_value.set_text(self.package_metadata["packager"])
+        vbox_package_maintainer.pack_start(lbl_package_maintainer_title, True, True, 0)
+        vbox_package_maintainer.pack_start(lbl_package_maintainer_value, True, True, 0)
+
+        listbox.add(row_package_maintainer)
+
+        # depends on
+
+        row_package_depends_on = Gtk.ListBoxRow()
+        vbox_package_depends_on = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        row_package_depends_on.add(vbox_package_depends_on)
+        lbl_package_depends_on_title = Gtk.Label(xalign=0)
+        lbl_package_depends_on_title.set_markup("<b>Depends on</b>")
 
         if len(self.package_metadata["depends_on"]) > 0:
             treestore_depends = Gtk.TreeStore(str, str)
@@ -450,160 +533,77 @@ def create_package_progress_dialog(self, action, pkg, command):
             for item in self.package_metadata["depends_on"]:
                 treestore_depends.append(None, list(item))
 
-            treeview_depends = Gtk.TreeView()
-            treeview_depends.set_model(treestore_depends)
+            treeview_depends = Gtk.TreeView(model=treestore_depends)
 
-            for i, col_title in enumerate(["Package"]):
-                renderer = Gtk.CellRendererText()
-                col = Gtk.TreeViewColumn(col_title)
-                treeview_depends.append_column(col)
-                col.pack_start(renderer, True)
-                col.add_attribute(renderer, "text", 0)
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn("Package", renderer, text=0)
 
-            path = Gtk.TreePath.new_from_indices([0])
+            treeview_depends.append_column(column)
 
-            selection = treeview_depends.get_selection()
-
-            selection.select_path(path)
-
-            grid_package_metadata.attach(lbl_package_depends_title, 0, 7, 1, 1)
-
-            grid_package_metadata.attach_next_to(
-                treeview_depends,
-                lbl_package_depends_title,
-                Gtk.PositionType.RIGHT,
-                1,
-                1,
+            vbox_package_depends_on.pack_start(
+                lbl_package_depends_on_title, True, True, 0
             )
+
+            vbox_package_depends_on.pack_start(treeview_depends, True, True, 0)
+
         else:
             lbl_package_depends_value = Gtk.Label(xalign=0, yalign=0)
             lbl_package_depends_value.set_text("None")
 
-            grid_package_metadata.attach(lbl_package_depends_title, 0, 7, 1, 1)
-
-            grid_package_metadata.attach_next_to(
-                lbl_package_depends_value,
-                lbl_package_depends_title,
-                Gtk.PositionType.RIGHT,
-                1,
-                1,
+            vbox_package_depends_on.pack_start(
+                lbl_package_depends_on_title, True, True, 0
             )
 
-        lbl_padding5 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding5.set_text("")
+            vbox_package_depends_on.pack_start(lbl_package_depends_value, True, True, 0)
 
-        grid_package_metadata.attach(lbl_padding5, 0, 9, 1, 1)
+        listbox.add(row_package_depends_on)
 
-        lbl_package_conflicts_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_conflicts_title.set_markup("<b>Conflicts with: </b>")
+        # conflicts with
+
+        row_package_conflicts_with = Gtk.ListBoxRow()
+        vbox_package_conflicts_with = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        row_package_conflicts_with.add(vbox_package_conflicts_with)
+        lbl_package_conflicts_with_title = Gtk.Label(xalign=0)
+        lbl_package_conflicts_with_title.set_markup("<b>Conflicts with</b>")
 
         if len(self.package_metadata["conflicts_with"]) > 0:
             treestore_conflicts = Gtk.TreeStore(str, str)
+
             for item in self.package_metadata["conflicts_with"]:
                 treestore_conflicts.append(None, list(item))
 
-            treeview_conflicts = Gtk.TreeView()
-            treeview_conflicts.set_model(treestore_conflicts)
+            treeview_conflicts = Gtk.TreeView(model=treestore_conflicts)
 
-            for i, col_title in enumerate(["Package"]):
-                renderer = Gtk.CellRendererText()
-                col = Gtk.TreeViewColumn(col_title)
-                treeview_conflicts.append_column(col)
-                col.pack_start(renderer, True)
-                col.add_attribute(renderer, "text", 0)
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn("Package", renderer, text=0)
 
-            path = Gtk.TreePath.new_from_indices([0])
+            treeview_conflicts.append_column(column)
 
-            selection = treeview_conflicts.get_selection()
-
-            selection.select_path(path)
-
-            grid_package_metadata.attach(lbl_package_conflicts_title, 0, 10, 1, 1)
-
-            grid_package_metadata.attach_next_to(
-                treeview_conflicts,
-                lbl_package_conflicts_title,
-                Gtk.PositionType.RIGHT,
-                1,
-                1,
+            vbox_package_conflicts_with.pack_start(
+                lbl_package_conflicts_with_title, True, True, 0
             )
+
+            vbox_package_conflicts_with.pack_start(treeview_conflicts, True, True, 0)
+
         else:
-            lbl_package_conflicts_value = Gtk.Label(xalign=0, yalign=0)
-            lbl_package_conflicts_value.set_text("None")
+            lbl_package_conflicts_with_value = Gtk.Label(xalign=0, yalign=0)
+            lbl_package_conflicts_with_value.set_text("None")
 
-            grid_package_metadata.attach(lbl_package_conflicts_title, 0, 10, 1, 1)
-
-            grid_package_metadata.attach_next_to(
-                lbl_package_conflicts_value,
-                lbl_package_conflicts_title,
-                Gtk.PositionType.RIGHT,
-                1,
-                1,
+            vbox_package_conflicts_with.pack_start(
+                lbl_package_conflicts_with_title, True, True, 0
             )
 
-        lbl_package_download_size_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_download_size_title.set_markup("<b>Download size: </b>")
+            vbox_package_conflicts_with.pack_start(
+                lbl_package_conflicts_with_value, True, True, 0
+            )
 
-        lbl_package_download_size_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_download_size_value.set_text(self.package_metadata["download_size"])
+        listbox.add(row_package_conflicts_with)
 
-        grid_package_metadata.attach(lbl_package_download_size_title, 0, 11, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_download_size_value,
-            lbl_package_download_size_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
+        package_metadata_scrolled_window = Gtk.ScrolledWindow()
 
-        lbl_package_installed_size_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_installed_size_title.set_markup("<b>Installed size: </b>")
-
-        lbl_package_installed_size_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_installed_size_value.set_text(
-            self.package_metadata["installed_size"]
-        )
-
-        grid_package_metadata.attach(lbl_package_installed_size_title, 0, 12, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_installed_size_value,
-            lbl_package_installed_size_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
-
-        lbl_package_build_date_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_build_date_title.set_markup("<b>Build date: </b>")
-
-        lbl_package_build_date_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_build_date_value.set_text(self.package_metadata["build_date"])
-
-        grid_package_metadata.attach(lbl_package_build_date_title, 0, 13, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_build_date_value,
-            lbl_package_build_date_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
-
-        lbl_package_packager_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_packager_title.set_markup("<b>Packager: </b>")
-
-        lbl_package_packager_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_package_packager_value.set_text(self.package_metadata["packager"])
-
-        grid_package_metadata.attach(lbl_package_packager_title, 0, 14, 1, 1)
-        grid_package_metadata.attach_next_to(
-            lbl_package_packager_value,
-            lbl_package_packager_title,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
-
-        package_metadata_scrolled_window.add(grid_package_metadata)
+        package_metadata_scrolled_window.add(box_outer)
 
         stack.add_titled(
             package_metadata_scrolled_window, "Package Information", "Information"
@@ -611,7 +611,6 @@ def create_package_progress_dialog(self, action, pkg, command):
 
         self.package_progress_dialog.vbox.add(stack_switcher)
         self.package_progress_dialog.vbox.add(stack)
-
         self.package_progress_dialog.vbox.add(package_progress_btn_grid)
 
         self.package_progress_dialog.show_all()
@@ -660,7 +659,7 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
                     priority=GLib.PRIORITY_DEFAULT,
                 )
 
-                time.sleep(0.2)
+                time.sleep(0.1)
 
             if process.returncode == 0:
                 logger.info("Package %s = completed" % action)
@@ -695,7 +694,7 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
 
                 btn_ok.set_sensitive(True)
 
-            time.sleep(0.5)
+            time.sleep(0.1)
     except TimeoutError as t:
         logger.error("TimeoutError in %s start_subprocess(): %s" % (action, t))
         process.terminate()
@@ -738,12 +737,12 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
 
     if installed is False and action == "install":
         # install failed/terminated
         switch.set_state(False)
-        # switch.set_active(False)
+        switch.set_active(False)
         switch.set_sensitive(True)
 
         self.package_progress_dialog.set_title(
@@ -767,12 +766,12 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
 
     if installed is False and action == "uninstall":
         logger.debug("Toggle switch state = False")
         switch.set_state(False)
-        # switch.set_active(False)
+        switch.set_active(False)
         switch.set_sensitive(True)
         self.package_progress_dialog.set_title(
             "Package uninstall for %s completed" % pkg.name
@@ -794,12 +793,12 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
 
     if installed is True and action == "uninstall":
         # uninstall failed/terminated
         switch.set_state(True)
-        # switch.set_active(True)
+        switch.set_active(True)
         switch.set_sensitive(True)
 
         self.package_progress_dialog.set_title(
@@ -823,7 +822,7 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(500, reveal_infobar, self)
 
 
 def update_progress_textview(self, line, buffer, textview):
@@ -851,7 +850,7 @@ def install(self):
 
     try:
         if action == "install":
-            thread_limiter.acquire()
+            thread_limiter_pkg_install_rem.acquire()
 
             # path = base_dir + "/cache/installed.lst"
 
@@ -887,7 +886,7 @@ def install(self):
         btn_pkg_inst_ok.set_sensitive(True)
     finally:
         self.pkg_queue.task_done()
-        thread_limiter.release()
+        thread_limiter_pkg_install_rem.release()
 
 
 # =====================================================
@@ -899,7 +898,7 @@ def uninstall(self):
 
     try:
         if action == "uninstall":
-            thread_limiter.acquire()
+            thread_limiter_pkg_install_rem.acquire()
 
             # path = base_dir + "/cache/installed.lst"
             logger.info("Removing package %s" % pkg.name)
@@ -921,27 +920,24 @@ def uninstall(self):
                 btn_pkg_uninst_ok,
             ) = create_package_progress_dialog(self, action, pkg, " ".join(uninst_str))
 
-            if is_thread_alive("thread_subprocess") is False:
-                th_subprocess_install = Thread(
-                    name="thread_subprocess",
-                    target=start_subprocess,
-                    args=(
-                        self,
-                        uninst_str,
-                        pacman_progress_textview,
-                        btn_pkg_uninst_ok,
-                        action,
-                        pkg,
-                        widget,
-                    ),
-                    daemon=True,
-                )
+            th_subprocess_uninstall = Thread(
+                name="thread_subprocess",
+                target=start_subprocess,
+                args=(
+                    self,
+                    uninst_str,
+                    pacman_progress_textview,
+                    btn_pkg_uninst_ok,
+                    action,
+                    pkg,
+                    widget,
+                ),
+                daemon=True,
+            )
 
-                th_subprocess_install.start()
+            th_subprocess_uninstall.start()
 
-                logger.debug("Thread: subprocess uninstall started")
-            else:
-                logger.debug("Thread: subprocess uninstall alive")
+            logger.debug("Thread: subprocess uninstall started")
 
     except Exception as e:
         widget.set_state(True)
@@ -958,7 +954,7 @@ def uninstall(self):
             logger.debug("Package is not installed")
             widget.set_state(False)
         self.pkg_queue.task_done()
-        thread_limiter.release()
+        thread_limiter_pkg_install_rem.release()
 
 
 # =====================================================
@@ -1286,6 +1282,10 @@ def message_dialog(self, title, first_msg, secondary_msg):
         headerbar = Gtk.HeaderBar()
         headerbar.set_title(title)
         headerbar.set_show_close_button(True)
+
+        # move focus away from the textview, to hide the cursor at load
+        headerbar.set_property("can-focus", True)
+        Gtk.Window.grab_focus(headerbar)
 
         dialog.set_default_size(800, 600)
 
@@ -2082,7 +2082,7 @@ def check_pacman_lockfile():
             logger.warn("Another pacman process is running")
             return True
         else:
-            logger.info("No pacman lockfile found, continuing")
+            logger.info("No pacman lockfile found continuing")
             return False
     except Exception as e:
         logger.error("Exception in check_pacman_lockfile() : %s" % e)
@@ -2103,7 +2103,7 @@ def on_dialog_export_clicked(self, dialog, packages_lst):
                 % datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             )
             for package in packages_lst:
-                f.write("%s %s\n" % (package[0], package[1]))
+                f.write("%s\n" % (package[0]))
 
         if os.path.exists(filename):
             logger.info("Export completed")
@@ -2144,6 +2144,11 @@ def on_dialog_export_close_clicked(self, dialog):
     dialog.destroy()
 
 
+def on_dialog_export_on_close(self, event, dialog):
+    dialog.hide()
+    dialog.destroy()
+
+
 # export currently installed packages to a txt file inside $HOME
 def export_installed_packages(self):
     try:
@@ -2155,6 +2160,8 @@ def export_installed_packages(self):
         export_dialog.set_modal(True)
         export_dialog.set_border_width(10)
 
+        export_dialog.connect("delete-event", on_dialog_export_on_close, export_dialog)
+
         headerbar = Gtk.HeaderBar()
         headerbar.set_title("Showing installed packages")
         headerbar.set_show_close_button(True)
@@ -2163,7 +2170,6 @@ def export_installed_packages(self):
 
         export_grid = Gtk.Grid()
         export_grid.set_column_homogeneous(True)
-        # export_grid.set_row_homogeneous(True)
 
         # get a list of installed packages on the system
 
