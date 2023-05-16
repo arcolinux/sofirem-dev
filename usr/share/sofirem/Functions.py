@@ -41,6 +41,10 @@ path_dir_cache = base_dir + "/cache/"
 packages = []
 debug = False
 distr = id()
+# limit the amount of threads to run
+# this limit is set for the install/uninstall package thread
+max_number_threads = 5
+thread_limiter = threading.BoundedSemaphore(max_number_threads)
 
 # this timeout is for the pacman sync, pacman lock file, install/uninstall processes
 # 10m timeout
@@ -122,7 +126,7 @@ def get_position(lists, value):
 def create_packages_log():
     try:
         logger.info("Creating a list of currently installed packages")
-        packages_log = log_dir + "%s-packages.log" % datetime.now().strftime("%H-%M-%S")
+        packages_log = "%s-packages.log" % datetime.now().strftime("%H-%M-%S")
         logger.info("Saving in %s" % packages_log)
         cmd = ["pacman", "-Q"]
 
@@ -133,9 +137,9 @@ def create_packages_log():
             bufsize=1,
             universal_newlines=True,
         ) as process:
-            with open(packages_log, "w") as f:
+            with open("%s/%s" % (log_dir, packages_log), "w") as f:
                 for line in process.stdout:
-                    f.write("%s\n" % line)
+                    f.write("%s" % line)
     except Exception as e:
         logger.error("Exception in create_packages_log(): %s" % e)
 
@@ -295,9 +299,6 @@ def create_package_progress_dialog(self, action, pkg, command):
         stack_switcher.set_stack(stack)
         stack_switcher.set_homogeneous(True)
 
-        # switcher_scrolled_window = Gtk.ScrolledWindow()
-        # switcher_scrolled_window.add(stack_switcher)
-
         package_progress_grid = Gtk.Grid()
 
         self.infobar = Gtk.InfoBar()
@@ -337,25 +338,17 @@ def create_package_progress_dialog(self, action, pkg, command):
 
         package_progress_btn_grid = Gtk.Grid()
 
-        lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding2.set_text("")
+        lbl_padding_btn = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding_btn.set_text("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t")
 
-        package_progress_btn_grid.attach(lbl_padding2, 0, 1, 1, 1)
-
-        lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding3.set_text("")
-
-        package_progress_btn_grid.attach(lbl_padding3, 0, 2, 1, 1)
-
-        lbl_padding4 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding4.set_text("\t\t\t\t\t\t\t\t\t\t\t\t")
+        package_progress_btn_grid.attach(lbl_padding_btn, 0, 1, 1, 1)
 
         package_progress_btn_grid.attach_next_to(
-            lbl_padding4, lbl_padding3, Gtk.PositionType.RIGHT, 20, 1
-        )
-
-        package_progress_btn_grid.attach_next_to(
-            btn_package_progress_close, lbl_padding4, Gtk.PositionType.RIGHT, 20, 1
+            btn_package_progress_close,
+            lbl_padding_btn,
+            Gtk.PositionType.RIGHT,
+            1,
+            1,
         )
 
         stack.add_titled(package_progress_grid, "Progress", "Package Progress")
@@ -460,10 +453,12 @@ def create_package_progress_dialog(self, action, pkg, command):
             treeview_depends = Gtk.TreeView()
             treeview_depends.set_model(treestore_depends)
 
-            for i, col_title in enumerate(["Packages"]):
+            for i, col_title in enumerate(["Package"]):
                 renderer = Gtk.CellRendererText()
-                col = Gtk.TreeViewColumn(col_title, renderer, text=i)
+                col = Gtk.TreeViewColumn(col_title)
                 treeview_depends.append_column(col)
+                col.pack_start(renderer, True)
+                col.add_attribute(renderer, "text", 0)
 
             path = Gtk.TreePath.new_from_indices([0])
 
@@ -510,10 +505,12 @@ def create_package_progress_dialog(self, action, pkg, command):
             treeview_conflicts = Gtk.TreeView()
             treeview_conflicts.set_model(treestore_conflicts)
 
-            for i, col_title in enumerate(["Packages"]):
+            for i, col_title in enumerate(["Package"]):
                 renderer = Gtk.CellRendererText()
-                col = Gtk.TreeViewColumn(col_title, renderer, text=i)
+                col = Gtk.TreeViewColumn(col_title)
                 treeview_conflicts.append_column(col)
+                col.pack_start(renderer, True)
+                col.add_attribute(renderer, "text", 0)
 
             path = Gtk.TreePath.new_from_indices([0])
 
@@ -635,8 +632,10 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
         ) as process:
             self.pkg_dialog_closed = False
             self.in_progress = True
+            widget.set_sensitive(False)
 
             line = "Running command: %s\n\n" % " ".join(cmd)
+
             GLib.idle_add(
                 update_progress_textview,
                 self,
@@ -650,6 +649,8 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
             logger.debug("Pacman is now processing the request")
 
             for line in process.stdout:
+                if self.pkg_dialog_closed:
+                    break
                 GLib.idle_add(
                     update_progress_textview,
                     self,
@@ -714,104 +715,119 @@ def toggle_switch(self, action, switch, pkg):
     if installed and action == "install":
         logger.debug("Toggle switch state = True")
         switch.set_state(True)
-        switch.set_active(True)
+        # switch.set_active(True)
+        switch.set_sensitive(True)
         self.package_progress_dialog.set_title(
             "Package install for %s completed" % pkg.name
         )
-        self.infobar.set_name("infobar_info")
 
-        content = self.infobar.get_content_area()
-        for widget in content.get_children():
-            content.remove(widget)
+        if self.pkg_dialog_closed is False:
+            self.infobar.set_name("infobar_info")
 
-        lbl_install = Gtk.Label(xalign=0, yalign=0)
-        lbl_install.set_markup("<b>Package %s installed</b>" % pkg.name)
+            content = self.infobar.get_content_area()
+            if content is not None:
+                for widget in content.get_children():
+                    content.remove(widget)
 
-        content.add(lbl_install)
+                lbl_install = Gtk.Label(xalign=0, yalign=0)
+                lbl_install.set_markup("<b>Package %s installed</b>" % pkg.name)
 
-        if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
-            self.timeout_id = None
+                content.add(lbl_install)
 
-        self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                if self.timeout_id is not None:
+                    GLib.source_remove(self.timeout_id)
+                    self.timeout_id = None
+
+                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
 
     if installed is False and action == "install":
         # install failed/terminated
         switch.set_state(False)
-        switch.set_active(False)
+        # switch.set_active(False)
+        switch.set_sensitive(True)
 
         self.package_progress_dialog.set_title(
             "Package install for %s failed" % pkg.name
         )
-        self.infobar.set_name("infobar_error")
 
-        content = self.infobar.get_content_area()
-        for widget in content.get_children():
-            content.remove(widget)
+        if self.pkg_dialog_closed is False:
+            self.infobar.set_name("infobar_error")
 
-        lbl_install = Gtk.Label(xalign=0, yalign=0)
-        lbl_install.set_markup("<b>Package %s install failed</b>" % pkg.name)
+            content = self.infobar.get_content_area()
+            if content is not None:
+                for widget in content.get_children():
+                    content.remove(widget)
 
-        content.add(lbl_install)
+                lbl_install = Gtk.Label(xalign=0, yalign=0)
+                lbl_install.set_markup("<b>Package %s install failed</b>" % pkg.name)
 
-        if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
-            self.timeout_id = None
+                content.add(lbl_install)
 
-        self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                if self.timeout_id is not None:
+                    GLib.source_remove(self.timeout_id)
+                    self.timeout_id = None
+
+                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
 
     if installed is False and action == "uninstall":
         logger.debug("Toggle switch state = False")
         switch.set_state(False)
-        switch.set_active(False)
+        # switch.set_active(False)
+        switch.set_sensitive(True)
         self.package_progress_dialog.set_title(
             "Package uninstall for %s completed" % pkg.name
         )
-        self.infobar.set_name("infobar_info")
 
-        content = self.infobar.get_content_area()
-        for widget in content.get_children():
-            content.remove(widget)
+        if self.pkg_dialog_closed is False:
+            self.infobar.set_name("infobar_info")
+            content = self.infobar.get_content_area()
+            if content is not None:
+                for widget in content.get_children():
+                    content.remove(widget)
 
-        lbl_install = Gtk.Label(xalign=0, yalign=0)
-        lbl_install.set_markup("<b>Package %s uninstalled</b>" % pkg.name)
+                lbl_install = Gtk.Label(xalign=0, yalign=0)
+                lbl_install.set_markup("<b>Package %s uninstalled</b>" % pkg.name)
 
-        content.add(lbl_install)
+                content.add(lbl_install)
 
-        if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
-            self.timeout_id = None
+                if self.timeout_id is not None:
+                    GLib.source_remove(self.timeout_id)
+                    self.timeout_id = None
 
-        self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
 
     if installed is True and action == "uninstall":
         # uninstall failed/terminated
         switch.set_state(True)
-        switch.set_active(True)
+        # switch.set_active(True)
+        switch.set_sensitive(True)
 
         self.package_progress_dialog.set_title(
             "Package uninstall for %s failed" % pkg.name
         )
-        self.infobar.set_name("infobar_err")
 
-        content = self.infobar.get_content_area()
-        for widget in content.get_children():
-            content.remove(widget)
+        if self.pkg_dialog_closed is False:
+            self.infobar.set_name("infobar_err")
 
-        lbl_install = Gtk.Label(xalign=0, yalign=0)
-        lbl_install.set_markup("<b>Package %s uninstall failed</b>" % pkg.name)
+            content = self.infobar.get_content_area()
+            if content is not None:
+                for widget in content.get_children():
+                    content.remove(widget)
 
-        content.add(lbl_install)
+                lbl_install = Gtk.Label(xalign=0, yalign=0)
+                lbl_install.set_markup("<b>Package %s uninstall failed</b>" % pkg.name)
 
-        if self.timeout_id is not None:
-            GLib.source_remove(self.timeout_id)
-            self.timeout_id = None
+                content.add(lbl_install)
 
-        self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
+                if self.timeout_id is not None:
+                    GLib.source_remove(self.timeout_id)
+                    self.timeout_id = None
+
+                self.timeout_id = GLib.timeout_add(1000, reveal_infobar, self)
 
 
 def update_progress_textview(self, line, buffer, textview):
-    if self.pkg_dialog_closed is False or self.in_progress is True:
+    if self.pkg_dialog_closed is False and self.in_progress is True:
         if len(line) > 0 or buffer is None:
             buffer.insert(buffer.get_end_iter(), "  %s" % line, len("  %s" % line))
 
@@ -823,6 +839,8 @@ def update_progress_textview(self, line, buffer, textview):
             "Package progress dialog closed/in progress = False, stop updating UI"
         )
 
+        return False
+
 
 # =====================================================
 #               APP INSTALLATION
@@ -833,10 +851,9 @@ def install(self):
 
     try:
         if action == "install":
-            # setattr(self, "action", "install")
+            thread_limiter.acquire()
 
-            # start_pacmanlock_thread()
-            path = base_dir + "/cache/installed.lst"
+            # path = base_dir + "/cache/installed.lst"
 
             logger.info("Installing package %s" % pkg.name)
 
@@ -844,27 +861,24 @@ def install(self):
                 self, action, pkg, " ".join(inst_str)
             )
 
-            if is_thread_alive("thread_subprocess") is False:
-                th_subprocess_install = Thread(
-                    name="thread_subprocess",
-                    target=start_subprocess,
-                    args=(
-                        self,
-                        inst_str,
-                        pacman_progress_textview,
-                        btn_pkg_inst_ok,
-                        action,
-                        pkg,
-                        widget,
-                    ),
-                    daemon=True,
-                )
+            th_subprocess_install = Thread(
+                name="thread_subprocess",
+                target=start_subprocess,
+                args=(
+                    self,
+                    inst_str,
+                    pacman_progress_textview,
+                    btn_pkg_inst_ok,
+                    action,
+                    pkg,
+                    widget,
+                ),
+                daemon=True,
+            )
 
-                th_subprocess_install.start()
+            th_subprocess_install.start()
 
-                logger.debug("Thread: subprocess install started")
-            else:
-                logger.debug("Thread: subprocess install alive")
+            logger.debug("Thread: subprocess install started")
 
     except Exception as e:
         logger.error("Exception in install(): %s" % e)
@@ -873,7 +887,7 @@ def install(self):
         btn_pkg_inst_ok.set_sensitive(True)
     finally:
         self.pkg_queue.task_done()
-        print_threads_alive()
+        thread_limiter.release()
 
 
 # =====================================================
@@ -885,12 +899,9 @@ def uninstall(self):
 
     try:
         if action == "uninstall":
-            self.abort_process = False
-            # setattr(self, "action", "uninstall")
+            thread_limiter.acquire()
 
-            path = base_dir + "/cache/installed.lst"
-
-            now = datetime.now().strftime("%H:%M:%S")
+            # path = base_dir + "/cache/installed.lst"
             logger.info("Removing package %s" % pkg.name)
 
             # get pacman process currently running, is the package which is requested
@@ -947,8 +958,7 @@ def uninstall(self):
             logger.debug("Package is not installed")
             widget.set_state(False)
         self.pkg_queue.task_done()
-
-        print_threads_alive()
+        thread_limiter.release()
 
 
 # =====================================================
@@ -1264,74 +1274,75 @@ def get_package_information(self, package_name):
 # =====================================================
 
 
-def on_msg_dialog_ok_response(self, dialog):
+def on_message_dialog_ok_response(self, dialog):
     dialog.hide()
     dialog.destroy()
 
 
 def message_dialog(self, title, first_msg, secondary_msg):
-    dialog = Gtk.Dialog(self)
-    dialog.set_border_width(10)
+    try:
+        dialog = Gtk.Dialog(self)
 
-    headerbar = Gtk.HeaderBar()
-    headerbar.set_show_close_button(True)
-    headerbar.set_title(title)
-    dialog.set_titlebar(headerbar)
+        headerbar = Gtk.HeaderBar()
+        headerbar.set_title(title)
+        headerbar.set_show_close_button(True)
 
-    lbl_first_message = Gtk.Label(xalign=0, yalign=0)
-    lbl_first_message.set_text(first_msg)
+        dialog.set_default_size(800, 600)
 
-    lbl_second_message = Gtk.Label(xalign=0, yalign=0)
-    lbl_second_message.set_text(secondary_msg)
+        dialog.set_resizable(False)
+        dialog.set_modal(True)
 
-    btn_msg_ok = Gtk.Button(label="OK")
-    btn_msg_ok.connect("clicked", on_msg_dialog_ok_response, dialog)
-    btn_msg_ok.set_size_request(100, 30)
+        dialog.set_titlebar(headerbar)
 
-    dialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
+        btn_ok = Gtk.Button(label="OK")
+        btn_ok.set_size_request(100, 30)
+        btn_ok.connect("clicked", on_message_dialog_ok_response, dialog)
+        dialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
-    dialog.set_resizable(False)
-    dialog.set_size_request(500, 100)
-    dialog.set_modal(True)
+        grid_message = Gtk.Grid()
+        grid_message.set_column_homogeneous(True)
+        grid_message.set_row_homogeneous(True)
 
-    grid_content = Gtk.Grid()
-    grid_content.set_column_homogeneous(True)
-    # grid.set_row_homogeneous(True)
+        scrolled_window = Gtk.ScrolledWindow()
+        textview = Gtk.TextView()
+        textview.set_property("editable", False)
+        textview.set_property("monospace", True)
+        textview.set_vexpand(True)
+        textview.set_hexpand(True)
 
-    lblPadding1 = Gtk.Label(xalign=0, yalign=0)
-    lblPadding1.set_text("    ")
+        msg_buffer = textview.get_buffer()
+        msg_buffer.insert(msg_buffer.get_end_iter(), "%s \n" % first_msg)
+        msg_buffer.insert(msg_buffer.get_end_iter(), secondary_msg)
 
-    grid_content.attach(lblPadding1, 0, 0, 1, 1)
+        scrolled_window.add(textview)
+        grid_message.attach(scrolled_window, 0, 0, 1, 1)
 
-    grid_content.attach_next_to(
-        lbl_first_message, lblPadding1, Gtk.PositionType.LEFT, 20, 1
-    )
+        lbl_padding = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding.set_name("lbl_btn_padding_right")
 
-    lblPaddingRow1 = Gtk.Label(xalign=0, yalign=0)
-    lblPaddingRow1.set_text("    ")
+        lbl_padding_top = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding_top.set_text("")
 
-    grid_content.attach(lblPaddingRow1, 0, 1, 1, 1)
+        grid_btn = Gtk.Grid()
 
-    if len(secondary_msg) > 0:
-        lblPadding2 = Gtk.Label(xalign=0, yalign=0)
-        lblPadding2.set_text("    ")
-        grid_content.attach_next_to(
-            lbl_second_message, lblPaddingRow1, Gtk.PositionType.LEFT, 20, 1
+        grid_btn.attach(lbl_padding_top, 0, 1, 1, 1)
+
+        grid_btn.attach_next_to(
+            lbl_padding, lbl_padding_top, Gtk.PositionType.RIGHT, 1, 1
         )
-        # grid_content.attach_next_to(
-        #    lbl_second_message, lblPadding2, Gtk.PositionType.RIGHT, 20, 1
-        # )
 
-    grid_buttons = Gtk.Grid()
-    lblPadding3 = Gtk.Label(xalign=0, yalign=0)
-    lblPadding3.set_text("\t\t\t\t\t\t\t\t\t\t\t\t\t\t")
+        grid_btn.attach_next_to(btn_ok, lbl_padding, Gtk.PositionType.RIGHT, 1, 1)
 
-    grid_buttons.attach(lblPadding3, 0, 0, 1, 1)
+        dialog.vbox.add(grid_message)
+        dialog.vbox.add(grid_btn)
 
-    grid_buttons.attach_next_to(btn_msg_ok, lblPadding3, Gtk.PositionType.RIGHT, 20, 1)
+        dialog.show_all()
 
-    dialog.vbox.add(grid_content)
-    dialog.vbox.add(grid_buttons)
+        return dialog
+    except Exception as e:
+        logger.error("Exception in message_dialog(): %s" % e)
+
+    dialog.show_all()
 
     return dialog
 
@@ -2067,8 +2078,11 @@ def print_threads_alive():
 def check_pacman_lockfile():
     try:
         if os.path.exists(pacman_lockfile):
+            logger.warn("Pacman lockfile found inside %s" % pacman_lockfile)
+            logger.warn("Another pacman process is running")
             return True
         else:
+            logger.info("No pacman lockfile found, continuing")
             return False
     except Exception as e:
         logger.error("Exception in check_pacman_lockfile() : %s" % e)
@@ -2254,28 +2268,6 @@ def export_installed_packages(self):
 #              PACMAN LOCK FILE THREADING
 # =====================================================
 """
-def start_pacmanlock_thread():
-    # check the pacman lock file thread isn't already running
-    thread_alive = False
-    lockfile_thread = "thread_waitForPacmanLockFile"
-
-    thread_alive = is_thread_alive(lockfile_thread)
-
-    if thread_alive is False:
-        logger.debug("Starting waitForPacmanLockFile thread")
-
-        th = Thread(
-            name=lockfile_thread,
-            target=waitForPacmanLockFile,
-            daemon=True,
-        )
-
-        th.start()
-
-    else:
-        logger.debug("[DEBUG] %s waitForPacmanLockFile thread is already running")
-
-
 def waitForPacmanLockFile():
     start = int(time.time())
 
@@ -2309,51 +2301,4 @@ def waitForPacmanLockFile():
                 return
     except Exception as e:
         logger.error("Exception in waitForPacmanLockFile(): %s " % e)
-"""
-
-"""
-# since the msg output from a process doesn't fit properly inside a normal
-# messagebox, use a dialog box to have a textView inside a ScrolledWindow
-
-
-def create_message_dialog(self, title, first_msg, secondary_msg):
-    try:
-        messageDialog = Gtk.Dialog(self)
-
-        messageDialog.set_title(title)
-        messageDialog.set_default_size(800, 600)
-        messageDialog.set_position(Gtk.WindowPosition.CENTER)
-        btnMessageDialogOk = Gtk.Button(label="OK")
-        btnMessageDialogOk.connect("clicked", on_msg_dialog_ok_response, messageDialog)
-        messageDialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
-
-        messageGrid = Gtk.Grid()
-        messageGrid.set_column_homogeneous(True)
-        messageGrid.set_row_homogeneous(True)
-
-        messageScrolledWindow = Gtk.ScrolledWindow()
-        messageTextView = Gtk.TextView()
-        messageTextView.set_property("editable", False)
-        messageTextView.set_property("monospace", True)
-        messageTextView.set_vexpand(True)
-        messageTextView.set_hexpand(True)
-
-        msg_buffer = messageTextView.get_buffer()
-        msg_buffer.insert(msg_buffer.get_end_iter(), "%s \n" % first_msg)
-        msg_buffer.insert(msg_buffer.get_end_iter(), secondary_msg)
-
-        messageScrolledWindow.add(messageTextView)
-        messageGrid.attach(messageScrolledWindow, 0, 0, 1, 1)
-
-        ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        ivbox.pack_start(btnMessageDialogOk, False, False, 0)
-
-        messageDialog.vbox.add(messageGrid)
-        messageDialog.vbox.add(ivbox)
-        messageDialog.set_position(Gtk.WindowPosition.CENTER)
-
-        return messageDialog
-    except Exception as e:
-        logger.error("Exception in create_message_dialog(): %s" % e)
-
 """

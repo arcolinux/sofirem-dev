@@ -65,6 +65,7 @@ class Main(Gtk.Window):
             # default: displaying versions are disabled
             self.display_versions = False
 
+            # self.package_metadata = fn.get_package_information(self, "gimp")
             # pkg = fn.Package(
             #     "wine-staging",
             #     "description",
@@ -153,16 +154,14 @@ class Main(Gtk.Window):
 
             # test there is no pacman lock file on the system
             if fn.check_pacman_lockfile():
-                msg_dialog = fn.message_dialog(
+                dialog = fn.message_dialog(
                     self,
                     "Pacman lock file",
-                    "Pacman lock file found inside %s." % fn.pacman_lockfile,
-                    "Is there another Pacman process running?",
-                    Gtk.MessageType.ERROR,
+                    "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                    "Is there another Pacman process running ?",
                 )
-
-                msg_dialog.run()
-                msg_dialog.destroy()
+                dialog.run()
+                dialog.destroy()
                 sys.exit(1)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
@@ -170,22 +169,22 @@ class Main(Gtk.Window):
             sync_err = fn.sync_package_db()
 
             if sync_err is not None:
-                logger.error("[ERROR] Synchronising failed")
+                fn.logger.error("[ERROR] Synchronising failed")
 
                 print(
                     "---------------------------------------------------------------------------"
                 )
 
-                dialog = fn.create_message_dialog(
+                dialog = fn.message_dialog(
                     self,
-                    "Pacman synchronisation failed (pacman -Sy)",
-                    "Pacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
+                    "Pacman synchronisation failed",
+                    "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
                     sync_err,
                 )
-                dialog.show_all()
+
                 dialog.run()
                 dialog.destroy()
-                # sys.exit(1)
+                sys.exit(1)
 
             else:
                 fn.logger.info("Synchronising complete")
@@ -402,60 +401,85 @@ class Main(Gtk.Window):
     def app_toggle(self, widget, active, package):
         # switch widget is currently toggled off
         if widget.get_state() == False and widget.get_active() == True:
-            widget.set_active(True)
-            widget.set_state(True)
-
             if len(package.name) > 0:
-                # start pacman lock file detection thread in the background
+                # widget.set_active(True)
+                # widget.set_state(True)
 
-                # fn.start_pacmanlock_thread()
-                self.package_metadata = fn.get_package_information(self, package.name)
-                fn.logger.info("Package to install : %s" % package.name)
+                # check there is no pacman lockfile before continuing
+                if fn.check_pacman_lockfile() is False:
+                    self.package_metadata = fn.get_package_information(
+                        self, package.name
+                    )
+                    fn.logger.info("Package to install : %s" % package.name)
 
-                self.pkg_queue.put(
-                    (
-                        package,
-                        "install",
-                        widget,
-                    ),
-                )
+                    self.pkg_queue.put(
+                        (
+                            package,
+                            "install",
+                            widget,
+                        ),
+                    )
 
-                th = fn.threading.Thread(
-                    name="thread_pkginst",
-                    target=fn.install,
-                    args=(self,),
-                )
+                    th = fn.threading.Thread(
+                        name="thread_pkginst",
+                        target=fn.install,
+                        args=(self,),
+                    )
 
-                th.start()
+                    th.start()
+                else:
+                    proc = fn.get_pacman_process()
+                    dialog = fn.message_dialog(
+                        self,
+                        "Pacman lockfile found",
+                        "Pacman is busy and is processing another transaction",
+                        "Process currently running = %s" % proc,
+                    )
+                    dialog.show_all()
+                    dialog.run()
+                    dialog.hide()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
-            widget.set_active(False)
-            widget.set_state(False)
-
             # Uninstall the package
-
+            # widget.set_active(False)
+            # widget.set_state(False)
             if len(package.name) > 0:
-                self.package_metadata = fn.get_package_information(self, package.name)
-                fn.logger.info("Package to remove : %s" % package.name)
+                if fn.check_pacman_lockfile() is False:
+                    self.package_metadata = fn.get_package_information(
+                        self, package.name
+                    )
+                    fn.logger.info("Package to remove : %s" % package.name)
 
-                self.pkg_queue.put(
-                    (
-                        package,
-                        "uninstall",
-                        widget,
-                    ),
-                )
+                    self.pkg_queue.put(
+                        (
+                            package,
+                            "uninstall",
+                            widget,
+                        ),
+                    )
 
-                th = fn.threading.Thread(
-                    name="thread_pkgrem",
-                    target=fn.uninstall,
-                    args=(self,),
-                )
+                    th = fn.threading.Thread(
+                        name="thread_pkgrem",
+                        target=fn.uninstall,
+                        args=(self,),
+                    )
 
-                th.start()
+                    th.start()
+                else:
+                    proc = fn.get_pacman_process()
+                    dialog = fn.message_dialog(
+                        self,
+                        "Pacman lockfile found",
+                        "Pacman is busy and is processing another transaction",
+                        "Process currently running = %s" % proc,
+                    )
+                    dialog.show_all()
+                    dialog.run()
+                    dialog.hide()
 
         fn.get_current_installed()
+        fn.print_threads_alive()
 
         # return True to prevent the default handler from running
         return True
@@ -465,9 +489,6 @@ class Main(Gtk.Window):
         # self.gui.hide()
         # self.gui.queue_redraw()
         # self.gui.show_all()
-
-    def pkgInfo_clicked(self, widget):
-        fn.show_package_info(self)
 
     def recache_clicked(self, widget):
         # Check if cache is out of date. If so, run the re-cache, if not, don't.
@@ -525,8 +546,8 @@ class Main(Gtk.Window):
             )
 
     def refresh_main_gui(self):
-        self.remove(self.vbox_main)
-        self.vbox_main = GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+        self.remove(self.vbox)
+        GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
         self.show_all()
 
     def on_pacman_log_clicked(self, widget):
