@@ -191,7 +191,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     ##### add pkg version label widet starts #####
 
-                    if self.display_versions == True:
+                    if self.display_versions is True:
                         lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
                         lbl_pkg_version.set_text(package.version)
                         lbl_pkg_version.set_name("lbl_pkg_version")

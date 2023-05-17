@@ -9,21 +9,21 @@ gi.require_version("Gtk", "3.0")
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-class About(Gtk.Dialog):
+class AboutDialog(Gtk.Dialog):
     def __init__(self):
         app_name = "Sofirem"
         app_title = "About Sofirem"
         app_main_description = "%s - %s" % (app_name, "Software Installer Remover")
-        app_secondary_message = "Install/Remove packages from your system"
+        app_secondary_message = "Install or remove packages from your ArcoLinux system"
         app_secondary_description = "Report issues to make it even better"
         app_version = "version placeholder"
         app_discord = "https://discord.gg/stBhS4taje"
         app_website = "https://arcolinux.com"
         app_github = "https://github.com/arcolinux/sofirem-dev"
         app_authors = []
-        app_authors.append(("Developer", "Erik Dubois"))
-        app_authors.append(("Developer", "Cameron Percival"))
-        app_authors.append(("Developer", "Fennec"))
+        app_authors.append(("Erik Dubois", None))
+        app_authors.append(("Cameron Percival", None))
+        app_authors.append(("Fennec", None))
 
         pixbuf = GdkPixbuf.Pixbuf().new_from_file_at_size(
             os.path.join(base_dir, "images/sofirem.png"), 100, 100
@@ -33,7 +33,8 @@ class About(Gtk.Dialog):
         Gtk.Dialog.__init__(self)
 
         self.set_resizable(False)
-        self.set_size_request(500, 400)
+        self.set_size_request(560, 400)
+        self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
         headerbar = Gtk.HeaderBar()
         headerbar.set_show_close_button(True)
@@ -120,22 +121,27 @@ class About(Gtk.Dialog):
 
         stack.add_titled(grid_support, "Support", "Support")
 
-        grid_authors = Gtk.Grid()
+        box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
-        lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding3.set_text("")
+        listbox = Gtk.ListBox()
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        box_outer.pack_start(listbox, True, True, 0)
+
+        lbl_authors_title = Gtk.Label(xalign=0, yalign=0)
+        lbl_authors_title.set_text(
+            "The following people have contributed to developing %s" % app_name
+        )
 
         treestore_authors = Gtk.TreeStore(str, str)
         for item in app_authors:
             treestore_authors.append(None, list(item))
 
-        treeview_authors = Gtk.TreeView()
-        treeview_authors.set_model(treestore_authors)
+        treeview_authors = Gtk.TreeView(model=treestore_authors)
 
-        for i, col_title in enumerate(["Role", "Name"]):
-            renderer = Gtk.CellRendererText()
-            col = Gtk.TreeViewColumn(col_title, renderer, text=i)
-            treeview_authors.append_column(col)
+        renderer = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn(None, renderer, text=0)
+
+        treeview_authors.append_column(column)
 
         path = Gtk.TreePath.new_from_indices([0])
 
@@ -143,21 +149,23 @@ class About(Gtk.Dialog):
 
         selection.select_path(path)
 
-        grid_authors.attach(lbl_padding3, 0, 1, 1, 1)
-
-        lbl_padding4 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding4.set_text("                                     ")
-
-        grid_authors.attach(lbl_padding4, 0, 2, 1, 1)
-
-        grid_authors.attach_next_to(
-            treeview_authors, lbl_padding4, Gtk.PositionType.RIGHT, 20, 1
-        )
-
         treeview_authors.expand_all()
         treeview_authors.columns_autosize()
 
-        stack.add_titled(grid_authors, "Authors", "Authors")
+        row_authors = Gtk.ListBoxRow()
+        vbox_authors = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        row_authors.add(vbox_authors)
+        lbl_credits = Gtk.Label(xalign=0)
+        lbl_credits.set_markup(
+            "<b>The following people have helped develop %s</b>" % app_name
+        )
+
+        vbox_authors.pack_start(lbl_credits, True, True, 0)
+        vbox_authors.pack_start(treeview_authors, True, True, 0)
+
+        listbox.add(row_authors)
+
+        stack.add_titled(box_outer, "Authors", "Authors")
 
         self.connect("response", self.on_response)
 

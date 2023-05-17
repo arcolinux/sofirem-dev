@@ -23,14 +23,12 @@ class GUI_Worker(Thread):
             # pull what we need from the queue so we can process properly.
             items = self.queue.get()
             try:
-                # reached the end of items on the queue
-                if items is None:
-                    break
-
                 # make sure we have the required number of items on the queue
-                if len(items) == 5:
+                if items is not None:
                     # self, Gtk, vboxStack1, category, package_file = items
+
                     self, Gtk, vboxStack1, category, packages = items
+
                     App_Frame_GUI.GUI(
                         self,
                         Gtk,
@@ -42,10 +40,14 @@ class GUI_Worker(Thread):
             except Exception as e:
                 fn.logger.error("Exception in GUI_Worker(): %s" % e)
             finally:
+                if items is None:
+                    fn.logger.debug("Stopping GUI Worker thread")
+                    self.queue.task_done()
+                    return False
                 self.queue.task_done()
 
 
-def GUISearch(
+def setup_gui_search(
     self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, search_term
 ):
     try:
@@ -124,6 +126,7 @@ def GUISearch(
         # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         search_worker = GUI_Worker(self.queue)
+        search_worker.name = "thread_GUI_search_worker"
         # Set the worker to be True to allow processing, and avoid Blocking
         search_worker.daemon = True
         search_worker.start()
@@ -161,6 +164,7 @@ def GUISearch(
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.
         self.queue.join()
+        fn.logger.debug("GUI Worker thread completed")
 
         stack_switcher = Gtk.StackSidebar()
         stack_switcher.set_name("sidebar")
@@ -211,9 +215,9 @@ def GUISearch(
         #               QUIT BUTTON
         # =====================================================
 
-        btnQuitSofi = Gtk.Button(label="Quit")
-        btnQuitSofi.set_size_request(100, 30)
-        btnQuitSofi.connect("clicked", self.on_close, "delete-event")
+        # btnQuitSofi = Gtk.Button(label="Quit")
+        # btnQuitSofi.set_size_request(100, 30)
+        # btnQuitSofi.connect("clicked", self.on_close, "delete-event")
 
         # =====================================================
         #               SEARCH BOX
@@ -244,7 +248,7 @@ def GUISearch(
 
         # ivbox.pack_start(btnReCache, False, False, 0)
         ivbox.pack_start(self.btnRepos, False, False, 0)
-        ivbox.pack_start(btnQuitSofi, False, False, 0)
+        # ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
         vbox1.pack_start(stack, True, True, 0)
@@ -261,7 +265,7 @@ def GUISearch(
         fn.logger.error("Exception in GUISearch(): %s" % err)
 
 
-def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
+def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     try:
         # reset back to main box
         if self.search_activated:
@@ -353,6 +357,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         worker = GUI_Worker(self.queue)
+        worker.name = "thread_GUI_Worker"
         # Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
         worker.start()
@@ -383,7 +388,9 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # send a signal that no further items are to be put on the queue
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.
+
         self.queue.join()
+        fn.logger.debug("GUI Worker thread completed")
 
         stack_switcher = Gtk.StackSidebar()
         stack_switcher.set_name("sidebar")
@@ -420,9 +427,9 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # =====================================================
         #               QUIT BUTTON
         # =====================================================
-        btnQuitSofi = Gtk.Button(label="Quit")
-        btnQuitSofi.set_size_request(100, 30)
-        btnQuitSofi.connect("clicked", self.on_close, "delete-event")
+        # btnQuitSofi = Gtk.Button(label="Quit")
+        # btnQuitSofi.set_size_request(100, 30)
+        # btnQuitSofi.connect("clicked", self.on_close, "delete-event")
 
         # =====================================================
         #               SEARCH BOX
@@ -443,7 +450,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
         # ivbox.pack_start(self.btnRepos, False, False, 0)
-        ivbox.pack_start(btnQuitSofi, False, False, 0)
+        # ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
         vbox1.pack_start(stack, True, True, 0)
@@ -462,153 +469,179 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
 
 def setup_headerbar(self, Gtk):
-    header_bar_title = "Sofirem"
-    headerbar = Gtk.HeaderBar()
-    headerbar.set_title(header_bar_title)
-    headerbar.set_show_close_button(True)
+    try:
+        header_bar_title = "Sofirem"
+        headerbar = Gtk.HeaderBar()
+        headerbar.set_title(header_bar_title)
+        headerbar.set_show_close_button(True)
 
-    self.set_titlebar(headerbar)
+        self.set_titlebar(headerbar)
 
-    toolbuttonSettings = Gtk.ToolButton()
-    toolbuttonSettings.set_icon_name("open-menu-symbolic.symbolic")
-    # toolbuttonSettings.set_icon_name(Gtk.STOCK_PREFERENCES)
-    toolbuttonSettings.connect("clicked", self.on_settings_clicked)
+        toolbuttonSettings = Gtk.ToolButton()
+        toolbuttonSettings.set_icon_name("open-menu-symbolic.symbolic")
+        # toolbuttonSettings.set_icon_name(Gtk.STOCK_PREFERENCES)
+        toolbuttonSettings.connect("clicked", self.on_settings_clicked)
 
-    headerbar.pack_end(toolbuttonSettings)
+        headerbar.pack_end(toolbuttonSettings)
 
-    self.popover = Gtk.PopoverMenu.new()
-    self.popover.set_relative_to(toolbuttonSettings)
+        self.popover = Gtk.PopoverMenu.new()
+        self.popover.set_relative_to(toolbuttonSettings)
 
-    vbox = Gtk.Box(spacing=1, orientation=Gtk.Orientation.VERTICAL)
-    vbox.set_border_width(10)
+        vbox = Gtk.Box(spacing=1, orientation=Gtk.Orientation.VERTICAL)
+        vbox.set_border_width(10)
 
-    # switch to display package versions
-    switchSettingsVersion = Gtk.Switch()
-    switchSettingsVersion.set_halign(Gtk.Align(1))
+        # switch to display package versions
+        switchSettingsVersion = Gtk.Switch()
+        switchSettingsVersion.set_halign(Gtk.Align(1))
 
-    # button to open the pacman log monitoring dialog
-    btnPacmanLog = Gtk.Button(label="Open Pacman Log File")
-    btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
-    btnPacmanLog.set_size_request(100, 30)
+        # button to open the pacman log monitoring dialog
+        btnPacmanLog = Gtk.Button(label="Open Pacman Log File")
+        btnPacmanLog.connect("clicked", self.on_pacman_log_clicked)
+        btnPacmanLog.set_size_request(100, 30)
 
-    # button to export list of installed packages to disk
-    btn_packages_export = Gtk.Button(label="Show Installed Packages")
-    btn_packages_export.connect("clicked", self.on_packages_export_clicked)
-    btn_packages_export.set_size_request(100, 30)
+        # button to export list of installed packages to disk
+        btn_packages_export = Gtk.Button(label="Show Installed Packages")
+        btn_packages_export.connect("clicked", self.on_packages_export_clicked)
+        btn_packages_export.set_size_request(100, 30)
 
-    # button to show about dialog
-    btn_about_app = Gtk.Button(label="About")
-    btn_about_app.connect("clicked", self.on_about_app_clicked)
-    btn_about_app.set_size_request(100, 30)
+        # quit button
 
-    if self.display_versions == True:
-        switchSettingsVersion.set_active(True)
-    else:
-        switchSettingsVersion.set_active(False)
-    switchSettingsVersion.connect("notify::active", self.version_toggle)
+        btn_quit_sofi = Gtk.Button(label="Quit")
+        btn_quit_sofi.set_size_request(100, 30)
+        btn_quit_sofi.connect("clicked", self.on_close, "delete-event")
 
-    if not (
-        fn.check_package_installed("arcolinux-keyring")
-        or fn.check_package_installed("arcolinux-mirrorlist-git")
-    ):
-        self.btnRepos = Gtk.Button(label="Add ArcoLinux Repos")
-        self.btnRepos._value = 1
-    else:
-        self.btnRepos = Gtk.Button(label="Remove ArcoLinux Repos")
-        self.btnRepos._value = 2
+        # button to show about dialog
+        btn_about_app = Gtk.Button(label="About")
+        btn_about_app.connect("clicked", self.on_about_app_clicked)
+        btn_about_app.set_size_request(100, 30)
 
-    self.btnRepos.set_size_request(100, 30)
-    self.btnRepos.connect("clicked", self.on_repos_clicked)
+        if self.display_versions == True:
+            switchSettingsVersion.set_active(True)
+        else:
+            switchSettingsVersion.set_active(False)
 
-    lblSettingsVersion = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsVersion.set_text("Display package version")
+        switchSettingsVersion.connect("notify::active", self.version_toggle)
 
-    lblSettingsPadding1 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding1.set_text("    ")
+        if not (
+            fn.check_package_installed("arcolinux-keyring")
+            or fn.check_package_installed("arcolinux-mirrorlist-git")
+        ):
+            self.btnRepos = Gtk.Button(label="Add ArcoLinux Repos")
+            self.btnRepos._value = 1
+        else:
+            self.btnRepos = Gtk.Button(label="Remove ArcoLinux Repos")
+            self.btnRepos._value = 2
 
-    lblSettingsPadding2 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding2.set_text("    ")
+        self.btnRepos.set_size_request(100, 30)
+        self.btnRepos.connect("clicked", self.on_repos_clicked)
 
-    gridSettings = Gtk.Grid()
+        lblSettingsVersion = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsVersion.set_text("Display package version")
 
-    # attach_next_to(new,existing)
-    # attach (self, child:Gtk.Widget, left:int, top:int, width:int, height:int)
-    gridSettings.attach(lblSettingsPadding1, 0, 0, 1, 1)
+        lblSettingsPadding1 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding1.set_text("    ")
 
-    gridSettings.attach_next_to(
-        lblSettingsVersion, lblSettingsPadding1, Gtk.PositionType.RIGHT, 1, 1
-    )
+        lblSettingsPadding2 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding2.set_text("    ")
 
-    gridSettings.attach_next_to(
-        lblSettingsPadding2, lblSettingsVersion, Gtk.PositionType.RIGHT, 1, 1
-    )
+        gridSettings = Gtk.Grid()
 
-    gridSettings.attach_next_to(
-        switchSettingsVersion, lblSettingsPadding2, Gtk.PositionType.RIGHT, 1, 1
-    )
+        # attach_next_to(new,existing)
+        # attach (self, child:Gtk.Widget, left:int, top:int, width:int, height:int)
+        gridSettings.attach(lblSettingsPadding1, 0, 0, 1, 1)
 
-    # add the repos button
+        gridSettings.attach_next_to(
+            lblSettingsVersion, lblSettingsPadding1, Gtk.PositionType.RIGHT, 1, 1
+        )
 
-    lblSettingsPaddingRow1 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPaddingRow1.set_text("    ")
+        gridSettings.attach_next_to(
+            lblSettingsPadding2, lblSettingsVersion, Gtk.PositionType.RIGHT, 1, 1
+        )
 
-    gridSettings.attach(lblSettingsPaddingRow1, 0, 1, 1, 1)
+        gridSettings.attach_next_to(
+            switchSettingsVersion, lblSettingsPadding2, Gtk.PositionType.RIGHT, 1, 1
+        )
 
-    lblSettingsPadding3 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding3.set_text("    ")
+        # add the repos button
 
-    gridSettings.attach(lblSettingsPadding3, 0, 2, 1, 1)
+        lblSettingsPaddingRow1 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPaddingRow1.set_text("    ")
 
-    gridSettings.attach_next_to(
-        self.btnRepos, lblSettingsPadding3, Gtk.PositionType.RIGHT, 20, 1
-    )
+        gridSettings.attach(lblSettingsPaddingRow1, 0, 1, 1, 1)
 
-    # add the pacman log button
-    lblSettingsPaddingRow2 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPaddingRow2.set_text("    ")
+        lblSettingsPadding3 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding3.set_text("    ")
 
-    gridSettings.attach(lblSettingsPaddingRow2, 0, 3, 1, 1)
+        gridSettings.attach(lblSettingsPadding3, 0, 2, 1, 1)
 
-    lblSettingsPadding4 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding4.set_text("    ")
+        gridSettings.attach_next_to(
+            self.btnRepos, lblSettingsPadding3, Gtk.PositionType.RIGHT, 20, 1
+        )
 
-    gridSettings.attach(lblSettingsPadding4, 0, 4, 1, 1)
+        # add the pacman log button
+        lblSettingsPaddingRow2 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPaddingRow2.set_text("    ")
 
-    gridSettings.attach_next_to(
-        btnPacmanLog, lblSettingsPadding4, Gtk.PositionType.RIGHT, 20, 1
-    )
+        gridSettings.attach(lblSettingsPaddingRow2, 0, 3, 1, 1)
 
-    # add export package list button
-    lblSettingsPaddingRow3 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPaddingRow3.set_text("    ")
+        lblSettingsPadding4 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding4.set_text("    ")
 
-    gridSettings.attach(lblSettingsPaddingRow3, 0, 5, 1, 1)
+        gridSettings.attach(lblSettingsPadding4, 0, 4, 1, 1)
 
-    lblSettingsPadding5 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding5.set_text("    ")
+        gridSettings.attach_next_to(
+            btnPacmanLog, lblSettingsPadding4, Gtk.PositionType.RIGHT, 20, 1
+        )
 
-    gridSettings.attach(lblSettingsPadding5, 0, 6, 1, 1)
+        # add export package list button
+        lblSettingsPaddingRow3 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPaddingRow3.set_text("    ")
 
-    gridSettings.attach_next_to(
-        btn_packages_export, lblSettingsPadding5, Gtk.PositionType.RIGHT, 20, 1
-    )
+        gridSettings.attach(lblSettingsPaddingRow3, 0, 5, 1, 1)
 
-    # add about dialog button
-    lblSettingsPaddingRow4 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPaddingRow4.set_text("    ")
+        lblSettingsPadding5 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding5.set_text("    ")
 
-    gridSettings.attach(lblSettingsPaddingRow4, 0, 7, 1, 1)
+        gridSettings.attach(lblSettingsPadding5, 0, 6, 1, 1)
 
-    lblSettingsPadding6 = Gtk.Label(xalign=0, yalign=0)
-    lblSettingsPadding6.set_text("    ")
+        gridSettings.attach_next_to(
+            btn_packages_export, lblSettingsPadding5, Gtk.PositionType.RIGHT, 20, 1
+        )
 
-    gridSettings.attach(lblSettingsPadding6, 0, 8, 1, 1)
+        # add about dialog button
+        lblSettingsPaddingRow4 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPaddingRow4.set_text("    ")
 
-    gridSettings.attach_next_to(
-        btn_about_app, lblSettingsPadding6, Gtk.PositionType.RIGHT, 20, 1
-    )
+        gridSettings.attach(lblSettingsPaddingRow4, 0, 7, 1, 1)
 
-    vbox.pack_start(gridSettings, True, True, 0)
+        lblSettingsPadding6 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding6.set_text("    ")
 
-    self.popover.add(vbox)
-    self.popover.set_position(Gtk.PositionType.BOTTOM)
+        gridSettings.attach(lblSettingsPadding6, 0, 8, 1, 1)
+
+        gridSettings.attach_next_to(
+            btn_about_app, lblSettingsPadding6, Gtk.PositionType.RIGHT, 20, 1
+        )
+
+        # add quit button
+
+        lblSettingsPaddingRow5 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPaddingRow5.set_text("    ")
+
+        gridSettings.attach(lblSettingsPaddingRow5, 0, 9, 1, 1)
+
+        lblSettingsPadding7 = Gtk.Label(xalign=0, yalign=0)
+        lblSettingsPadding7.set_text("    ")
+
+        gridSettings.attach(lblSettingsPadding7, 0, 10, 1, 1)
+
+        gridSettings.attach_next_to(
+            btn_quit_sofi, lblSettingsPadding7, Gtk.PositionType.RIGHT, 20, 1
+        )
+
+        vbox.pack_start(gridSettings, True, True, 0)
+
+        self.popover.add(vbox)
+        self.popover.set_position(Gtk.PositionType.BOTTOM)
+    except Exception as e:
+        fn.logger.error("Exception in setup_headerbar(): %s" % e)

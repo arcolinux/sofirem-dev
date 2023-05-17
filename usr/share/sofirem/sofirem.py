@@ -11,7 +11,7 @@ import subprocess
 from Functions import os
 from queue import Queue
 import App_Frame_GUI
-from About import About
+from AboutDialog import AboutDialog
 
 # from Functions import install_alacritty, os, pacman
 from subprocess import PIPE, STDOUT
@@ -19,6 +19,7 @@ from time import sleep
 from datetime import datetime
 import sys
 import time
+from ProgressDialog import ProgressDialog
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -65,24 +66,9 @@ class Main(Gtk.Window):
             self.timeout_id = None
             # default: displaying versions are disabled
             self.display_versions = False
-
-            # self.package_metadata = fn.get_package_information(self, "steam")
-            # pkg = fn.Package(
-            #     "wine-staging",
-            #     "description",
-            #     "category",
-            #     "subcategory",
-            #     "subcategory_description",
-            #     "version",
-            # )
-            # dialog = fn.create_package_progress_dialog(
-            #     self,
-            #     "install",
-            #     pkg,
-            #     "pacman -s paru --noconfirm",
-            # )
-            #
-            # sys.exit(0)
+            self.thread_add_pacmanlog_alive = False
+            # On initial app load search_activated is set to False
+            self.search_activated = False
 
             print(
                 "---------------------------------------------------------------------------"
@@ -194,7 +180,7 @@ class Main(Gtk.Window):
             # store package information into memory, and use the dictionary returned to search in for quicker retrieval
             fn.logger.info("Storing package metadata started")
 
-            self.packages = fn.storePackages()
+            self.packages = fn.store_packages()
 
             fn.logger.info("Categories = %s" % len(self.packages.keys()))
 
@@ -212,17 +198,12 @@ class Main(Gtk.Window):
             while Gtk.events_pending():
                 Gtk.main_iteration()
 
-            sleep(3)
+            sleep(5)
             splScr.destroy()
 
             fn.logger.info("Preparing GUI")
 
-            # On initial app load search_activated is set to False
-
-            self.search_activated = False
-
-            # Save reference to the vbox generated from the main GUI view
-            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
             fn.logger.info("GUI loaded")
 
@@ -254,7 +235,7 @@ class Main(Gtk.Window):
 
     def on_search_activated(self, searchentry):
         if searchentry.get_text_length() == 0 and self.search_activated:
-            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
             self.search_activated = False
 
         if searchentry.get_text_length() == 0:
@@ -297,7 +278,7 @@ class Main(Gtk.Window):
                             fn.logger.info("Search found %s results" % total)
                             # make sure the gui search only displays the pkgs inside the results
 
-                            GUI.GUISearch(
+                            GUI.setup_gui_search(
                                 self,
                                 Gtk,
                                 Gdk,
@@ -326,7 +307,7 @@ class Main(Gtk.Window):
                         msg_dialog.hide()
 
                 elif self.search_activated == True:
-                    GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+                    GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
                     self.search_activated = False
             except Exception as err:
                 fn.logger.error("Exception in on_search_activated(): %s" % err)
@@ -337,7 +318,7 @@ class Main(Gtk.Window):
 
     def on_search_cleared(self, searchentry, icon_pos, event):
         if self.search_activated:
-            GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
         self.searchEntry.set_placeholder_text("Search...")
 
@@ -350,7 +331,7 @@ class Main(Gtk.Window):
     def on_repos_clicked(self, widget):
         if self.btnRepos._value == 1:
             fn.logger.info("Let's install the ArcoLinux keys and mirrors")
-            fn.install_arcolinux_key_mirror(self)
+            fn.install_arcolinux_key_mirror()
 
             fn.logger.info("Checking whether the repos have been added")
             fn.add_repos()
@@ -409,16 +390,30 @@ class Main(Gtk.Window):
 
                 # check there is no pacman lockfile before continuing
                 if fn.check_pacman_lockfile() is False:
-                    self.package_metadata = fn.get_package_information(
-                        self, package.name
-                    )
                     fn.logger.info("Package to install : %s" % package.name)
+
+                    inst_str = [
+                        "pacman",
+                        "-S",
+                        package.name,
+                        "--needed",
+                        "--noconfirm",
+                        "--disable-download-timeout",
+                    ]
+
+                    dialog = ProgressDialog(
+                        "install",
+                        package,
+                        " ".join(inst_str),
+                    )
 
                     self.pkg_queue.put(
                         (
                             package,
                             "install",
                             widget,
+                            inst_str,
+                            dialog,
                         ),
                     )
 
@@ -429,19 +424,15 @@ class Main(Gtk.Window):
                     )
 
                     th.start()
+                    fn.logger.debug("Package-install thread started")
                 else:
                     widget.set_state(False)
                     proc = fn.get_pacman_process()
-                    dialog = fn.message_dialog(
+                    fn.messageBox(
                         self,
                         "Pacman lockfile found",
-                        "Pacman is busy and is processing another transaction",
-                        "Process currently running = %s" % proc,
+                        "Pacman is busy, and currently running: %s" % proc,
                     )
-                    dialog.show_all()
-                    dialog.run()
-                    dialog.hide()
-
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
             # Uninstall the package
@@ -449,16 +440,23 @@ class Main(Gtk.Window):
             # widget.set_state(False)
             if len(package.name) > 0:
                 if fn.check_pacman_lockfile() is False:
-                    self.package_metadata = fn.get_package_information(
-                        self, package.name
-                    )
                     fn.logger.info("Package to remove : %s" % package.name)
+
+                    uninst_str = ["pacman", "-Rs", package.name, "--noconfirm"]
+
+                    dialog = ProgressDialog(
+                        "uninstall",
+                        package,
+                        " ".join(uninst_str),
+                    )
 
                     self.pkg_queue.put(
                         (
                             package,
                             "uninstall",
                             widget,
+                            uninst_str,
+                            dialog,
                         ),
                     )
 
@@ -472,18 +470,14 @@ class Main(Gtk.Window):
                 else:
                     widget.set_state(True)
                     proc = fn.get_pacman_process()
-                    dialog = fn.message_dialog(
+                    fn.messageBox(
                         self,
                         "Pacman lockfile found",
-                        "Pacman is busy and is processing another transaction",
-                        "Process currently running = %s" % proc,
+                        "Pacman is busy, and currently running = %s" % proc,
                     )
-                    dialog.show_all()
-                    dialog.run()
-                    dialog.hide()
 
-        fn.get_current_installed()
-        fn.print_threads_alive()
+        # fn.get_current_installed()
+        # fn.print_threads_alive()
 
         # return True to prevent the default handler from running
         return True
@@ -513,8 +507,10 @@ class Main(Gtk.Window):
         fn.logger.info("Showing About dialog")
         self.toggle_popover()
 
-        about = About()
+        about = AboutDialog()
         about.run()
+        about.hide()
+        about.destroy()
 
     def on_packages_export_clicked(self, widget):
         self.toggle_popover()
@@ -551,12 +547,13 @@ class Main(Gtk.Window):
 
     def refresh_main_gui(self):
         self.remove(self.vbox)
-        GUI.GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+        GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
         self.show_all()
 
     def on_pacman_log_clicked(self, widget):
         try:
             self.toggle_popover()
+
             thread_addlog = "thread_addPacmanLogQueue"
             thread_add_pacmanlog_alive = fn.is_thread_alive(thread_addlog)
 
@@ -571,9 +568,6 @@ class Main(Gtk.Window):
                 )
                 th_add_pacmanlog_queue.start()
 
-            else:
-                fn.logger.info("Thread to monitor Pacman Log file is already active")
-
             # show dialog
 
             pacmanlog_dialog = Gtk.Dialog(self)
@@ -586,6 +580,10 @@ class Main(Gtk.Window):
             pacmanlog_dialog.set_title("Pacman log file viewer")
             pacmanlog_dialog.set_default_size(700, 600)
             pacmanlog_dialog.set_resizable(True)
+            pacmanlog_dialog.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+            pacmanlog_dialog.set_icon_from_file(
+                os.path.join(base_dir, "images/sofirem.png")
+            )
             btnPacmanLogOk = Gtk.Button(label="OK")
             btnPacmanLogOk.connect(
                 "clicked", self.onPacmanlogResponse, pacmanlog_dialog
@@ -597,7 +595,7 @@ class Main(Gtk.Window):
 
             pacmanlog_scrolledwindow = Gtk.ScrolledWindow()
 
-            if thread_add_pacmanlog_alive == True:
+            if self.thread_add_pacmanlog_alive == True:
                 # thread already running, textbuffer already populated
                 # re-use the existing textbuffer to repopulate the textviewer
                 self.pacmanlog_textview = Gtk.TextView()
@@ -643,6 +641,8 @@ class Main(Gtk.Window):
                     daemon=True,
                 )
                 th_logtimer.start()
+
+            self.thread_add_pacmanlog_alive = True
 
         except Exception as e:
             fn.logger.error("Exception in on_pacman_log_clicked() : %s" % e)
@@ -697,10 +697,10 @@ if __name__ == "__main__":
                 flags=0,
                 message_type=Gtk.MessageType.INFO,
                 buttons=Gtk.ButtonsType.YES_NO,
-                text="Lock File Found",
+                text="Sofirem Lock File Found",
             )
             md.format_secondary_markup(
-                "The lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
+                "A Sofirem lock file has been found. This indicates there is already an instance of <b>Sofirem</b> running.\n\
                 Click 'Yes' to remove the lock file and try running again"
             )  # noqa
 

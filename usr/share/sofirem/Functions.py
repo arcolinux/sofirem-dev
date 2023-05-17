@@ -4,7 +4,6 @@
 
 import os
 import sys
-import shutil
 import psutil
 import time
 import datetime
@@ -12,20 +11,14 @@ from datetime import datetime, timedelta
 import subprocess
 import threading  # noqa
 import gi
-import requests
 import logging
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
-
-# import configparser
-gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gtk  # noqa
-from queue import Queue  # Multithreading the caching
 from threading import Thread
-from ProgressBarWindow import ProgressBarWindow
 from Package import Package
 from distro import id
-from os import mkdir, path, makedirs
+from os import makedirs
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import GLib, Gtk  # noqa
 
 # =====================================================
 #               Base Directory
@@ -42,12 +35,6 @@ path_dir_cache = base_dir + "/cache/"
 packages = []
 debug = False
 distr = id()
-# limit the amount of threads to run
-# this limit is set for the install/uninstall package thread
-max_number_threads_pkg_install_rem = 5
-thread_limiter_pkg_install_rem = threading.BoundedSemaphore(
-    max_number_threads_pkg_install_rem
-)
 
 # this timeout is for the pacman sync, pacman lock file, install/uninstall processes
 # 10m timeout
@@ -204,7 +191,6 @@ def permissions(dst):
 def sync_package_db():
     try:
         sync_str = ["pacman", "-Sy"]
-        now = datetime.now().strftime("%H:%M:%S")
         logger.info("Synchronising package databases")
         process_sync = subprocess.run(
             sync_str,
@@ -227,400 +213,7 @@ def sync_package_db():
         logger.error("Exception in sync(): %s" % e)
 
 
-def on_package_progress_close_response(self, widget, dialog):
-    dialog.hide()
-    dialog.destroy()
-    self.pkg_dialog_closed = True
-
-
-def package_progress_dialog_on_close(widget, data, self, action):
-    self.pkg_dialog_closed = True
-    logger.debug("Closing package progress dialog window")
-    widget.hide()
-    widget.destroy()
-
-
-def create_package_progress_dialog(self, action, pkg, command):
-    try:
-        self.package_progress_dialog = Gtk.Dialog(self)
-
-        package_progress_dialog_headerbar = Gtk.HeaderBar()
-        package_progress_dialog_headerbar.set_show_close_button(True)
-        self.package_progress_dialog.set_titlebar(package_progress_dialog_headerbar)
-
-        package_progress_dialog_headerbar.set_property("can-focus", True)
-        Gtk.Window.grab_focus(package_progress_dialog_headerbar)
-
-        self.package_progress_dialog.connect(
-            "delete-event", package_progress_dialog_on_close, self, action
-        )
-
-        if action == "install":
-            self.package_progress_dialog.set_title(
-                "Sofirem - installing package %s" % pkg.name
-            )
-
-        elif action == "uninstall":
-            self.package_progress_dialog.set_title(
-                "Sofirem - removing package %s" % pkg.name
-            )
-
-        btn_package_progress_close = Gtk.Button(label="OK")
-        btn_package_progress_close.connect(
-            "clicked",
-            on_package_progress_close_response,
-            self,
-            self.package_progress_dialog,
-        )
-        btn_package_progress_close.set_sensitive(False)
-        btn_package_progress_close.set_size_request(100, 30)
-
-        self.package_progress_dialog.set_resizable(False)
-        self.package_progress_dialog.set_size_request(750, 700)
-        self.package_progress_dialog.set_modal(True)
-        self.package_progress_dialog.set_border_width(10)
-
-        lbl_pacman_action_title = Gtk.Label(xalign=0, yalign=0)
-        lbl_pacman_action_title.set_text("Running command:")
-
-        lbl_pacman_action_value = Gtk.Label(xalign=0, yalign=0)
-        lbl_pacman_action_value.set_markup("<b>%s</b>" % command)
-
-        stack = Gtk.Stack()
-        stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        stack.set_transition_duration(350)
-        stack.set_hhomogeneous(False)
-        stack.set_vhomogeneous(False)
-
-        stack_switcher = Gtk.StackSwitcher()
-        stack_switcher.set_orientation(Gtk.Orientation.HORIZONTAL)
-        stack_switcher.set_stack(stack)
-        stack_switcher.set_homogeneous(True)
-
-        package_progress_grid = Gtk.Grid()
-
-        self.infobar = Gtk.InfoBar()
-        self.infobar.set_name("infobar_info")
-
-        content = self.infobar.get_content_area()
-        content.add(lbl_pacman_action_title)
-        content.add(lbl_pacman_action_value)
-
-        self.infobar.set_revealed(True)
-
-        lbl_padding_header1 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding_header1.set_text("")
-
-        package_progress_grid.attach(lbl_padding_header1, 0, 1, 1, 1)
-        package_progress_grid.attach(self.infobar, 0, 2, 1, 1)
-
-        package_progress_grid.set_property("can-focus", True)
-        Gtk.Window.grab_focus(package_progress_grid)
-
-        lbl_padding1 = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding1.set_text("")
-
-        package_progress_grid.attach(lbl_padding1, 0, 3, 1, 1)
-
-        package_progress_scrolled_window = Gtk.ScrolledWindow()
-        package_progress_textview = Gtk.TextView()
-        package_progress_textview.set_property("editable", False)
-        package_progress_textview.set_property("monospace", True)
-        package_progress_textview.set_vexpand(True)
-        package_progress_textview.set_hexpand(True)
-        buffer = package_progress_textview.get_buffer()
-        package_progress_textview.set_buffer(buffer)
-
-        package_progress_scrolled_window.add(package_progress_textview)
-        package_progress_grid.attach(package_progress_scrolled_window, 0, 4, 1, 1)
-
-        package_progress_btn_grid = Gtk.Grid()
-
-        lbl_padding_btn = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding_btn.set_name("lbl_btn_padding_right")
-
-        lbl_padding_btn_top = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding_btn_top.set_text("")
-
-        package_progress_btn_grid.attach(lbl_padding_btn_top, 0, 1, 1, 1)
-
-        package_progress_btn_grid.attach(lbl_padding_btn, 0, 2, 5, 1)
-
-        package_progress_btn_grid.attach_next_to(
-            btn_package_progress_close,
-            lbl_padding_btn,
-            Gtk.PositionType.RIGHT,
-            1,
-            1,
-        )
-
-        stack.add_titled(package_progress_grid, "Progress", "Package Progress")
-
-        # package information
-        box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-
-        listbox = Gtk.ListBox()
-        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        box_outer.pack_start(listbox, True, True, 0)
-
-        # package name
-        row_package_title = Gtk.ListBoxRow()
-        vbox_package_title = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        row_package_title.add(vbox_package_title)
-        lbl_package_name_title = Gtk.Label(xalign=0)
-        lbl_package_name_title.set_markup("<b>Package Name</b>")
-
-        lbl_package_name_value = Gtk.Label(xalign=0)
-        lbl_package_name_value.set_text(self.package_metadata["name"])
-        vbox_package_title.pack_start(lbl_package_name_title, True, True, 0)
-        vbox_package_title.pack_start(lbl_package_name_value, True, True, 0)
-
-        listbox.add(row_package_title)
-
-        # repository
-
-        row_package_repo = Gtk.ListBoxRow()
-        vbox_package_repo = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        row_package_repo.add(vbox_package_repo)
-        lbl_package_repo_title = Gtk.Label(xalign=0)
-        lbl_package_repo_title.set_markup("<b>Repository</b>")
-
-        lbl_package_repo_value = Gtk.Label(xalign=0)
-        lbl_package_repo_value.set_text(self.package_metadata["repository"])
-        vbox_package_repo.pack_start(lbl_package_repo_title, True, True, 0)
-        vbox_package_repo.pack_start(lbl_package_repo_value, True, True, 0)
-
-        listbox.add(row_package_repo)
-
-        # description
-
-        row_package_description = Gtk.ListBoxRow()
-        vbox_package_description = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_description.add(vbox_package_description)
-        lbl_package_description_title = Gtk.Label(xalign=0)
-        lbl_package_description_title.set_markup("<b>Description</b>")
-
-        lbl_package_description_value = Gtk.Label(xalign=0)
-        lbl_package_description_value.set_text(self.package_metadata["description"])
-        vbox_package_description.pack_start(
-            lbl_package_description_title, True, True, 0
-        )
-        vbox_package_description.pack_start(
-            lbl_package_description_value, True, True, 0
-        )
-
-        listbox.add(row_package_description)
-
-        # arch
-
-        row_package_arch = Gtk.ListBoxRow()
-        vbox_package_arch = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        row_package_arch.add(vbox_package_arch)
-        lbl_package_arch_title = Gtk.Label(xalign=0)
-        lbl_package_arch_title.set_markup("<b>Architecture</b>")
-
-        lbl_package_arch_value = Gtk.Label(xalign=0)
-        lbl_package_arch_value.set_text(self.package_metadata["arch"])
-        vbox_package_arch.pack_start(lbl_package_arch_title, True, True, 0)
-        vbox_package_arch.pack_start(lbl_package_arch_value, True, True, 0)
-
-        listbox.add(row_package_arch)
-
-        # url
-
-        row_package_url = Gtk.ListBoxRow()
-        vbox_package_url = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        row_package_url.add(vbox_package_url)
-        lbl_package_url_title = Gtk.Label(xalign=0)
-        lbl_package_url_title.set_markup("<b>URL</b>")
-
-        lbl_package_url_value = Gtk.Label(xalign=0)
-        lbl_package_url_value.set_markup(
-            "<a href=''>%s</a>" % self.package_metadata["url"]
-        )
-        vbox_package_url.pack_start(lbl_package_url_title, True, True, 0)
-        vbox_package_url.pack_start(lbl_package_url_value, True, True, 0)
-
-        listbox.add(row_package_url)
-
-        # download size
-
-        row_package_size = Gtk.ListBoxRow()
-        vbox_package_size = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        row_package_size.add(vbox_package_size)
-        lbl_package_size_title = Gtk.Label(xalign=0)
-        lbl_package_size_title.set_markup("<b>Download size</b>")
-
-        lbl_package_size_value = Gtk.Label(xalign=0)
-        lbl_package_size_value.set_text(self.package_metadata["download_size"])
-        vbox_package_size.pack_start(lbl_package_size_title, True, True, 0)
-        vbox_package_size.pack_start(lbl_package_size_value, True, True, 0)
-
-        listbox.add(row_package_size)
-
-        # installed size
-
-        row_package_installed_size = Gtk.ListBoxRow()
-        vbox_package_installed_size = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_installed_size.add(vbox_package_installed_size)
-        lbl_package_installed_size_title = Gtk.Label(xalign=0)
-        lbl_package_installed_size_title.set_markup("<b>Installed size</b>")
-
-        lbl_package_installed_size_value = Gtk.Label(xalign=0)
-        lbl_package_installed_size_value.set_text(
-            self.package_metadata["installed_size"]
-        )
-        vbox_package_installed_size.pack_start(
-            lbl_package_installed_size_title, True, True, 0
-        )
-        vbox_package_installed_size.pack_start(
-            lbl_package_installed_size_value, True, True, 0
-        )
-
-        listbox.add(row_package_installed_size)
-
-        # build date
-
-        row_package_build_date = Gtk.ListBoxRow()
-        vbox_package_build_date = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_build_date.add(vbox_package_build_date)
-        lbl_package_build_date_title = Gtk.Label(xalign=0)
-        lbl_package_build_date_title.set_markup("<b>Build date</b>")
-
-        lbl_package_build_date_value = Gtk.Label(xalign=0)
-        lbl_package_build_date_value.set_text(self.package_metadata["build_date"])
-        vbox_package_build_date.pack_start(lbl_package_build_date_title, True, True, 0)
-        vbox_package_build_date.pack_start(lbl_package_build_date_value, True, True, 0)
-
-        listbox.add(row_package_build_date)
-
-        # packager
-
-        row_package_maintainer = Gtk.ListBoxRow()
-        vbox_package_maintainer = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_maintainer.add(vbox_package_maintainer)
-        lbl_package_maintainer_title = Gtk.Label(xalign=0)
-        lbl_package_maintainer_title.set_markup("<b>Packager</b>")
-
-        lbl_package_maintainer_value = Gtk.Label(xalign=0)
-        lbl_package_maintainer_value.set_text(self.package_metadata["packager"])
-        vbox_package_maintainer.pack_start(lbl_package_maintainer_title, True, True, 0)
-        vbox_package_maintainer.pack_start(lbl_package_maintainer_value, True, True, 0)
-
-        listbox.add(row_package_maintainer)
-
-        # depends on
-
-        row_package_depends_on = Gtk.ListBoxRow()
-        vbox_package_depends_on = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_depends_on.add(vbox_package_depends_on)
-        lbl_package_depends_on_title = Gtk.Label(xalign=0)
-        lbl_package_depends_on_title.set_markup("<b>Depends on</b>")
-
-        if len(self.package_metadata["depends_on"]) > 0:
-            treestore_depends = Gtk.TreeStore(str, str)
-
-            for item in self.package_metadata["depends_on"]:
-                treestore_depends.append(None, list(item))
-
-            treeview_depends = Gtk.TreeView(model=treestore_depends)
-
-            renderer = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn("Package", renderer, text=0)
-
-            treeview_depends.append_column(column)
-
-            vbox_package_depends_on.pack_start(
-                lbl_package_depends_on_title, True, True, 0
-            )
-
-            vbox_package_depends_on.pack_start(treeview_depends, True, True, 0)
-
-        else:
-            lbl_package_depends_value = Gtk.Label(xalign=0, yalign=0)
-            lbl_package_depends_value.set_text("None")
-
-            vbox_package_depends_on.pack_start(
-                lbl_package_depends_on_title, True, True, 0
-            )
-
-            vbox_package_depends_on.pack_start(lbl_package_depends_value, True, True, 0)
-
-        listbox.add(row_package_depends_on)
-
-        # conflicts with
-
-        row_package_conflicts_with = Gtk.ListBoxRow()
-        vbox_package_conflicts_with = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL, spacing=0
-        )
-        row_package_conflicts_with.add(vbox_package_conflicts_with)
-        lbl_package_conflicts_with_title = Gtk.Label(xalign=0)
-        lbl_package_conflicts_with_title.set_markup("<b>Conflicts with</b>")
-
-        if len(self.package_metadata["conflicts_with"]) > 0:
-            treestore_conflicts = Gtk.TreeStore(str, str)
-
-            for item in self.package_metadata["conflicts_with"]:
-                treestore_conflicts.append(None, list(item))
-
-            treeview_conflicts = Gtk.TreeView(model=treestore_conflicts)
-
-            renderer = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn("Package", renderer, text=0)
-
-            treeview_conflicts.append_column(column)
-
-            vbox_package_conflicts_with.pack_start(
-                lbl_package_conflicts_with_title, True, True, 0
-            )
-
-            vbox_package_conflicts_with.pack_start(treeview_conflicts, True, True, 0)
-
-        else:
-            lbl_package_conflicts_with_value = Gtk.Label(xalign=0, yalign=0)
-            lbl_package_conflicts_with_value.set_text("None")
-
-            vbox_package_conflicts_with.pack_start(
-                lbl_package_conflicts_with_title, True, True, 0
-            )
-
-            vbox_package_conflicts_with.pack_start(
-                lbl_package_conflicts_with_value, True, True, 0
-            )
-
-        listbox.add(row_package_conflicts_with)
-
-        package_metadata_scrolled_window = Gtk.ScrolledWindow()
-
-        package_metadata_scrolled_window.add(box_outer)
-
-        stack.add_titled(
-            package_metadata_scrolled_window, "Package Information", "Information"
-        )
-
-        self.package_progress_dialog.vbox.add(stack_switcher)
-        self.package_progress_dialog.vbox.add(stack)
-        self.package_progress_dialog.vbox.add(package_progress_btn_grid)
-
-        self.package_progress_dialog.show_all()
-
-        return package_progress_textview, btn_package_progress_close
-    except Exception as e:
-        logger.error("Exception in package_progress_dialog(): %s" % e)
-
-
-def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
+def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
     try:
         with subprocess.Popen(
             cmd,
@@ -629,37 +222,39 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
             bufsize=1,
             universal_newlines=True,
         ) as process:
-            self.pkg_dialog_closed = False
+            progress_dialog.pkg_dialog_closed = False
             self.in_progress = True
             widget.set_sensitive(False)
 
-            line = "Running command: %s\n\n" % " ".join(cmd)
+            line = "Pacman is processing the %s of package %s \n\n" % (action, pkg.name)
 
             GLib.idle_add(
                 update_progress_textview,
                 self,
                 line,
-                textview.get_buffer(),
-                textview,
+                progress_dialog,
+                # progress_dialog.package_progress_textview.get_buffer(),
+                # progress_dialog.package_progress_textview,
                 priority=GLib.PRIORITY_DEFAULT,
             )
             logger.debug("Waiting for pacman process, timeout = %s" % process_timeout)
-            process.wait(process_timeout)
+            # process.wait(process_timeout)
             logger.debug("Pacman is now processing the request")
+            while process.poll() is None:
+                for line in process.stdout:
+                    if progress_dialog.pkg_dialog_closed:
+                        break
+                    GLib.idle_add(
+                        update_progress_textview,
+                        self,
+                        line,
+                        progress_dialog,
+                        # progress_dialog.package_progress_textview.get_buffer(),
+                        # progress_dialog.package_progress_textview,
+                        priority=GLib.PRIORITY_DEFAULT,
+                    )
 
-            for line in process.stdout:
-                if self.pkg_dialog_closed:
-                    break
-                GLib.idle_add(
-                    update_progress_textview,
-                    self,
-                    line,
-                    textview.get_buffer(),
-                    textview,
-                    priority=GLib.PRIORITY_DEFAULT,
-                )
-
-                time.sleep(0.1)
+                    time.sleep(0.3)
 
             if process.returncode == 0:
                 logger.info("Package %s = completed" % action)
@@ -670,9 +265,10 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
                     action,
                     widget,
                     pkg,
+                    progress_dialog,
                     priority=GLib.PRIORITY_DEFAULT,
                 )
-                btn_ok.set_sensitive(True)
+                progress_dialog.btn_package_progress_close.set_sensitive(True)
                 self.in_progress = False
 
             else:
@@ -689,26 +285,27 @@ def start_subprocess(self, cmd, textview, btn_ok, action, pkg, widget):
                     action,
                     widget,
                     pkg,
+                    progress_dialog,
                     priority=GLib.PRIORITY_DEFAULT,
                 )
 
-                btn_ok.set_sensitive(True)
+                progress_dialog.btn_package_progress_close.set_sensitive(True)
 
-            time.sleep(0.1)
+            # time.sleep(0.1)
     except TimeoutError as t:
         logger.error("TimeoutError in %s start_subprocess(): %s" % (action, t))
         process.terminate()
-        btn_ok.set_sensitive(True)
+        progress_dialog.btn_package_progress_close.set_sensitive(True)
         # deactivate switch widget, install failed
 
     except SystemError as s:
         logger.error("SystemError in %s start_subprocess(): %s" % (action, s))
         process.terminate()
-        btn_ok.set_sensitive(True)
+        progress_dialog.btn_package_progress_close.set_sensitive(True)
         # deactivate switch widget, install failed
 
 
-def toggle_switch(self, action, switch, pkg):
+def toggle_switch(self, action, switch, pkg, progress_dialog):
     logger.debug("Toggling switch state")
     installed = check_package_installed(pkg.name)
     if installed and action == "install":
@@ -716,14 +313,12 @@ def toggle_switch(self, action, switch, pkg):
         switch.set_state(True)
         # switch.set_active(True)
         switch.set_sensitive(True)
-        self.package_progress_dialog.set_title(
-            "Package install for %s completed" % pkg.name
-        )
+        progress_dialog.set_title("Package install for %s completed" % pkg.name)
 
-        if self.pkg_dialog_closed is False:
-            self.infobar.set_name("infobar_info")
+        if progress_dialog.pkg_dialog_closed is False:
+            progress_dialog.infobar.set_name("infobar_info")
 
-            content = self.infobar.get_content_area()
+            content = progress_dialog.infobar.get_content_area()
             if content is not None:
                 for widget in content.get_children():
                     content.remove(widget)
@@ -737,7 +332,9 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(
+                    200, reveal_infobar, self, progress_dialog
+                )
 
     if installed is False and action == "install":
         # install failed/terminated
@@ -745,14 +342,12 @@ def toggle_switch(self, action, switch, pkg):
         switch.set_active(False)
         switch.set_sensitive(True)
 
-        self.package_progress_dialog.set_title(
-            "Package install for %s failed" % pkg.name
-        )
+        progress_dialog.set_title("Package install for %s failed" % pkg.name)
 
-        if self.pkg_dialog_closed is False:
-            self.infobar.set_name("infobar_error")
+        if progress_dialog.pkg_dialog_closed is False:
+            progress_dialog.infobar.set_name("infobar_error")
 
-            content = self.infobar.get_content_area()
+            content = progress_dialog.infobar.get_content_area()
             if content is not None:
                 for widget in content.get_children():
                     content.remove(widget)
@@ -766,20 +361,20 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(
+                    200, reveal_infobar, self, progress_dialog
+                )
 
     if installed is False and action == "uninstall":
         logger.debug("Toggle switch state = False")
         switch.set_state(False)
         switch.set_active(False)
         switch.set_sensitive(True)
-        self.package_progress_dialog.set_title(
-            "Package uninstall for %s completed" % pkg.name
-        )
+        progress_dialog.set_title("Package uninstall for %s completed" % pkg.name)
 
-        if self.pkg_dialog_closed is False:
-            self.infobar.set_name("infobar_info")
-            content = self.infobar.get_content_area()
+        if progress_dialog.pkg_dialog_closed is False:
+            progress_dialog.infobar.set_name("infobar_info")
+            content = progress_dialog.infobar.get_content_area()
             if content is not None:
                 for widget in content.get_children():
                     content.remove(widget)
@@ -793,7 +388,9 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(200, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(
+                    200, reveal_infobar, self, progress_dialog
+                )
 
     if installed is True and action == "uninstall":
         # uninstall failed/terminated
@@ -801,14 +398,12 @@ def toggle_switch(self, action, switch, pkg):
         switch.set_active(True)
         switch.set_sensitive(True)
 
-        self.package_progress_dialog.set_title(
-            "Package uninstall for %s failed" % pkg.name
-        )
+        progress_dialog.set_title("Package uninstall for %s failed" % pkg.name)
 
-        if self.pkg_dialog_closed is False:
-            self.infobar.set_name("infobar_err")
+        if progress_dialog.pkg_dialog_closed is False:
+            progress_dialog.infobar.set_name("infobar_err")
 
-            content = self.infobar.get_content_area()
+            content = progress_dialog.infobar.get_content_area()
             if content is not None:
                 for widget in content.get_children():
                     content.remove(widget)
@@ -822,17 +417,23 @@ def toggle_switch(self, action, switch, pkg):
                     GLib.source_remove(self.timeout_id)
                     self.timeout_id = None
 
-                self.timeout_id = GLib.timeout_add(500, reveal_infobar, self)
+                self.timeout_id = GLib.timeout_add(
+                    500, reveal_infobar, self, progress_dialog
+                )
 
 
-def update_progress_textview(self, line, buffer, textview):
-    if self.pkg_dialog_closed is False and self.in_progress is True:
+# def update_progress_textview(self, line, buffer, textview):
+def update_progress_textview(self, line, progress_dialog):
+    if progress_dialog.pkg_dialog_closed is False and self.in_progress is True:
+        buffer = progress_dialog.package_progress_textview.get_buffer()
         if len(line) > 0 or buffer is None:
             buffer.insert(buffer.get_end_iter(), "  %s" % line, len("  %s" % line))
 
             text_mark_end = buffer.create_mark("\nend", buffer.get_end_iter(), False)
 
-            textview.scroll_mark_onscreen(text_mark_end)
+            progress_dialog.package_progress_textview.scroll_mark_onscreen(
+                text_mark_end
+            )
     else:
         logger.debug(
             "Package progress dialog closed/in progress = False, stop updating UI"
@@ -845,20 +446,16 @@ def update_progress_textview(self, line, buffer, textview):
 #               APP INSTALLATION
 # =====================================================
 def install(self):
-    pkg, action, widget = self.pkg_queue.get()
-    inst_str = ["pacman", "-S", pkg.name, "--needed", "--noconfirm"]
+    pkg, action, widget, inst_str, progress_dialog = self.pkg_queue.get()
 
     try:
         if action == "install":
-            thread_limiter_pkg_install_rem.acquire()
-
             # path = base_dir + "/cache/installed.lst"
+            logger.debug("Running inside install thread")
 
             logger.info("Installing package %s" % pkg.name)
 
-            pacman_progress_textview, btn_pkg_inst_ok = create_package_progress_dialog(
-                self, action, pkg, " ".join(inst_str)
-            )
+            # create_package_progress_dialog(self, action, pkg, " ".join(inst_str))
 
             th_subprocess_install = Thread(
                 name="thread_subprocess",
@@ -866,8 +463,7 @@ def install(self):
                 args=(
                     self,
                     inst_str,
-                    pacman_progress_textview,
-                    btn_pkg_inst_ok,
+                    progress_dialog,
                     action,
                     pkg,
                     widget,
@@ -883,42 +479,29 @@ def install(self):
         logger.error("Exception in install(): %s" % e)
         # deactivate switch widget, install failed
         widget.set_state(False)
-        btn_pkg_inst_ok.set_sensitive(True)
+        self.btn_package_progress_close.set_sensitive(True)
     finally:
         self.pkg_queue.task_done()
-        thread_limiter_pkg_install_rem.release()
 
 
 # =====================================================
 #               APP UNINSTALLATION
 # =====================================================
 def uninstall(self):
-    pkg, action, widget = self.pkg_queue.get()
-    uninst_str = ["pacman", "-Rs", pkg.name, "--noconfirm"]
+    pkg, action, widget, uninst_str, progress_dialog = self.pkg_queue.get()
 
     try:
         if action == "uninstall":
-            thread_limiter_pkg_install_rem.acquire()
-
             # path = base_dir + "/cache/installed.lst"
+            logger.debug("Running inside uninstall thread")
             logger.info("Removing package %s" % pkg.name)
 
             # get pacman process currently running, is the package which is requested
             # to be uninstalled currently being installed ?
 
-            proc = get_pacman_process()
+            # proc = get_pacman_process()
 
-            if proc == "pacman -S %s --needed --noconfirm" % pkg.name:
-                logger.warning(
-                    "Package is currently being installed, terminating install"
-                )
-
-                terminate_pacman()
-
-            (
-                pacman_progress_textview,
-                btn_pkg_uninst_ok,
-            ) = create_package_progress_dialog(self, action, pkg, " ".join(uninst_str))
+            # create_package_progress_dialog(self, action, pkg, " ".join(uninst_str))
 
             th_subprocess_uninstall = Thread(
                 name="thread_subprocess",
@@ -926,8 +509,7 @@ def uninstall(self):
                 args=(
                     self,
                     uninst_str,
-                    pacman_progress_textview,
-                    btn_pkg_uninst_ok,
+                    progress_dialog,
                     action,
                     pkg,
                     widget,
@@ -941,7 +523,7 @@ def uninstall(self):
 
     except Exception as e:
         widget.set_state(True)
-        btn_pkg_uninst_ok.set_sensitive(True)
+        progress_dialog.btn_package_progress_close.set_sensitive(True)
         logger.error("Exception in uninstall(): %s" % e)
     finally:
         # Now check uninstall_state for any packages which failed to uninstall
@@ -954,7 +536,6 @@ def uninstall(self):
             logger.debug("Package is not installed")
             widget.set_state(False)
         self.pkg_queue.task_done()
-        thread_limiter_pkg_install_rem.release()
 
 
 # =====================================================
@@ -963,7 +544,7 @@ def uninstall(self):
 
 
 # store a list of package metadata into memory for fast retrieval
-def storePackages():
+def store_packages():
     path = base_dir + "/yaml/"
     yaml_files = []
     packages = []
@@ -1005,6 +586,7 @@ def storePackages():
                         )
                     elif line.startswith("- name:"):
                         # category
+
                         subcat_name = (
                             line.strip("- name: ")
                             .strip()
@@ -1043,21 +625,21 @@ def storePackages():
         # filter the results so that each category holds a list of package
 
         category_name = None
-        packages_cat = []
+        packages_cat_lst = []
         for pkg in packages:
             if category_name == pkg.category:
-                packages_cat.append(pkg)
-                category_dict[category_name] = packages_cat
-            elif category_name == None:
-                packages_cat.append(pkg)
-                category_dict[pkg.category] = packages_cat
+                packages_cat_lst.append(pkg)
+                category_dict[category_name] = packages_cat_lst
+            elif category_name is None:
+                packages_cat_lst.append(pkg)
+                category_dict[pkg.category] = packages_cat_lst
             else:
                 # reset packages, new category
-                packages_cat = []
+                packages_cat_lst = []
 
-                packages_cat.append(pkg)
+                packages_cat_lst.append(pkg)
 
-                category_dict[pkg.category] = packages_cat
+                category_dict[pkg.category] = packages_cat_lst
 
             category_name = pkg.category
 
@@ -1105,13 +687,14 @@ def getPackageVersion():
         if process_pkg_query.returncode == 0:
             if out:
                 package_data = []
+                pkg_name = None
                 for line in out.decode("utf-8").splitlines():
                     package_dict = {}
                     if "Name            :" in line.strip():
-                        pkgName = line.replace(" ", "").split("Name:")[1]
+                        pkg_name = line.replace(" ", "").split("Name:")[1]
                     if "Version         :" in line.strip():
-                        pkgVersion = line.replace(" ", "").split("Version:")[1]
-                        package_dict[pkgName] = pkgVersion
+                        pkg_version = line.replace(" ", "").split("Version:")[1]
+                        package_dict[pkg_name] = pkg_version
 
                         package_data.append(package_dict)
 
@@ -1283,16 +866,14 @@ def message_dialog(self, title, first_msg, secondary_msg):
         headerbar.set_title(title)
         headerbar.set_show_close_button(True)
 
-        # move focus away from the textview, to hide the cursor at load
-        headerbar.set_property("can-focus", True)
-        Gtk.Window.grab_focus(headerbar)
-
         dialog.set_default_size(800, 600)
 
         dialog.set_resizable(False)
         dialog.set_modal(True)
+        dialog.set_border_width(10)
 
         dialog.set_titlebar(headerbar)
+        dialog.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         btn_ok = Gtk.Button(label="OK")
         btn_ok.set_size_request(100, 30)
@@ -1311,8 +892,12 @@ def message_dialog(self, title, first_msg, secondary_msg):
         textview.set_hexpand(True)
 
         msg_buffer = textview.get_buffer()
-        msg_buffer.insert(msg_buffer.get_end_iter(), "%s \n" % first_msg)
-        msg_buffer.insert(msg_buffer.get_end_iter(), secondary_msg)
+        msg_buffer.insert(msg_buffer.get_end_iter(), " %s \n" % first_msg)
+        msg_buffer.insert(msg_buffer.get_end_iter(), " %s \n" % secondary_msg)
+
+        # move focus away from the textview, to hide the cursor at load
+        headerbar.set_property("can-focus", True)
+        Gtk.Window.grab_focus(headerbar)
 
         scrolled_window.add(textview)
         grid_message.attach(scrolled_window, 0, 0, 1, 1)
@@ -1320,18 +905,26 @@ def message_dialog(self, title, first_msg, secondary_msg):
         lbl_padding = Gtk.Label(xalign=0, yalign=0)
         lbl_padding.set_name("lbl_btn_padding_right")
 
-        lbl_padding_top = Gtk.Label(xalign=0, yalign=0)
-        lbl_padding_top.set_text("")
+        lbl_padding_top1 = Gtk.Label(xalign=0)
+        lbl_padding_top1.set_text("")
+
+        lbl_padding_top2 = Gtk.Label(xalign=0)
+        lbl_padding_top2.set_text("")
+
+        lbl_btn_padding_right = Gtk.Label(xalign=0)
+        lbl_btn_padding_right.set_name("lbl_btn_padding_right")
 
         grid_btn = Gtk.Grid()
 
-        grid_btn.attach(lbl_padding_top, 0, 1, 1, 1)
-
+        grid_btn.attach(lbl_padding_top1, 0, 1, 1, 1)
+        grid_btn.attach(lbl_padding_top2, 0, 2, 1, 1)
         grid_btn.attach_next_to(
-            lbl_padding, lbl_padding_top, Gtk.PositionType.RIGHT, 1, 1
+            lbl_btn_padding_right, lbl_padding_top2, Gtk.PositionType.RIGHT, 1, 1
         )
 
-        grid_btn.attach_next_to(btn_ok, lbl_padding, Gtk.PositionType.RIGHT, 1, 1)
+        grid_btn.attach_next_to(
+            btn_ok, lbl_btn_padding_right, Gtk.PositionType.RIGHT, 1, 1
+        )
 
         dialog.vbox.add(grid_message)
         dialog.vbox.add(grid_btn)
@@ -1416,7 +1009,7 @@ def cache(package, path_dir_cache):
         # first we need to strip the new line escape sequence to ensure we don't get incorrect outcome
         pkg = package.strip()
         # you can see all the errors here with the print command below
-        if debug == True:
+        if debug is True:
             print(pkg)
         # create the query
         query_str = ["pacman", "-Si", pkg, " --noconfirm"]
@@ -1430,7 +1023,7 @@ def cache(package, path_dir_cache):
 
         # validate the process result
         if process.returncode == 0:
-            if debug == True:
+            if debug is True:
                 logger.debug("Return code: equals 0 " + str(process.returncode))
             # out, err = process.communicate()
 
@@ -1455,7 +1048,7 @@ def cache(package, path_dir_cache):
         # There are several packages that do not return a valid process return code
         # Cathing those manually via corrections folder
         if process.returncode != 0:
-            if debug == True:
+            if debug is True:
                 print("Return code: " + str(process.returncode))
             exceptions = [
                 "florence",
@@ -1587,11 +1180,11 @@ def restart_program():
 # =====================================================
 
 
-def checkIfProcessRunning(processName):
+def checkIfProcessRunning(process_name):
     for proc in psutil.process_iter():
         try:
             pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
-            if processName == pinfo["pid"]:
+            if process_name == pinfo["pid"]:
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
@@ -1618,6 +1211,8 @@ def addPacmanLogQueue(self):
 
     except Exception as e:
         logger.error("Exception in addPacmanLogQueue() : %s" % e)
+    finally:
+        logger.debug("No new lines found inside the pacman log file")
 
 
 # update the textview called from a non-blocking thread
@@ -1626,7 +1221,7 @@ def startLogTimer(self):
         GLib.idle_add(updateTextView, self, priority=GLib.PRIORITY_DEFAULT)
         time.sleep(2)
 
-        if self.start_logtimer == False:
+        if self.start_logtimer is False:
             return False
 
 
@@ -1680,9 +1275,9 @@ def messageBox(self, title, message):
     md2 = Gtk.MessageDialog(
         parent=self,
         flags=0,
-        message_type=Gtk.MessageType.INFO,
+        message_type=Gtk.MessageType.WARNING,
         buttons=Gtk.ButtonsType.OK,
-        text=message,
+        text=title,
     )
     md2.format_secondary_markup(message)
     md2.run()
@@ -1737,7 +1332,7 @@ def search(self, term):
             if category_name == pkg_match.category:
                 packages_cat.append(pkg_match)
                 category_dict[category_name] = packages_cat
-            elif category_name == None:
+            elif category_name is None:
                 packages_cat.append(pkg_match)
                 category_dict[pkg_match.category] = packages_cat
             else:
@@ -1822,7 +1417,7 @@ def repo_exist(value):
 
 
 # install ArcoLinux mirrorlist and key package
-def install_arcolinux_key_mirror(self):
+def install_arcolinux_key_mirror():
     base_dir = os.path.dirname(os.path.realpath(__file__))
     pathway = base_dir + "/packages/arcolinux-keyring/"
     file = os.listdir(pathway)
@@ -2004,7 +1599,7 @@ def show_in_app_notification(self, message, err):
         GLib.source_remove(self.timeout_id)
         self.timeout_id = None
 
-    if err == True:
+    if err is True:
         self.notification_label.set_markup(
             '<span background="yellow" foreground="black">' + message + "</span>"
         )
@@ -2013,10 +1608,10 @@ def show_in_app_notification(self, message, err):
             '<span foreground="white">' + message + "</span>"
         )
     self.notification_revealer.set_reveal_child(True)
-    self.timeout_id = GLib.timeout_add(3000, timeOut, self)
+    self.timeout_id = GLib.timeout_add(3000, timeout, self)
 
 
-def timeOut(self):
+def timeout(self):
     close_in_app_notification(self)
 
 
@@ -2026,9 +1621,9 @@ def close_in_app_notification(self):
     self.timeout_id = None
 
 
-def reveal_infobar(self):
-    self.infobar.set_revealed(True)
-    self.infobar.show_all()
+def reveal_infobar(self, progress_dialog):
+    progress_dialog.infobar.set_revealed(True)
+    progress_dialog.infobar.show_all()
     GLib.source_remove(self.timeout_id)
     self.timeout_id = None
 
@@ -2078,11 +1673,11 @@ def print_threads_alive():
 def check_pacman_lockfile():
     try:
         if os.path.exists(pacman_lockfile):
-            logger.warn("Pacman lockfile found inside %s" % pacman_lockfile)
-            logger.warn("Another pacman process is running")
+            logger.warning("Pacman lockfile found inside %s" % pacman_lockfile)
+            logger.warning("Another pacman process is running")
             return True
         else:
-            logger.info("No pacman lockfile found continuing")
+            logger.info("No pacman lockfile found, ok to proceed")
             return False
     except Exception as e:
         logger.error("Exception in check_pacman_lockfile() : %s" % e)
@@ -2159,6 +1754,7 @@ def export_installed_packages(self):
         export_dialog.set_size_request(900, 700)
         export_dialog.set_modal(True)
         export_dialog.set_border_width(10)
+        export_dialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
         export_dialog.connect("delete-event", on_dialog_export_on_close, export_dialog)
 
@@ -2267,7 +1863,7 @@ def export_installed_packages(self):
         logger.error("Exception in export_installed_packages(): %s" % e)
 
 
-#######ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
+# ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
 
 
 # =====================================================
