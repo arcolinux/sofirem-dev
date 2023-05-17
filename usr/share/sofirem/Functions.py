@@ -233,28 +233,28 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
                 self,
                 line,
                 progress_dialog,
-                # progress_dialog.package_progress_textview.get_buffer(),
-                # progress_dialog.package_progress_textview,
                 priority=GLib.PRIORITY_DEFAULT,
             )
             logger.debug("Waiting for pacman process, timeout = %s" % process_timeout)
             # process.wait(process_timeout)
             logger.debug("Pacman is now processing the request")
+
+            # poll for the process to complete
+            # read stdout as it comes in, update the progress textview
             while process.poll() is None:
+                if progress_dialog.pkg_dialog_closed:
+                    break
+
                 for line in process.stdout:
-                    if progress_dialog.pkg_dialog_closed:
-                        break
                     GLib.idle_add(
                         update_progress_textview,
                         self,
                         line,
                         progress_dialog,
-                        # progress_dialog.package_progress_textview.get_buffer(),
-                        # progress_dialog.package_progress_textview,
                         priority=GLib.PRIORITY_DEFAULT,
                     )
 
-                    time.sleep(0.3)
+                time.sleep(0.3)
 
             if process.returncode == 0:
                 logger.info("Package %s = completed" % action)
