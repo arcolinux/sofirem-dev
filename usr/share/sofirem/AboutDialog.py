@@ -11,10 +11,12 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 
 class AboutDialog(Gtk.Dialog):
     def __init__(self):
+        Gtk.Dialog.__init__(self)
+
         app_name = "Sofirem"
         app_title = "About Sofirem"
         app_main_description = "%s - %s" % (app_name, "Software Installer Remover")
-        app_secondary_message = "Install or remove packages from your ArcoLinux system"
+        app_secondary_message = "Install or remove software from your ArcoLinux system"
         app_secondary_description = "Report issues to make it even better"
         app_version = "version placeholder"
         app_discord = "https://discord.gg/stBhS4taje"
@@ -29,8 +31,6 @@ class AboutDialog(Gtk.Dialog):
             os.path.join(base_dir, "images/sofirem.png"), 100, 100
         )
         app_image = Gtk.Image().new_from_pixbuf(pixbuf)
-
-        Gtk.Dialog.__init__(self)
 
         self.set_resizable(False)
         self.set_size_request(560, 400)

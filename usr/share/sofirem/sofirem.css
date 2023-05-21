@@ -42,7 +42,12 @@ infobar#infobar_info {
   color: white;
 }
 
-infobar#infobar_err {
-  background-color: red;
+infobar#infobar_error {
+  background-color: #9d261d;
   color: white;
+}
+
+infobar#infobar_warning{
+  background-color:orange;
+  color:white;
 }

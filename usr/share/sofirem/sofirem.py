@@ -12,14 +12,17 @@ from Functions import os
 from queue import Queue
 import App_Frame_GUI
 from AboutDialog import AboutDialog
+from MessageDialog import MessageDialog
+from PacmanLogDialog import PacmanLogDialog
+from PackageListDialog import PackageListDialog
+from ProgressDialog import ProgressDialog
 
-# from Functions import install_alacritty, os, pacman
-from subprocess import PIPE, STDOUT
+
 from time import sleep
 from datetime import datetime
 import sys
 import time
-from ProgressDialog import ProgressDialog
+
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
@@ -66,7 +69,6 @@ class Main(Gtk.Window):
             self.timeout_id = None
             # default: displaying versions are disabled
             self.display_versions = False
-            self.thread_add_pacmanlog_alive = False
             # On initial app load search_activated is set to False
             self.search_activated = False
 
@@ -118,38 +120,39 @@ class Main(Gtk.Window):
             fn.logger.info("Created installed.lst")
 
             # start making sure sofirem starts next time with dark or light theme
-            # if os.path.isdir(fn.home + "/.config/gtk-3.0"):
-            #     try:
-            #         if not os.path.islink("/root/.config/gtk-3.0"):
-            #             fn.shutil.rmtree("/root/.config/gtk-3.0")
-            #             fn.shutil.copytree(
-            #                 fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
-            #             )
-            #     except Exception as error:
-            #         print(error)
-            #
-            # if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
-            #     try:
-            #         if not os.path.islink("/root/.config/xsettingsd/"):
-            #             fn.shutil.rmtree("/root/.config/xsettingsd/")
-            #             if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
-            #                 fn.shutil.copytree(
-            #                     fn.home + "/.config/xsettingsd/",
-            #                     "/root/.config/xsettingsd/",
-            #                 )
-            #     except Exception as error:
-            #         print(error)
+            if os.path.isdir(fn.home + "/.config/gtk-3.0"):
+                try:
+                    if not os.path.islink("/root/.config/gtk-3.0"):
+                        fn.shutil.rmtree("/root/.config/gtk-3.0")
+                        fn.shutil.copytree(
+                            fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
+                        )
+                except Exception as error:
+                    print(error)
+
+            if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
+                try:
+                    if not os.path.islink("/root/.config/xsettingsd/"):
+                        fn.shutil.rmtree("/root/.config/xsettingsd/")
+                        if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
+                            fn.shutil.copytree(
+                                fn.home + "/.config/xsettingsd/",
+                                "/root/.config/xsettingsd/",
+                            )
+                except Exception as error:
+                    print(error)
 
             # test there is no pacman lock file on the system
             if fn.check_pacman_lockfile():
-                dialog = fn.message_dialog(
-                    self,
-                    "Pacman lock file",
+                message_dialog = MessageDialog(
+                    "Sofirem cannot proceed pacman lockfile found",
                     "Pacman lock file found inside %s" % fn.pacman_lockfile,
                     "Is there another Pacman process running ?",
+                    "error",
+                    False,
                 )
-                dialog.run()
-                dialog.destroy()
+                message_dialog.run()
+                message_dialog.destroy()
                 sys.exit(1)
 
             # run pacman -Sy to sync pacman db, else you get a lot of 404 errors
@@ -163,15 +166,16 @@ class Main(Gtk.Window):
                     "---------------------------------------------------------------------------"
                 )
 
-                dialog = fn.message_dialog(
-                    self,
+                message_dialog = MessageDialog(
                     "Pacman synchronisation failed",
                     "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
                     sync_err,
+                    "error",
+                    True,
                 )
 
-                dialog.run()
-                dialog.destroy()
+                message_dialog.run()
+                message_dialog.destroy()
                 sys.exit(1)
 
             else:
@@ -295,16 +299,11 @@ class Main(Gtk.Window):
                         fn.logger.info("Search found %s results" % 0)
                         self.searchEntry.grab_focus()
 
-                        msg_dialog = fn.message_dialog(
+                        fn.messageBox(
                             self,
                             "Search returned 0 results",
-                            "Failed to find search term inside either the package name / description.",
-                            "Try searching for something else.",
+                            "Failed to find search term inside the package name or description.",
                         )
-
-                        msg_dialog.show_all()
-                        msg_dialog.run()
-                        msg_dialog.hide()
 
                 elif self.search_activated == True:
                     GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
@@ -323,30 +322,6 @@ class Main(Gtk.Window):
         self.searchEntry.set_placeholder_text("Search...")
 
         self.search_activated = False
-
-    # =====================================================
-    #               ARCOLINUX REPOS, KEYS AND MIRRORS
-    # =====================================================
-
-    def on_repos_clicked(self, widget):
-        if self.btnRepos._value == 1:
-            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
-            fn.install_arcolinux_key_mirror()
-
-            fn.logger.info("Checking whether the repos have been added")
-            fn.add_repos()
-
-            self.btnRepos.set_label("Remove ArcoLinux Repos")
-            self.btnRepos._value = 2
-
-        else:
-            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
-            fn.remove_arcolinux_key_mirror(self)
-            fn.logger.info("Removing the ArcoLinux repos in /etc/pacman.conf")
-            fn.remove_repos()
-
-            self.btnRepos.set_label("Add ArcoLinux Repos")
-            self.btnRepos._value = 1
 
     # =====================================================
     #               RESTART/QUIT BUTTON
@@ -382,14 +357,16 @@ class Main(Gtk.Window):
     # Given what this function does, it might be worth considering making it a
     # thread so that the app doesn't block while installing/uninstalling is happening.
     def app_toggle(self, widget, active, package):
+        # check there is no lock file in place
+
         # switch widget is currently toggled off
         if widget.get_state() == False and widget.get_active() == True:
             if len(package.name) > 0:
-                # widget.set_active(True)
-                # widget.set_state(True)
-
                 # check there is no pacman lockfile before continuing
                 if fn.check_pacman_lockfile() is False:
+                    widget.set_active(True)
+                    widget.set_state(True)
+
                     fn.logger.info("Package to install : %s" % package.name)
 
                     inst_str = [
@@ -398,7 +375,6 @@ class Main(Gtk.Window):
                         package.name,
                         "--needed",
                         "--noconfirm",
-                        "--disable-download-timeout",
                     ]
 
                     dialog = ProgressDialog(
@@ -407,32 +383,46 @@ class Main(Gtk.Window):
                         " ".join(inst_str),
                     )
 
-                    self.pkg_queue.put(
-                        (
-                            package,
-                            "install",
-                            widget,
-                            inst_str,
-                            dialog,
-                        ),
-                    )
+                    if dialog.package_found is False:
+                        fn.logger.debug("Install aborted, toggling switch to False")
+                        widget.set_state(False)
+                        widget.set_active(False)
+                        fn.logger.warning(
+                            "Cannot proceed with install, package not found in the repository"
+                        )
 
-                    th = fn.threading.Thread(
-                        name="thread_pkginst",
-                        target=fn.install,
-                        args=(self,),
-                    )
+                    else:
+                        dialog.show_all()
+                        self.pkg_queue.put(
+                            (
+                                package,
+                                "install",
+                                widget,
+                                inst_str,
+                                dialog,
+                            ),
+                        )
 
-                    th.start()
-                    fn.logger.debug("Package-install thread started")
+                        th = fn.threading.Thread(
+                            name="thread_pkginst",
+                            target=fn.install,
+                            args=(self,),
+                        )
+
+                        th.start()
+                        fn.logger.debug("Package-install thread started")
                 else:
-                    widget.set_state(False)
                     proc = fn.get_pacman_process()
-                    fn.messageBox(
-                        self,
+                    message_dialog = MessageDialog(
                         "Pacman lockfile found",
-                        "Pacman is busy, and currently running: %s" % proc,
+                        "Sofirem cannot continue, a pacman lockfile has been found",
+                        "Pacman is busy and cannot process another transaction\nCurrently running: %s"
+                        % proc,
+                        "warning",
                     )
+
+                    message_dialog.run()
+                    message_dialog.destroy()
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
             # Uninstall the package
@@ -440,6 +430,8 @@ class Main(Gtk.Window):
             # widget.set_state(False)
             if len(package.name) > 0:
                 if fn.check_pacman_lockfile() is False:
+                    widget.set_active(False)
+                    widget.set_state(False)
                     fn.logger.info("Package to remove : %s" % package.name)
 
                     uninst_str = ["pacman", "-Rs", package.name, "--noconfirm"]
@@ -450,32 +442,45 @@ class Main(Gtk.Window):
                         " ".join(uninst_str),
                     )
 
-                    self.pkg_queue.put(
-                        (
-                            package,
-                            "uninstall",
-                            widget,
-                            uninst_str,
-                            dialog,
-                        ),
-                    )
+                    if dialog.package_found is False:
+                        fn.logger.debug("Uninstall aborted, toggling switch to True")
+                        widget.set_state(True)
+                        widget.set_active(True)
+                        fn.logger.warning(
+                            "Cannot proceed with uninstall, package not found in the repository"
+                        )
 
-                    th = fn.threading.Thread(
-                        name="thread_pkgrem",
-                        target=fn.uninstall,
-                        args=(self,),
-                    )
+                    else:
+                        dialog.show_all()
+                        self.pkg_queue.put(
+                            (
+                                package,
+                                "uninstall",
+                                widget,
+                                uninst_str,
+                                dialog,
+                            ),
+                        )
 
-                    th.start()
+                        th = fn.threading.Thread(
+                            name="thread_pkgrem",
+                            target=fn.uninstall,
+                            args=(self,),
+                        )
+
+                        th.start()
                 else:
-                    widget.set_state(True)
                     proc = fn.get_pacman_process()
-                    fn.messageBox(
-                        self,
+                    message_dialog = MessageDialog(
                         "Pacman lockfile found",
-                        "Pacman is busy, and currently running = %s" % proc,
+                        "Sofirem cannot continue, a pacman lockfile has been found",
+                        "Pacman is busy and cannot process another transaction\nCurrently running: %s"
+                        % proc,
+                        "warning",
                     )
 
+                    message_dialog.run()
+                    message_dialog.destroy()
         # fn.get_current_installed()
         # fn.print_threads_alive()
 
@@ -503,6 +508,42 @@ class Main(Gtk.Window):
     #                   SETTINGS
     # ================================================================
 
+    # ArcoLinux keys, mirrors setup
+
+    def on_repos_clicked(self, widget):
+        self.toggle_popover()
+        if self.btnRepos._value == 1:
+            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
+
+            fn.setup_arcolinux_config(self, "install", "keyring")
+            fn.setup_arcolinux_config(self, "install", "mirrorlist")
+
+            # write to pacman.conf file
+            fn.add_repos()
+
+            self.btnRepos.set_label("Remove ArcoLinux Repos")
+            self.btnRepos._value = 2
+
+        else:
+            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
+
+            fn.setup_arcolinux_config(self, "remove", "keyring")
+            fn.setup_arcolinux_config(self, "remove", "mirrorlist")
+
+            fn.logger.info("Removing the ArcoLinux repos in /etc/pacman.conf")
+
+            fn.remove_repos()
+
+            self.btnRepos.set_label("Add ArcoLinux Repos")
+            self.btnRepos._value = 1
+
+        # force a pacman db sync to reflect changes to the the conf files
+
+        fn.logger.info(
+            "Pacman configuration files have changed, running a Pacman db sync"
+        )
+        fn.sync_package_db()
+
     def on_about_app_clicked(self, widget):
         fn.logger.info("Showing About dialog")
         self.toggle_popover()
@@ -514,11 +555,9 @@ class Main(Gtk.Window):
 
     def on_packages_export_clicked(self, widget):
         self.toggle_popover()
-        GLib.idle_add(
-            fn.export_installed_packages,
-            self,
-            priority=GLib.PRIORITY_DEFAULT,
-        )
+
+        dialog_packagelist = PackageListDialog()
+        dialog_packagelist.show_all()
 
     def toggle_popover(self):
         if self.popover.get_visible():
@@ -555,89 +594,73 @@ class Main(Gtk.Window):
             self.toggle_popover()
 
             thread_addlog = "thread_addPacmanLogQueue"
-            thread_add_pacmanlog_alive = fn.is_thread_alive(thread_addlog)
+            self.thread_add_pacmanlog_alive = fn.is_thread_alive(thread_addlog)
 
-            if thread_add_pacmanlog_alive == False:
+            if self.thread_add_pacmanlog_alive == False:
                 fn.logger.info("Starting thread to monitor Pacman Log file")
 
                 th_add_pacmanlog_queue = fn.threading.Thread(
                     name=thread_addlog,
-                    target=fn.addPacmanLogQueue,
+                    target=fn.add_pacmanlog_queue,
                     args=(self,),
                     daemon=True,
                 )
                 th_add_pacmanlog_queue.start()
 
-            # show dialog
+            if self.thread_add_pacmanlog_alive is True:
+                # need to recreate the textview, can't use existing reference as it throws a seg fault
 
-            pacmanlog_dialog = Gtk.Dialog(self)
-            pacmanlog_headerbar = Gtk.HeaderBar()
+                self.textview_pacmanlog = Gtk.TextView()
+                self.textview_pacmanlog.set_property("editable", False)
+                self.textview_pacmanlog.set_property("monospace", True)
+                self.textview_pacmanlog.set_border_width(10)
+                self.textview_pacmanlog.set_vexpand(True)
+                self.textview_pacmanlog.set_hexpand(True)
 
-            pacmanlog_headerbar.set_show_close_button(True)
+                # use the reference to the text buffer initialized before the logtimer thread started
+                self.textview_pacmanlog.set_buffer(self.textbuffer_pacmanlog)
 
-            pacmanlog_dialog.set_titlebar(pacmanlog_headerbar)
+                dialog_pacmanlog = PacmanLogDialog(
+                    self.textview_pacmanlog,
+                )
+                dialog_pacmanlog.show_all()
 
-            pacmanlog_dialog.set_title("Pacman log file viewer")
-            pacmanlog_dialog.set_default_size(700, 600)
-            pacmanlog_dialog.set_resizable(True)
-            pacmanlog_dialog.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-            pacmanlog_dialog.set_icon_from_file(
-                os.path.join(base_dir, "images/sofirem.png")
-            )
-            btnPacmanLogOk = Gtk.Button(label="OK")
-            btnPacmanLogOk.connect(
-                "clicked", self.onPacmanlogResponse, pacmanlog_dialog
-            )
+                self.start_logtimer = dialog_pacmanlog.start_logtimer
 
-            pacmanlog_grid = Gtk.Grid()
-            pacmanlog_grid.set_column_homogeneous(True)
-            pacmanlog_grid.set_row_homogeneous(True)
-
-            pacmanlog_scrolledwindow = Gtk.ScrolledWindow()
-
-            if self.thread_add_pacmanlog_alive == True:
-                # thread already running, textbuffer already populated
-                # re-use the existing textbuffer to repopulate the textviewer
-                self.pacmanlog_textview = Gtk.TextView()
-                self.pacmanlog_textview.set_property("editable", False)
-                self.pacmanlog_textview.set_property("monospace", True)
-                self.pacmanlog_textview.set_vexpand(True)
-                self.pacmanlog_textview.set_hexpand(True)
-                self.pacmanlog_textview.set_buffer(self.buffer)
             else:
-                self.pacmanlog_textview = Gtk.TextView()
-                self.pacmanlog_textview.set_property("editable", False)
-                self.pacmanlog_textview.set_property("monospace", True)
-                self.pacmanlog_textview.set_vexpand(True)
-                self.pacmanlog_textview.set_hexpand(True)
-                self.buffer = self.pacmanlog_textview.get_buffer()
-                self.pacmanlog_textview.set_buffer(self.buffer)
+                # keep a handle on the textbuffer, this is needed again later, if the pacman log file dialog is closed
+                # since the textbuffer will already hold textdata at that point
 
-            pacmanlog_scrolledwindow.add(self.pacmanlog_textview)
+                # textview is used inside another thread to update as the pacmanlog file is read into memory
+                self.textbuffer_pacmanlog = Gtk.TextBuffer()
 
-            pacmanlog_grid.attach(pacmanlog_scrolledwindow, 0, 0, 1, 1)
+                self.textview_pacmanlog = Gtk.TextView()
+                self.textview_pacmanlog.set_property("editable", False)
+                self.textview_pacmanlog.set_property("monospace", True)
+                self.textview_pacmanlog.set_border_width(10)
+                self.textview_pacmanlog.set_vexpand(True)
+                self.textview_pacmanlog.set_hexpand(True)
 
-            ivbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-            ivbox.pack_start(btnPacmanLogOk, False, False, 0)
+                self.textview_pacmanlog.set_buffer(self.textbuffer_pacmanlog)
 
-            pacmanlog_dialog.vbox.add(pacmanlog_grid)
-            pacmanlog_dialog.vbox.add(ivbox)
-
-            pacmanlog_dialog.show_all()
+                dialog_pacmanlog = PacmanLogDialog(
+                    self.textview_pacmanlog,
+                )
+                dialog_pacmanlog.show_all()
 
             thread_logtimer = "thread_startLogTimer"
             thread_logtimer_alive = False
 
             thread_logtimer_alive = fn.is_thread_alive(thread_logtimer)
 
-            # a flag to indicate that the textview will need updating, used inside fn.startLogTimer
+            # a flag to indicate that the textview will need updating, used inside fn.start_log_timer
             self.start_logtimer = True
 
             if thread_logtimer_alive == False:
                 th_logtimer = fn.threading.Thread(
                     name=thread_logtimer,
-                    target=fn.startLogTimer,
-                    args=(self,),
+                    target=fn.start_log_timer,
+                    args=(self, dialog_pacmanlog),
                     daemon=True,
                 )
                 th_logtimer.start()
@@ -646,11 +669,6 @@ class Main(Gtk.Window):
 
         except Exception as e:
             fn.logger.error("Exception in on_pacman_log_clicked() : %s" % e)
-
-    def onPacmanlogResponse(self, widget, dialog):
-        dialog.destroy()
-        # stop updating the textview
-        self.start_logtimer = False
 
 
 # ====================================================================
@@ -692,6 +710,7 @@ if __name__ == "__main__":
 
             Gtk.main()
         else:
+            fn.logger.info("Sofirem lock file found")
             md = Gtk.MessageDialog(
                 parent=Main(),
                 flags=0,
@@ -713,7 +732,7 @@ if __name__ == "__main__":
                     line = f.read()
                     pid = line.rstrip().lstrip()
 
-                if fn.checkIfProcessRunning(int(pid)):
+                if fn.check_if_process_running(int(pid)):
                     # needs to be fixed - todo
 
                     # md2 = Gtk.MessageDialog(
