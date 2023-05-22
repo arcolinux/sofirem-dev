@@ -17,7 +17,6 @@ from PacmanLogDialog import PacmanLogDialog
 from PackageListDialog import PackageListDialog
 from ProgressDialog import ProgressDialog
 
-
 from time import sleep
 from datetime import datetime
 import sys
@@ -202,7 +201,7 @@ class Main(Gtk.Window):
             while Gtk.events_pending():
                 Gtk.main_iteration()
 
-            sleep(5)
+            sleep(3)
             splScr.destroy()
 
             fn.logger.info("Preparing GUI")
@@ -413,12 +412,13 @@ class Main(Gtk.Window):
                         fn.logger.debug("Package-install thread started")
                 else:
                     proc = fn.get_pacman_process()
+
                     message_dialog = MessageDialog(
-                        "Pacman lockfile found",
-                        "Sofirem cannot continue, a pacman lockfile has been found",
-                        "Pacman is busy and cannot process another transaction\nCurrently running: %s"
-                        % proc,
+                        "Sofirem cannot proceed pacman lockfile found",
+                        "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                        "Pacman running: %s" % proc,
                         "warning",
+                        False,
                     )
 
                     message_dialog.run()
@@ -472,13 +472,12 @@ class Main(Gtk.Window):
                 else:
                     proc = fn.get_pacman_process()
                     message_dialog = MessageDialog(
-                        "Pacman lockfile found",
-                        "Sofirem cannot continue, a pacman lockfile has been found",
-                        "Pacman is busy and cannot process another transaction\nCurrently running: %s"
-                        % proc,
-                        "warning",
+                        "Sofirem cannot proceed pacman lockfile found",
+                        "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                        "Pacman running: %s" % proc,
+                        "error",
+                        False,
                     )
-
                     message_dialog.run()
                     message_dialog.destroy()
         # fn.get_current_installed()
@@ -508,42 +507,6 @@ class Main(Gtk.Window):
     #                   SETTINGS
     # ================================================================
 
-    # ArcoLinux keys, mirrors setup
-
-    def on_repos_clicked(self, widget):
-        self.toggle_popover()
-        if self.btnRepos._value == 1:
-            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
-
-            fn.setup_arcolinux_config(self, "install", "keyring")
-            fn.setup_arcolinux_config(self, "install", "mirrorlist")
-
-            # write to pacman.conf file
-            fn.add_repos()
-
-            self.btnRepos.set_label("Remove ArcoLinux Repos")
-            self.btnRepos._value = 2
-
-        else:
-            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
-
-            fn.setup_arcolinux_config(self, "remove", "keyring")
-            fn.setup_arcolinux_config(self, "remove", "mirrorlist")
-
-            fn.logger.info("Removing the ArcoLinux repos in /etc/pacman.conf")
-
-            fn.remove_repos()
-
-            self.btnRepos.set_label("Add ArcoLinux Repos")
-            self.btnRepos._value = 1
-
-        # force a pacman db sync to reflect changes to the the conf files
-
-        fn.logger.info(
-            "Pacman configuration files have changed, running a Pacman db sync"
-        )
-        fn.sync_package_db()
-
     def on_about_app_clicked(self, widget):
         fn.logger.info("Showing About dialog")
         self.toggle_popover()
@@ -559,6 +522,12 @@ class Main(Gtk.Window):
         dialog_packagelist = PackageListDialog()
         dialog_packagelist.show_all()
 
+    def on_packages_import_clicked(self, widget):
+        self.toggle_popover()
+
+        fn.package_import()
+
+    # show/hide popover
     def toggle_popover(self):
         if self.popover.get_visible():
             self.popover.hide()
@@ -567,6 +536,45 @@ class Main(Gtk.Window):
 
     def on_settings_clicked(self, widget):
         self.toggle_popover()
+
+    # ArcoLinux keys, mirrors setup
+
+    def arco_repo_toggle(self, widget, data):
+        self.toggle_popover()
+
+        if widget.get_active() == True:
+            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
+
+            if (
+                fn.setup_arcolinux_config(self, "install", "keyring") is True
+                and fn.setup_arcolinux_config(self, "install", "mirrorlist") is True
+            ):
+                # write to pacman.conf file
+                fn.add_repos()
+
+                self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+            else:
+                self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+
+        else:
+            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
+
+            if (
+                fn.setup_arcolinux_config(self, "remove", "keyring") is True
+                and fn.setup_arcolinux_config(self, "remove", "mirrorlist") is True
+            ):
+                fn.logger.info("Removing the ArcoLinux repos in /etc/pacman.conf")
+
+                fn.remove_repos()
+
+                self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+            else:
+                self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+
+        fn.logger.info(
+            "Pacman configuration files have changed, running a Pacman db sync"
+        )
+        fn.sync_package_db()
 
     def version_toggle(self, widget, data):
         if widget.get_active() == True:
@@ -622,6 +630,7 @@ class Main(Gtk.Window):
 
                 dialog_pacmanlog = PacmanLogDialog(
                     self.textview_pacmanlog,
+                    self.btn_pacmanlog,
                 )
                 dialog_pacmanlog.show_all()
 
@@ -645,6 +654,7 @@ class Main(Gtk.Window):
 
                 dialog_pacmanlog = PacmanLogDialog(
                     self.textview_pacmanlog,
+                    self.btn_pacmanlog,
                 )
                 dialog_pacmanlog.show_all()
 
@@ -666,6 +676,7 @@ class Main(Gtk.Window):
                 th_logtimer.start()
 
             self.thread_add_pacmanlog_alive = True
+            self.btn_pacmanlog.set_sensitive(False)
 
         except Exception as e:
             fn.logger.error("Exception in on_pacman_log_clicked() : %s" % e)

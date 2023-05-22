@@ -57,6 +57,7 @@ class ProgressDialog(Gtk.Dialog):
             )
             self.btn_package_progress_close.set_sensitive(False)
             self.btn_package_progress_close.set_size_request(100, 30)
+            self.btn_package_progress_close.set_halign(Gtk.Align.END)
 
             self.set_resizable(False)
             self.set_size_request(750, 700)
@@ -120,25 +121,8 @@ class ProgressDialog(Gtk.Dialog):
             package_progress_scrolled_window.add(self.package_progress_textview)
             package_progress_grid.attach(package_progress_scrolled_window, 0, 4, 1, 1)
 
-            package_progress_btn_grid = Gtk.Grid()
-
-            lbl_padding_btn = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding_btn.set_name("lbl_btn_padding_right")
-
-            lbl_padding_btn_top = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding_btn_top.set_text("")
-
-            package_progress_btn_grid.attach(lbl_padding_btn_top, 0, 1, 1, 1)
-
-            package_progress_btn_grid.attach(lbl_padding_btn, 0, 2, 5, 1)
-
-            package_progress_btn_grid.attach_next_to(
-                self.btn_package_progress_close,
-                lbl_padding_btn,
-                Gtk.PositionType.RIGHT,
-                1,
-                1,
-            )
+            vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+            vbox_close.pack_start(self.btn_package_progress_close, True, True, 1)
 
             stack.add_titled(package_progress_grid, "Progress", "Package Progress")
 
@@ -411,7 +395,7 @@ class ProgressDialog(Gtk.Dialog):
 
             self.vbox.add(stack_switcher)
             self.vbox.add(stack)
-            self.vbox.add(package_progress_btn_grid)
+            self.vbox.add(vbox_close)
 
 
 def on_package_progress_close_response(self, widget):

@@ -33,10 +33,6 @@ label#lbl_pkg_version {
 	padding-right: 5px;
 }
 
-label#lbl_btn_padding_right{
-  padding-right: 700px;
-}
-
 infobar#infobar_info {
   background-color: #3584e4;
   color: white;
@@ -48,6 +44,6 @@ infobar#infobar_error {
 }
 
 infobar#infobar_warning{
-  background-color:orange;
+  background-color:yellow;
   color:white;
 }

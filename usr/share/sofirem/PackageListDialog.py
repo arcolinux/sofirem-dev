@@ -37,11 +37,19 @@ class PackageListDialog(Gtk.Dialog):
             self.set_title("Showing %s installed packages" % len(packages_lst))
             fn.logger.debug("List of installed packages obtained")
 
+            search_entry = Gtk.SearchEntry()
+            search_entry.set_placeholder_text("Search...")
+
+            # remove the focus on startup from search entry
+            headerbar.set_property("can-focus", True)
+            Gtk.Window.grab_focus(headerbar)
+
             treestore_packages = Gtk.TreeStore(str, str, str, str)
             for item in packages_lst:
                 treestore_packages.append(None, list(item))
 
             treeview_packages = Gtk.TreeView()
+            treeview_packages.set_search_entry(search_entry)
 
             treeview_packages.set_model(treestore_packages)
 
@@ -78,42 +86,37 @@ class PackageListDialog(Gtk.Dialog):
                 "clicked", self.on_dialog_export_clicked, packages_lst
             )
             btn_dialog_export.set_size_request(100, 30)
-            # btn_dialog_export.set_halign(Gtk.Align.END)
+            btn_dialog_export.set_halign(Gtk.Align.END)
 
             btn_dialog_export_close = Gtk.Button(label="Close")
             btn_dialog_export_close.connect("clicked", self.on_close, "delete-event")
             btn_dialog_export_close.set_size_request(100, 30)
-
-            btn_grid = Gtk.Grid()
-
-            lbl_btn_padding_right = Gtk.Label(xalign=0, yalign=0)
-
-            # padding to make the buttons move across to the right of the dialog
-            # set the name of the label using the value set inside the sofirem.css file
-
-            lbl_btn_padding_right.set_name("lbl_btn_padding_right")
-
-            btn_grid.attach(lbl_btn_padding_right, 0, 0, 1, 1)
-
-            lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding2.set_text("     ")
-
-            btn_grid.attach_next_to(
-                btn_dialog_export, lbl_btn_padding_right, Gtk.PositionType.RIGHT, 1, 1
-            )
-
-            btn_grid.attach_next_to(
-                lbl_padding2, btn_dialog_export, Gtk.PositionType.RIGHT, 1, 1
-            )
-
-            btn_grid.attach_next_to(
-                btn_dialog_export_close, lbl_padding2, Gtk.PositionType.RIGHT, 1, 1
-            )
+            btn_dialog_export_close.set_halign(Gtk.Align.END)
 
             scrolled_window.add(treeview_packages)
 
+            grid_btn = Gtk.Grid()
+            grid_btn.attach(btn_dialog_export, 0, 1, 1, 1)
+
+            lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+            lbl_padding2.set_text(" ")
+
+            grid_btn.attach_next_to(
+                lbl_padding2, btn_dialog_export, Gtk.PositionType.RIGHT, 1, 1
+            )
+
+            grid_btn.attach_next_to(
+                btn_dialog_export_close, lbl_padding2, Gtk.PositionType.RIGHT, 1, 1
+            )
+
+            grid_btn.set_halign(Gtk.Align.END)
+
+            vbox_btn = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+            vbox_btn.pack_start(grid_btn, True, True, 1)
+
+            self.vbox.add(search_entry)
             self.vbox.add(grid_packageslst)
-            self.vbox.add(btn_grid)
+            self.vbox.add(vbox_btn)
 
     def on_close(self, dialog, event):
         self.hide()

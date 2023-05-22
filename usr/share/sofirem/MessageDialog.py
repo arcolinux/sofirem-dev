@@ -32,6 +32,7 @@ class MessageDialog(Gtk.Dialog):
         btn_ok = Gtk.Button(label="OK")
         btn_ok.set_size_request(100, 30)
         btn_ok.connect("clicked", on_message_dialog_ok_response, self)
+        btn_ok.set_halign(Gtk.Align.END)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
         infobar = Gtk.InfoBar()
@@ -83,9 +84,6 @@ class MessageDialog(Gtk.Dialog):
 
             self.set_default_size(800, 600)
 
-            lbl_btn_padding_right = Gtk.Label(xalign=0)
-            lbl_btn_padding_right.set_name("lbl_btn_padding_right")
-
         else:
             # do not display textview
             lbl_first_message = Gtk.Label(xalign=0, yalign=0)
@@ -99,29 +97,11 @@ class MessageDialog(Gtk.Dialog):
 
             self.set_default_size(50, 100)
 
-            lbl_btn_padding_right = Gtk.Label(xalign=0)
-            lbl_btn_padding_right.set_text("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t")
-
-        lbl_padding_top1 = Gtk.Label(xalign=0)
-        lbl_padding_top1.set_text("")
-
-        lbl_padding_top2 = Gtk.Label(xalign=0)
-        lbl_padding_top2.set_text("")
-
-        grid_btn = Gtk.Grid()
-
-        grid_btn.attach(lbl_padding_top1, 0, 1, 1, 1)
-        grid_btn.attach(lbl_padding_top2, 0, 2, 1, 1)
-        grid_btn.attach_next_to(
-            lbl_btn_padding_right, lbl_padding_top2, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            btn_ok, lbl_btn_padding_right, Gtk.PositionType.RIGHT, 1, 1
-        )
+        vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        vbox_close.pack_start(btn_ok, True, True, 1)
 
         self.vbox.add(grid_message)
-        self.vbox.add(grid_btn)
+        self.vbox.add(vbox_close)
 
         self.show_all()
 

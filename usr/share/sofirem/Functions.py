@@ -229,6 +229,8 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
             progress_dialog.pkg_dialog_closed = False
             self.in_progress = True
             widget.set_sensitive(False)
+            self.switch_pkg_version.set_sensitive(False)
+            self.switch_arco_repo.set_sensitive(False)
 
             line = (
                 "Pacman is processing the %s of package %s \n\n  Command running = %s\n\n"
@@ -323,12 +325,16 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
         logger.error("TimeoutError in %s start_subprocess(): %s" % (action, t))
         process.terminate()
         progress_dialog.btn_package_progress_close.set_sensitive(True)
+        self.switch_pkg_version.set_sensitive(True)
+        self.switch_arco_repo.set_sensitive(True)
         # deactivate switch widget, install failed
 
     except SystemError as s:
         logger.error("SystemError in %s start_subprocess(): %s" % (action, s))
         process.terminate()
         progress_dialog.btn_package_progress_close.set_sensitive(True)
+        self.switch_pkg_version.set_sensitive(True)
+        self.switch_arco_repo.set_sensitive(True)
         # deactivate switch widget, install failed
 
 
@@ -338,6 +344,9 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
     logger.debug("Toggling switch state")
     logger.debug("Checking if package %s is installed" % pkg.name)
     installed = check_package_installed(pkg.name)
+
+    self.switch_pkg_version.set_sensitive(True)
+    self.switch_arco_repo.set_sensitive(True)
 
     progress_dialog.btn_package_progress_close.set_sensitive(True)
 
@@ -407,6 +416,7 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
                 "Pacman failed to install package %s\n" % pkg.name,
                 " ".join(process_stdout_lst),
                 "error",
+                True,
             )
 
             message_dialog.run()
@@ -475,6 +485,7 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
                 "Pacman failed to uninstall package %s\n" % pkg.name,
                 " ".join(process_stdout_lst),
                 "error",
+                True,
             )
 
             message_dialog.run()
@@ -508,8 +519,8 @@ def install(self):
         if action == "install":
             # path = base_dir + "/cache/installed.lst"
             logger.debug("Running inside install thread")
-
             logger.info("Installing package %s" % pkg.name)
+            logger.debug(inst_str)
 
             # create_package_progress_dialog(self, action, pkg, " ".join(inst_str))
 
@@ -550,7 +561,8 @@ def uninstall(self):
         if action == "uninstall":
             # path = base_dir + "/cache/installed.lst"
             logger.debug("Running inside uninstall thread")
-            logger.info("Removing package %s" % pkg.name)
+            logger.info("Uninstalling package %s" % pkg.name)
+            logger.debug(uninst_str)
 
             # get pacman process currently running, is the package which is requested
             # to be uninstalled currently being installed ?
@@ -1534,9 +1546,12 @@ def setup_arcolinux_config(self, action, config):
                         "%s\n" % " ".join(cmd_str),
                         " ".join(output),
                         "info",
+                        True,
                     )
                     message_dialog.run()
                     message_dialog.destroy()
+
+                    return True
 
                 else:
                     if len(output) == 0:
@@ -1549,10 +1564,13 @@ def setup_arcolinux_config(self, action, config):
                         "%s\n" % " ".join(cmd_str),
                         " ".join(output),
                         "error",
+                        True,
                     )
                     message_dialog.run()
                     message_dialog.destroy()
                     logger.warning("%s failed to %s" % (config, action))
+
+                    return False
 
     except Exception as e:
         logger.error("Exception in setup_arcolinux_config(): %s" % e)
@@ -1772,11 +1790,6 @@ def check_pacman_lockfile():
             return False
     except Exception as e:
         logger.error("Exception in check_pacman_lockfile() : %s" % e)
-
-
-# =====================================================
-#               SETTINGS
-# =====================================================
 
 
 # ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
