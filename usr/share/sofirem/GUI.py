@@ -23,14 +23,12 @@ class GUI_Worker(Thread):
             # pull what we need from the queue so we can process properly.
             items = self.queue.get()
             try:
-                # reached the end of items on the queue
-                if items is None:
-                    break
-
                 # make sure we have the required number of items on the queue
-                if len(items) == 5:
+                if items is not None:
                     # self, Gtk, vboxStack1, category, package_file = items
+
                     self, Gtk, vboxStack1, category, packages = items
+
                     App_Frame_GUI.GUI(
                         self,
                         Gtk,
@@ -40,23 +38,33 @@ class GUI_Worker(Thread):
                     )
 
             except Exception as e:
-                print("Exception in GUI_Worker(): %s" % e)
+                fn.logger.error("Exception in GUI_Worker(): %s" % e)
             finally:
+                if items is None:
+                    fn.logger.debug("Stopping GUI Worker thread")
+                    self.queue.task_done()
+                    return False
                 self.queue.task_done()
 
 
-def GUISearch(
+def setup_gui_search(
     self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, search_results, search_term
 ):
     try:
         # remove previous vbox
         if self.search_activated == False:
-            self.remove(self.vbox_main)
+            self.remove(self.vbox)
         else:
             self.remove(self.vbox_search)
 
         # lets quickly create the latest installed list.
         fn.get_current_installed()
+
+        # =======================================================
+        #                       HeaderBar
+        # =======================================================
+
+        setup_headerbar(self, Gtk)
 
         # =======================================================
         #                       App Notifications
@@ -84,12 +92,12 @@ def GUISearch(
         #                       CONTAINER
         # ==========================================================
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.vbox_search = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         vbox1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
-        vbox.pack_start(hbox, True, True, 0)
-        self.add(vbox)
+        self.vbox_search.pack_start(hbox, True, True, 0)
+        self.add(self.vbox_search)
 
         # ==========================================================
         #                    PREP WORK
@@ -118,6 +126,7 @@ def GUISearch(
         # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         search_worker = GUI_Worker(self.queue)
+        search_worker.name = "thread_GUI_search_worker"
         # Set the worker to be True to allow processing, and avoid Blocking
         search_worker.daemon = True
         search_worker.start()
@@ -155,6 +164,7 @@ def GUISearch(
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.
         self.queue.join()
+        fn.logger.debug("GUI Worker thread completed")
 
         stack_switcher = Gtk.StackSidebar()
         stack_switcher.set_name("sidebar")
@@ -188,26 +198,26 @@ def GUISearch(
         #                   REPOS
         # =====================================================
 
-        if not (
-            fn.check_package_installed("arcolinux-keyring")
-            or fn.check_package_installed("arcolinux-mirrorlist-git")
-        ):
-            self.btnRepos = Gtk.Button(label="Add repos")
-            self.btnRepos._value = 1
-        else:
-            self.btnRepos = Gtk.Button(label="Remove repos")
-            self.btnRepos._value = 2
-
-        self.btnRepos.set_size_request(100, 30)
-        self.btnRepos.connect("clicked", self.on_repos_clicked)
+        # if not (
+        #     fn.check_package_installed("arcolinux-keyring")
+        #     or fn.check_package_installed("arcolinux-mirrorlist-git")
+        # ):
+        #     self.btnRepos = Gtk.Button(label="Add ArcoLinux Repo")
+        #     self.btnRepos._value = 1
+        # else:
+        #     self.btnRepos = Gtk.Button(label="Remove ArcoLinux Repo")
+        #     self.btnRepos._value = 2
+        #
+        # self.btnRepos.set_size_request(100, 30)
+        # self.btnRepos.connect("clicked", self.on_repos_clicked)
 
         # =====================================================
         #               QUIT BUTTON
         # =====================================================
 
-        btnQuitSofi = Gtk.Button(label="Quit")
-        btnQuitSofi.set_size_request(100, 30)
-        btnQuitSofi.connect("clicked", self.on_close, "delete-event")
+        # btnQuitSofi = Gtk.Button(label="Quit")
+        # btnQuitSofi.set_size_request(100, 30)
+        # btnQuitSofi.connect("clicked", self.on_close, "delete-event")
 
         # =====================================================
         #               SEARCH BOX
@@ -238,7 +248,7 @@ def GUISearch(
 
         # ivbox.pack_start(btnReCache, False, False, 0)
         ivbox.pack_start(self.btnRepos, False, False, 0)
-        ivbox.pack_start(btnQuitSofi, False, False, 0)
+        # ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
         vbox1.pack_start(stack, True, True, 0)
@@ -251,16 +261,13 @@ def GUISearch(
 
         self.show_all()
 
-        return vbox
-
     except Exception as err:
-        print("Exception in GUISearch(): %s" % err)
+        fn.logger.error("Exception in GUISearch(): %s" % err)
 
 
-def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
+def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
     try:
         # reset back to main box
-
         if self.search_activated:
             # remove the search vbox
             self.remove(self.vbox_search)
@@ -268,6 +275,12 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # lets quickly create the latest installed list.
         fn.get_current_installed()
+
+        # =======================================================
+        #                       HeaderBar
+        # =======================================================
+
+        setup_headerbar(self, Gtk)
 
         # =======================================================
         #                       App Notifications
@@ -295,12 +308,12 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #                       CONTAINER
         # ==========================================================
 
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         vbox1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
 
-        vbox.pack_start(hbox, True, True, 0)
-        self.add(vbox)
+        self.vbox.pack_start(hbox, True, True, 0)
+        self.add(self.vbox)
 
         # ==========================================================
         #                    PREP WORK
@@ -344,6 +357,7 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # spawn only 1 GUI_Worker threads, as any number greater causes a Segmentation fault
 
         worker = GUI_Worker(self.queue)
+        worker.name = "thread_GUI_Worker"
         # Set the worker to be True to allow processing, and avoid Blocking
         worker.daemon = True
         worker.start()
@@ -374,7 +388,9 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # send a signal that no further items are to be put on the queue
         self.queue.put(None)
         # safety to ensure that we finish threading before we continue on.
+
         self.queue.join()
+        fn.logger.debug("GUI Worker thread completed")
 
         stack_switcher = Gtk.StackSidebar()
         stack_switcher.set_name("sidebar")
@@ -408,25 +424,12 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         #                   REPOS
         # =====================================================
 
-        if not (
-            fn.check_package_installed("arcolinux-keyring")
-            or fn.check_package_installed("arcolinux-mirrorlist-git")
-        ):
-            self.btnRepos = Gtk.Button(label="Add repos")
-            self.btnRepos._value = 1
-        else:
-            self.btnRepos = Gtk.Button(label="Remove repos")
-            self.btnRepos._value = 2
-
-        self.btnRepos.set_size_request(100, 30)
-        self.btnRepos.connect("clicked", self.on_repos_clicked)
-
         # =====================================================
         #               QUIT BUTTON
         # =====================================================
-        btnQuitSofi = Gtk.Button(label="Quit")
-        btnQuitSofi.set_size_request(100, 30)
-        btnQuitSofi.connect("clicked", self.on_close, "delete-event")
+        # btnQuitSofi = Gtk.Button(label="Quit")
+        # btnQuitSofi.set_size_request(100, 30)
+        # btnQuitSofi.connect("clicked", self.on_close, "delete-event")
 
         # =====================================================
         #               SEARCH BOX
@@ -446,8 +449,8 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
 
         # leaving cache button out
         # ivbox.pack_start(btnReCache, False, False, 0)
-        ivbox.pack_start(self.btnRepos, False, False, 0)
-        ivbox.pack_start(btnQuitSofi, False, False, 0)
+        # ivbox.pack_start(self.btnRepos, False, False, 0)
+        # ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
         vbox1.pack_start(stack, True, True, 0)
@@ -461,6 +464,116 @@ def GUI(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         if self.search_activated:
             self.show_all()
 
-        return vbox
     except Exception as e:
-        print("Exception in GUI(): %s" % e)
+        fn.logger.error("Exception in GUI(): %s" % e)
+
+
+def setup_headerbar(self, Gtk):
+    try:
+        header_bar_title = "Sofirem"
+        headerbar = Gtk.HeaderBar()
+        headerbar.set_title(header_bar_title)
+        headerbar.set_show_close_button(True)
+
+        self.set_titlebar(headerbar)
+
+        toolbuttonSettings = Gtk.ToolButton()
+        # icon-name open-menu-symbolic / open-menu-symbolic.symbolic
+        toolbuttonSettings.set_icon_name("open-menu-symbolic.symbolic")
+        # toolbuttonSettings.set_icon_name(Gtk.STOCK_PREFERENCES)
+        toolbuttonSettings.connect("clicked", self.on_settings_clicked)
+
+        headerbar.pack_end(toolbuttonSettings)
+
+        self.popover = Gtk.Popover()
+        self.popover.set_relative_to(toolbuttonSettings)
+
+        vbox = Gtk.Box(spacing=1, orientation=Gtk.Orientation.VERTICAL)
+        vbox.set_border_width(10)
+
+        # switch to display package versions
+        self.switch_pkg_version = Gtk.Switch()
+        self.switch_pkg_version.set_halign(Gtk.Align(1))
+
+        # button to open the pacman log monitoring dialog
+        self.btn_pacmanlog = Gtk.ModelButton(label="Open Pacman Log File")
+        self.btn_pacmanlog.connect("clicked", self.on_pacman_log_clicked)
+        # self.btn_pacmanlog.set_size_request(100, 30)
+        self.btn_pacmanlog.set_halign(Gtk.Align.START)
+
+        # button to export list of installed packages to disk
+        btn_packages_export = Gtk.ModelButton(label="Show Installed Packages")
+        btn_packages_export.connect("clicked", self.on_packages_export_clicked)
+        # btn_packages_export.set_size_request(100, 30)
+        btn_packages_export.set_halign(Gtk.Align.START)
+
+        # quit button
+        btn_quit_app = Gtk.ModelButton(label="Quit")
+        # btn_quit_app.set_size_request(100, 30)
+        btn_quit_app.connect("clicked", self.on_close, "delete-event")
+        btn_quit_app.set_halign(Gtk.Align.START)
+
+        # button to show about dialog
+        btn_about_app = Gtk.ModelButton(label="About")
+        btn_about_app.connect("clicked", self.on_about_app_clicked)
+        # btn_about_app.set_size_request(100, 30)
+        btn_about_app.set_halign(Gtk.Align.START)
+
+        if self.display_versions == True:
+            self.switch_pkg_version.set_active(True)
+        else:
+            self.switch_pkg_version.set_active(False)
+
+        self.switch_pkg_version.connect("notify::active", self.version_toggle)
+
+        self.switch_arco_repo = Gtk.Switch()
+        self.switch_arco_repo.set_halign(Gtk.Align(1))
+
+        self.lbl_arco_repo = Gtk.Label(xalign=0, yalign=0)
+
+        if not (
+            fn.check_package_installed("arcolinux-keyring")
+            or fn.check_package_installed("arcolinux-mirrorlist-git")
+        ):
+            self.btn_repos = Gtk.ModelButton(label="Add ArcoLinux Repos")
+            self.btn_repos._value = 1
+
+            self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+
+            self.switch_arco_repo.set_active(False)
+        else:
+            self.btn_repos = Gtk.ModelButton(label="Remove ArcoLinux Repos")
+            self.btn_repos._value = 2
+
+            self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+
+            self.switch_arco_repo.set_active(True)
+
+        self.switch_arco_repo.connect("notify::active", self.arco_repo_toggle)
+
+        lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
+        lbl_pkg_version.set_text("Display package version ")
+
+        hbox1 = Gtk.Box(spacing=1, orientation=Gtk.Orientation.HORIZONTAL)
+        hbox1.set_border_width(1)
+
+        hbox1.pack_start(lbl_pkg_version, True, True, 1)
+        hbox1.pack_start(self.switch_pkg_version, True, True, 1)
+
+        hbox2 = Gtk.Box(spacing=1, orientation=Gtk.Orientation.HORIZONTAL)
+        hbox2.set_border_width(1)
+
+        hbox2.pack_start(self.lbl_arco_repo, True, True, 1)
+        hbox2.pack_start(self.switch_arco_repo, True, True, 1)
+
+        vbox.pack_start(hbox1, True, True, 1)
+        vbox.pack_start(hbox2, True, True, 1)
+        vbox.pack_start(self.btn_pacmanlog, True, True, 1)
+        vbox.pack_start(btn_packages_export, True, True, 1)
+        vbox.pack_start(btn_about_app, True, True, 1)
+        vbox.pack_start(btn_quit_app, True, True, 1)
+
+        self.popover.add(vbox)
+        self.popover.set_position(Gtk.PositionType.BOTTOM)
+    except Exception as e:
+        fn.logger.error("Exception in setup_headerbar(): %s" % e)
