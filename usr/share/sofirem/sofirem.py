@@ -411,6 +411,8 @@ class Main(Gtk.Window):
                         th.start()
                         fn.logger.debug("Package-install thread started")
                 else:
+                    widget.set_state(False)
+                    widget.set_active(False)
                     proc = fn.get_pacman_process()
 
                     message_dialog = MessageDialog(
@@ -470,6 +472,9 @@ class Main(Gtk.Window):
 
                         th.start()
                 else:
+                    widget.set_state(True)
+                    widget.set_active(True)
+
                     proc = fn.get_pacman_process()
                     message_dialog = MessageDialog(
                         "Sofirem cannot proceed pacman lockfile found",

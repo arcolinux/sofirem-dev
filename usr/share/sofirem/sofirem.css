@@ -44,6 +44,6 @@ infobar#infobar_error {
 }
 
 infobar#infobar_warning{
-  background-color:yellow;
-  color:white;
+  background-color:#ffcc00;
+  color:black;
 }

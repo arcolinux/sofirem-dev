@@ -55,8 +55,6 @@ class MessageDialog(Gtk.Dialog):
         lbl_padding1.set_text("")
 
         grid_message = Gtk.Grid()
-        # grid_message.set_column_homogeneous(True)
-        # grid_message.set_row_homogeneous(True)
 
         grid_message.attach(infobar, 0, 0, 1, 1)
         grid_message.attach(lbl_padding1, 0, 1, 1, 1)
@@ -95,7 +93,7 @@ class MessageDialog(Gtk.Dialog):
             grid_message.attach(lbl_first_message, 0, 2, 1, 1)
             grid_message.attach(lbl_second_message, 0, 3, 1, 1)
 
-            self.set_default_size(50, 100)
+            self.set_default_size(600, 100)
 
         vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         vbox_close.pack_start(btn_ok, True, True, 1)
