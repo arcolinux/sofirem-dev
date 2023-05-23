@@ -9,7 +9,7 @@ import time
 import datetime
 from datetime import datetime, timedelta
 import subprocess
-import threading  # noqa
+import threading
 import gi
 import logging
 import shutil
@@ -20,7 +20,7 @@ from distro import id
 from os import makedirs
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gtk  # noqa
+from gi.repository import GLib, Gtk
 
 # =====================================================
 #               Base Directory
@@ -130,6 +130,11 @@ def create_packages_log():
             universal_newlines=True,
         ) as process:
             with open("%s/%s" % (log_dir, packages_log), "w") as f:
+                f.write(
+                    "# Created by Sofirem on %s\n"
+                    % datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                )
+
                 for line in process.stdout:
                     f.write("%s" % line)
     except Exception as e:
@@ -281,33 +286,10 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
 
             logger.debug("Pacman process return code = %s" % returncode)
 
-            # while process.poll() is None:
-            #     # logger.debug("Pacman process running")
-            #
-            #     for line in process.stdout:
-            #         if progress_dialog.pkg_dialog_closed is False:
-            #             GLib.idle_add(
-            #                 update_progress_textview,
-            #                 self,
-            #                 line,
-            #                 progress_dialog,
-            #                 priority=GLib.PRIORITY_DEFAULT,
-            #             )
-            #         else:
-            #             # increase wait time to reduce cpu load, no textview updates required since dialog is closed
-            #             # time.sleep(1)
-            #             break
-            #
-            #     time.sleep(0.3)
-
             logger.info(
                 "Pacman process completed for package = %s and action = %s"
                 % (pkg.name, action)
             )
-
-            # returncode = process.poll()
-
-            # logger.debug("Process returncode = %s" % returncode)
 
             GLib.idle_add(
                 refresh_ui,
@@ -320,7 +302,6 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
                 priority=GLib.PRIORITY_DEFAULT,
             )
 
-            # time.sleep(0.1)
     except TimeoutError as t:
         logger.error("TimeoutError in %s start_subprocess(): %s" % (action, t))
         process.terminate()
@@ -621,7 +602,8 @@ def store_packages():
 
     try:
         # get package version info
-        version_info_lst = getPackageVersion()
+
+        package_metadata = get_all_package_info()
 
         # get a list of yaml files
         for file in os.listdir(path):
@@ -671,13 +653,12 @@ def store_packages():
 
                         # get the package version, lookup dictionary
 
-                        package_version = "unknown"
+                        package_version = "Unknown"
 
-                        for i in version_info_lst:
-                            for name, version in i.items():
-                                if name == package_name:
-                                    package_version = version
-                                    continue
+                        for i in package_metadata:
+                            if i["name"] == package_name:
+                                package_version = i["version"]
+                                break
 
                         package = Package(
                             package_name,
@@ -741,8 +722,8 @@ def store_packages():
 # =====================================================
 
 
-# get live package version info
-def getPackageVersion():
+# get live package name, version info and repo name
+def get_all_package_info():
     query_str = ["pacman", "-Si"]
 
     try:
@@ -755,14 +736,21 @@ def getPackageVersion():
         if process_pkg_query.returncode == 0:
             if out:
                 package_data = []
-                pkg_name = None
+                package_name = "Unknown"
+                package_version = "Unknown"
+
                 for line in out.decode("utf-8").splitlines():
                     package_dict = {}
                     if "Name            :" in line.strip():
-                        pkg_name = line.replace(" ", "").split("Name:")[1]
+                        package_name = line.replace(" ", "").split("Name:")[1].strip()
+
                     if "Version         :" in line.strip():
-                        pkg_version = line.replace(" ", "").split("Version:")[1]
-                        package_dict[pkg_name] = pkg_version
+                        package_version = (
+                            line.replace(" ", "").split("Version:")[1].strip()
+                        )
+
+                        package_dict["name"] = package_name
+                        package_dict["version"] = package_version
 
                         package_data.append(package_dict)
 
@@ -771,11 +759,10 @@ def getPackageVersion():
             logger.error("Failed to extract package version information.")
 
     except Exception as e:
-        logger.error("Exception in getPackageVersion() : %s" % e)
+        logger.error("Exception in get_all_package_info() : %s" % e)
 
 
-# get installed package version, installed date, name to be displayed inside the treeview
-# when the show packages button is clicked on
+# get installed package version, installed date, name to be displayed inside PackageListDialog
 
 
 def get_installed_package_data():
@@ -818,7 +805,7 @@ def get_installed_package_data():
         logger.error("Exception in get_installed_package_data() : %s" % e)
 
 
-# get key package information which is to be shown inside the progress dialog window switcher
+# get key package information which is to be shown inside ProgressDialog
 
 
 def get_package_information(self, package_name):
@@ -922,133 +909,6 @@ def get_package_information(self, package_name):
 
     except Exception as e:
         logger.error("Exception in get_package_information(): %e" % e)
-
-
-# =====================================================
-#               CREATE MESSAGE DIALOG
-# =====================================================
-
-
-def on_message_dialog_ok_response(self, dialog):
-    dialog.hide()
-    dialog.destroy()
-
-
-def message_dialog_warn(self, title, first_msg, secondary_msg):
-    try:
-        dialog = Gtk.Dialog(self)
-
-        headerbar = Gtk.HeaderBar()
-        headerbar.set_title(title)
-        headerbar.set_show_close_button(True)
-
-        dialog.set_default_size(500, 100)
-
-        dialog.set_resizable(False)
-        dialog.set_modal(True)
-        dialog.set_border_width(10)
-
-        dialog.set_titlebar(headerbar)
-        dialog.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-
-        btn_msg_ok = Gtk.Button(label="OK")
-        btn_msg_ok.set_size_request(100, 30)
-        btn_msg_ok.connect("clicked", on_message_dialog_ok_response, dialog)
-        dialog.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
-
-        grid_message = Gtk.Grid()
-        grid_message.set_column_homogeneous(True)
-        grid_message.set_row_homogeneous(True)
-
-        lbl_first_message = Gtk.Label(xalign=0)
-        lbl_first_message.set_text(first_msg)
-
-        lbl_secondary_message = Gtk.Label(xalign=0)
-        lbl_secondary_message.set_markup(secondary_msg)
-
-        lbl_padding1 = Gtk.Label(xalign=0)
-        lbl_padding1.set_text("             ")
-
-        lbl_padding2 = Gtk.Label(xalign=0)
-        lbl_padding2.set_text("             ")
-
-        lbl_padding3 = Gtk.Label(xalign=0)
-        lbl_padding3.set_text("             ")
-
-        lbl_padding4 = Gtk.Label(xalign=0)
-        lbl_padding4.set_text("             ")
-
-        lbl_padding5 = Gtk.Label(xalign=0)
-        lbl_padding5.set_text("             ")
-
-        lbl_padding6 = Gtk.Label(xalign=0)
-        lbl_padding6.set_text("             ")
-
-        lbl_padding7 = Gtk.Label(xalign=0)
-        lbl_padding7.set_text("             ")
-
-        lbl_padding8 = Gtk.Label(xalign=0)
-        lbl_padding8.set_text("             ")
-
-        lbl_padding9 = Gtk.Label(xalign=0)
-        lbl_padding9.set_text("             ")
-
-        lbl_padding10 = Gtk.Label(xalign=0)
-        lbl_padding10.set_text("             ")
-
-        grid_message.attach(lbl_first_message, 0, 2, 1, 1)
-        grid_message.attach(lbl_secondary_message, 0, 3, 1, 1)
-
-        grid_btn = Gtk.Grid()
-
-        # grid_btn.attach(lbl_padding_top1, 0, 1, 1, 1)
-        grid_btn.attach(lbl_padding1, 0, 2, 1, 1)
-
-        grid_btn.attach_next_to(
-            lbl_padding2, lbl_padding1, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding3, lbl_padding2, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding4, lbl_padding3, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding5, lbl_padding4, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding6, lbl_padding5, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding7, lbl_padding6, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding8, lbl_padding7, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding9, lbl_padding8, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(
-            lbl_padding10, lbl_padding9, Gtk.PositionType.RIGHT, 1, 1
-        )
-
-        grid_btn.attach_next_to(btn_msg_ok, lbl_padding10, Gtk.PositionType.RIGHT, 1, 1)
-
-        dialog.vbox.add(grid_message)
-        dialog.vbox.add(grid_btn)
-
-        return dialog
-
-    except Exception as e:
-        logger.error("Exception in message_dialog_warn(): %s" % e)
 
 
 # =====================================================
@@ -1331,27 +1191,6 @@ def get_pacman_process():
 
 
 # =====================================================
-#               MESSAGEBOX
-# =====================================================
-
-
-def messageBox(self, title, message):
-    md2 = Gtk.MessageDialog(
-        parent=self,
-        flags=0,
-        message_type=Gtk.MessageType.WARNING,
-        buttons=Gtk.ButtonsType.OK,
-        text=title,
-    )
-    md2.format_secondary_markup(message)
-
-    md2.show_all()
-    md2.run()
-    md2.hide()
-    md2.destroy()
-
-
-# =====================================================
 #               USER SEARCH
 # =====================================================
 
@@ -1548,7 +1387,9 @@ def setup_arcolinux_config(self, action, config):
                         "info",
                         True,
                     )
+
                     message_dialog.run()
+                    message_dialog.hide()
                     message_dialog.destroy()
 
                     return True
@@ -1557,7 +1398,7 @@ def setup_arcolinux_config(self, action, config):
                     if len(output) == 0:
                         output.append("Error: %s %s failed" % (config, action))
 
-                    logger.debug(" ".join(output))
+                    logger.error(" ".join(output))
 
                     message_dialog = MessageDialog(
                         "Error: ArcoLinux %s %s failed" % (config, action),
@@ -1566,7 +1407,9 @@ def setup_arcolinux_config(self, action, config):
                         "error",
                         True,
                     )
+
                     message_dialog.run()
+                    message_dialog.hide()
                     message_dialog.destroy()
                     logger.warning("%s failed to %s" % (config, action))
 
@@ -1771,13 +1614,6 @@ def is_thread_alive(thread_name):
     return False
 
 
-# for debugging print number of threads running
-def print_threads_alive():
-    for thread in threading.enumerate():
-        if thread.is_alive():
-            logger.debug("Thread alive = %s" % thread.name)
-
-
 # check if pacman lock file exists
 def check_pacman_lockfile():
     try:
@@ -1935,7 +1771,6 @@ def check_github(yaml_files):
         inputs = zip(urls, fns)
         download_parallel(inputs)
 
-
 def download_url(args):
     t0 = time.time()
     url, fn = args[0], args[1]
@@ -1953,4 +1788,25 @@ def download_parallel(args):
     results = ThreadPool(cpus - 1).imap_unordered(download_url, args)
     for result in results:
         print("url:", result[0], "time (s):", result[1])
+
+def messageBox(self, title, message):
+    md2 = Gtk.MessageDialog(
+        parent=self,
+        flags=0,
+        message_type=Gtk.MessageType.WARNING,
+        buttons=Gtk.ButtonsType.OK,
+        text=title,
+    )
+    md2.format_secondary_markup(message)
+
+    md2.show_all()
+    md2.run()
+    md2.hide()
+    md2.destroy()
+
+# for debugging print number of threads running
+def print_threads_alive():
+    for thread in threading.enumerate():
+        if thread.is_alive():
+            logger.debug("Thread alive = %s" % thread.name)
 """

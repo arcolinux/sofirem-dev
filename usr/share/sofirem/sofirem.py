@@ -16,15 +16,14 @@ from MessageDialog import MessageDialog
 from PacmanLogDialog import PacmanLogDialog
 from PackageListDialog import PackageListDialog
 from ProgressDialog import ProgressDialog
-
+from Package import Package
 from time import sleep
 from datetime import datetime
 import sys
 import time
 
-
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib  # noqa
+from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 #      #============================================================
 #      #=  Authors:  Erik Dubois - Cameron Percival   - Fennec     =
@@ -70,7 +69,6 @@ class Main(Gtk.Window):
             self.display_versions = False
             # On initial app load search_activated is set to False
             self.search_activated = False
-
             print(
                 "---------------------------------------------------------------------------"
             )
@@ -145,12 +143,14 @@ class Main(Gtk.Window):
             if fn.check_pacman_lockfile():
                 message_dialog = MessageDialog(
                     "Sofirem cannot proceed pacman lockfile found",
-                    "Pacman lock file found inside %s" % fn.pacman_lockfile,
+                    "Pacman cannot lock the db, a lockfile is found inside %s"
+                    % fn.pacman_lockfile,
                     "Is there another Pacman process running ?",
                     "error",
                     False,
                 )
                 message_dialog.run()
+                message_dialog.hide()
                 message_dialog.destroy()
                 sys.exit(1)
 
@@ -174,6 +174,7 @@ class Main(Gtk.Window):
                 )
 
                 message_dialog.run()
+                message_dialog.hide()
                 message_dialog.destroy()
                 sys.exit(1)
 
@@ -227,7 +228,7 @@ class Main(Gtk.Window):
 
         if shortcut in ("Ctrl+F", "Ctrl+Mod2+F"):
             # set focus on text entry, select all text if any
-            self.searchEntry.grab_focus()
+            self.searchentry.grab_focus()
 
         if shortcut in ("Ctrl+I", "Ctrl+Mod2+I"):
             fn.show_package_info(self)
@@ -296,13 +297,19 @@ class Main(Gtk.Window):
                             self.search_activated = True
                     else:
                         fn.logger.info("Search found %s results" % 0)
-                        self.searchEntry.grab_focus()
+                        self.searchentry.grab_focus()
 
-                        fn.messageBox(
-                            self,
+                        message_dialog = MessageDialog(
                             "Search returned 0 results",
                             "Failed to find search term inside the package name or description.",
+                            "Try to search again using another term",
+                            "warning",
+                            False,
                         )
+
+                        message_dialog.run()
+                        message_dialog.hide()
+                        message_dialog.destroy()
 
                 elif self.search_activated == True:
                     GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
@@ -318,7 +325,7 @@ class Main(Gtk.Window):
         if self.search_activated:
             GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-        self.searchEntry.set_placeholder_text("Search...")
+        self.searchentry.set_placeholder_text("Search...")
 
         self.search_activated = False
 
@@ -417,14 +424,17 @@ class Main(Gtk.Window):
 
                     message_dialog = MessageDialog(
                         "Sofirem cannot proceed pacman lockfile found",
-                        "Pacman lock file found inside %s" % fn.pacman_lockfile,
-                        "Pacman running: %s" % proc,
+                        "Pacman cannot lock the db, a lockfile is found inside %s"
+                        % fn.pacman_lockfile,
+                        "Pacman status = busy: %s" % proc,
                         "warning",
                         False,
                     )
 
                     message_dialog.run()
+                    message_dialog.hide()
                     message_dialog.destroy()
+
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
             # Uninstall the package
@@ -474,17 +484,20 @@ class Main(Gtk.Window):
                 else:
                     widget.set_state(True)
                     widget.set_active(True)
-
                     proc = fn.get_pacman_process()
+
                     message_dialog = MessageDialog(
                         "Sofirem cannot proceed pacman lockfile found",
-                        "Pacman lock file found inside %s" % fn.pacman_lockfile,
-                        "Pacman running: %s" % proc,
-                        "error",
+                        "Pacman cannot lock the db, a lockfile is found inside %s"
+                        % fn.pacman_lockfile,
+                        "Pacman status = busy: %s" % proc,
+                        "warning",
                         False,
                     )
                     message_dialog.run()
+                    message_dialog.hide()
                     message_dialog.destroy()
+
         # fn.get_current_installed()
         # fn.print_threads_alive()
 
@@ -579,7 +592,27 @@ class Main(Gtk.Window):
         fn.logger.info(
             "Pacman configuration files have changed, running a Pacman db sync"
         )
-        fn.sync_package_db()
+
+        sync_err = fn.sync_package_db()
+
+        if sync_err is not None:
+            fn.logger.error("[ERROR] Synchronising failed")
+
+            print(
+                "---------------------------------------------------------------------------"
+            )
+
+            message_dialog = MessageDialog(
+                "Pacman synchronisation failed",
+                "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
+                sync_err,
+                "error",
+                True,
+            )
+
+            message_dialog.run()
+            message_dialog.hide()
+            message_dialog.destroy()
 
     def version_toggle(self, widget, data):
         if widget.get_active() == True:

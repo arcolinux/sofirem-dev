@@ -54,6 +54,9 @@ class MessageDialog(Gtk.Dialog):
         lbl_padding1 = Gtk.Label(xalign=0, yalign=0)
         lbl_padding1.set_text("")
 
+        lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding2.set_text("")
+
         grid_message = Gtk.Grid()
 
         grid_message.attach(infobar, 0, 0, 1, 1)
@@ -79,6 +82,7 @@ class MessageDialog(Gtk.Dialog):
             scrolled_window.add(textview)
 
             grid_message.attach(scrolled_window, 0, 2, 1, 1)
+            grid_message.attach(lbl_padding2, 0, 3, 1, 1)
 
             self.set_default_size(800, 600)
 

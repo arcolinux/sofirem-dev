@@ -2,6 +2,8 @@
 import os
 import gi
 import Functions as fn
+from MessageDialog import MessageDialog
+
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
@@ -140,19 +142,32 @@ class PackageListDialog(Gtk.Dialog):
                 # fix permissions, file is owned by root
                 fn.permissions(filename)
 
-                fn.messageBox(
-                    self,
+                message_dialog = MessageDialog(
                     "Package export complete",
                     "Package list exported to %s" % filename,
+                    "",
+                    "info",
+                    False,
                 )
+
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
             else:
                 fn.logger.error("Export failed")
-                fn.messageBox(
-                    self,
+
+                message_dialog = MessageDialog(
                     "Package export failed",
                     "Failed to export package list to %s." % filename,
+                    "",
+                    "error",
+                    False,
                 )
+
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
         except Exception as e:
             fn.logger.error("Exception in on_dialog_export_clicked(): %s" % e)

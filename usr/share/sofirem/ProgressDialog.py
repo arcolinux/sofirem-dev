@@ -2,6 +2,7 @@
 import os
 import gi
 import Functions as fn
+from MessageDialog import MessageDialog
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
@@ -29,11 +30,18 @@ class ProgressDialog(Gtk.Dialog):
             )
             fn.logger.warning("Package %s cannot continue" % action)
 
-            fn.messageBox(
-                self,
+            message_dialog = MessageDialog(
                 "Pacman repository error: package '%s' was not found" % pkg.name,
                 "<b>Sofirem cannot process the request</b>",
+                "",
+                "error",
+                False,
             )
+
+            message_dialog.run()
+            message_dialog.hide()
+            message_dialog.destroy()
+
         elif type(package_metadata) is dict:
             # package_progress_dialog = Gtk.Dialog(self)
 
@@ -60,7 +68,7 @@ class ProgressDialog(Gtk.Dialog):
             self.btn_package_progress_close.set_halign(Gtk.Align.END)
 
             self.set_resizable(False)
-            self.set_size_request(750, 700)
+            self.set_size_request(850, 700)
             self.set_modal(True)
             self.set_border_width(10)
             self.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
@@ -106,6 +114,9 @@ class ProgressDialog(Gtk.Dialog):
             lbl_padding1 = Gtk.Label(xalign=0, yalign=0)
             lbl_padding1.set_text("")
 
+            lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+            lbl_padding2.set_text("")
+
             package_progress_grid.attach(lbl_padding1, 0, 3, 1, 1)
 
             package_progress_scrolled_window = Gtk.ScrolledWindow()
@@ -118,16 +129,20 @@ class ProgressDialog(Gtk.Dialog):
             buffer = self.package_progress_textview.get_buffer()
             self.package_progress_textview.set_buffer(buffer)
 
+            package_progress_scrolled_window.set_size_request(700, 430)
+
             package_progress_scrolled_window.add(self.package_progress_textview)
             package_progress_grid.attach(package_progress_scrolled_window, 0, 4, 1, 1)
+            package_progress_grid.attach(lbl_padding2, 0, 5, 1, 1)
 
             vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+
             vbox_close.pack_start(self.btn_package_progress_close, True, True, 1)
 
             stack.add_titled(package_progress_grid, "Progress", "Package Progress")
 
             # package information
-            box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
             listbox = Gtk.ListBox()
             listbox.set_selection_mode(Gtk.SelectionMode.NONE)
