@@ -499,25 +499,25 @@ def setup_headerbar(self, Gtk):
         # button to open the pacman log monitoring dialog
         self.btn_pacmanlog = Gtk.ModelButton(label="Open Pacman Log File")
         self.btn_pacmanlog.connect("clicked", self.on_pacman_log_clicked)
-        # self.btn_pacmanlog.set_size_request(100, 30)
+
         self.btn_pacmanlog.set_halign(Gtk.Align.START)
 
         # button to export list of installed packages to disk
         btn_packages_export = Gtk.ModelButton(label="Show Installed Packages")
         btn_packages_export.connect("clicked", self.on_packages_export_clicked)
-        # btn_packages_export.set_size_request(100, 30)
+
         btn_packages_export.set_halign(Gtk.Align.START)
 
         # quit button
         btn_quit_app = Gtk.ModelButton(label="Quit Sofirem")
-        # btn_quit_app.set_size_request(100, 30)
+
         btn_quit_app.connect("clicked", self.on_close, "delete-event")
         btn_quit_app.set_halign(Gtk.Align.START)
 
         # button to show about dialog
         btn_about_app = Gtk.ModelButton(label="About Sofirem")
         btn_about_app.connect("clicked", self.on_about_app_clicked)
-        # btn_about_app.set_size_request(100, 30)
+
         btn_about_app.set_halign(Gtk.Align.START)
 
         if self.display_versions == True:
@@ -532,25 +532,21 @@ def setup_headerbar(self, Gtk):
 
         self.lbl_arco_repo = Gtk.Label(xalign=0, yalign=0)
 
-        if not (
-            fn.check_package_installed("arcolinux-keyring")
-            or fn.check_package_installed("arcolinux-mirrorlist-git")
+        if (
+            fn.check_package_installed("arcolinux-keyring") is False
+            or fn.check_package_installed("arcolinux-mirrorlist-git") is False
+            or fn.os.path.exists(fn.arcolinux_mirrorlist) is False
         ):
             self.btn_repos = Gtk.ModelButton(label="Add ArcoLinux Repos")
-            self.btn_repos._value = 1
-
             self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+            self.switch_arco_repo.set_state(False)
 
-            self.switch_arco_repo.set_active(False)
         else:
             self.btn_repos = Gtk.ModelButton(label="Remove ArcoLinux Repos")
-            self.btn_repos._value = 2
-
             self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+            self.switch_arco_repo.set_state(True)
 
-            self.switch_arco_repo.set_active(True)
-
-        self.switch_arco_repo.connect("notify::active", self.arco_repo_toggle)
+        self.switch_arco_repo.connect("state-set", self.arco_repo_toggle)
 
         lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
         lbl_pkg_version.set_text("Display package version ")

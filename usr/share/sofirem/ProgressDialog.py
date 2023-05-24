@@ -16,7 +16,7 @@ class ProgressDialog(Gtk.Dialog):
 
         self.package_found = True
         # this gets package information using pacman -Sii or pacman -Qii depending on if this is an install / uninstall
-        package_metadata = fn.get_package_information(self, pkg.name)
+        package_metadata = fn.get_package_information(pkg.name)
 
         if (
             type(package_metadata) is str
@@ -32,8 +32,8 @@ class ProgressDialog(Gtk.Dialog):
 
             message_dialog = MessageDialog(
                 "Pacman repository error: package '%s' was not found" % pkg.name,
-                "<b>Sofirem cannot process the request</b>",
-                "",
+                "Sofirem cannot process the request",
+                "Are the correct pacman mirrorlists configured ?",
                 "error",
                 False,
             )

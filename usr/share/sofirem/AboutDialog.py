@@ -143,7 +143,7 @@ class AboutDialog(Gtk.Dialog):
 
         listbox = Gtk.ListBox()
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        box_outer.pack_start(lbl_padding2, True, True, 0)
+
         box_outer.pack_start(lbl_authors_title, True, True, 0)
         box_outer.pack_start(listbox, True, True, 0)
 
