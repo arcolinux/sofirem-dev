@@ -27,12 +27,12 @@ class GUI_Worker(Thread):
                 if items is not None:
                     # self, Gtk, vboxStack1, category, package_file = items
 
-                    self, Gtk, vboxStack1, category, packages = items
+                    self, Gtk, vbox_stack, category, packages = items
 
                     App_Frame_GUI.GUI(
                         self,
                         Gtk,
-                        vboxStack1,
+                        vbox_stack,
                         category,
                         packages,
                     )
@@ -80,11 +80,11 @@ def setup_gui_search(
         pb_panel = GdkPixbuf.Pixbuf().new_from_file(base_dir + "/images/panel.png")
         panel = Gtk.Image().new_from_pixbuf(pb_panel)
 
-        overlayFrame = Gtk.Overlay()
-        overlayFrame.add(panel)
-        overlayFrame.add_overlay(self.notification_label)
+        overlay_frame = Gtk.Overlay()
+        overlay_frame.add(panel)
+        overlay_frame.add_overlay(self.notification_label)
 
-        self.notification_revealer.add(overlayFrame)
+        self.notification_revealer.add(overlay_frame)
 
         hbox0.pack_start(self.notification_revealer, True, False, 0)
 
@@ -113,7 +113,7 @@ def setup_gui_search(
         stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         stack.set_transition_duration(350)
 
-        vboxStack = []
+        vbox_stack = []
         stack_item = 0
 
         # Max Threads
@@ -138,9 +138,9 @@ def setup_gui_search(
             # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
 
             # subcategory = search_results[category][0].subcategory
-            vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
+            vbox_stack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
             stack.add_titled(
-                vboxStack[stack_item], str("stack" + str(len(vboxStack))), category
+                vbox_stack[stack_item], str("stack" + str(len(vbox_stack))), category
             )
 
             # subcategory_desc = search_results[category][0].subcategory_description
@@ -152,7 +152,7 @@ def setup_gui_search(
                 (
                     self,
                     Gtk,
-                    vboxStack[stack_item],
+                    vbox_stack[stack_item],
                     category,
                     search_res_lst,
                 )
@@ -188,8 +188,8 @@ def setup_gui_search(
         #               RECACHE BUTTON
         # =====================================================
 
-        btnReCache = Gtk.Button(label="Recache Applications")
-        btnReCache.connect("clicked", self.recache_clicked)
+        btn_recache = Gtk.Button(label="Recache Applications")
+        btn_recache.connect("clicked", self.recache_clicked)
         # btnReCache.set_property("has-tooltip", True)
         # btnReCache.connect("query-tooltip", self.tooltip_callback,
         #           "Refresh the application cache")
@@ -223,12 +223,12 @@ def setup_gui_search(
         #               SEARCH BOX
         # =====================================================
 
-        self.searchEntry = Gtk.SearchEntry()
-        self.searchEntry.set_text(search_term)
-        self.searchEntry.connect("activate", self.on_search_activated)
-        self.searchEntry.connect("icon-release", self.on_search_cleared)
+        self.searchentry = Gtk.SearchEntry()
+        self.searchentry.set_text(search_term)
+        self.searchentry.connect("activate", self.on_search_activated)
+        self.searchentry.connect("icon-release", self.on_search_cleared)
 
-        ivSearchbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        iv_searchbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
         # =====================================================
         #                      PACKS
@@ -240,14 +240,14 @@ def setup_gui_search(
 
         # hbox3.pack_start(btnReCache, False, False, 0)
 
-        ivSearchbox.pack_start(self.searchEntry, False, False, 0)
+        iv_searchbox.pack_start(self.searchentry, False, False, 0)
 
         ivbox.pack_start(image, False, False, 0)
-        ivbox.pack_start(ivSearchbox, False, False, 0)
+        ivbox.pack_start(iv_searchbox, False, False, 0)
         ivbox.pack_start(stack_switcher, True, True, 0)
 
         # ivbox.pack_start(btnReCache, False, False, 0)
-        ivbox.pack_start(self.btnRepos, False, False, 0)
+        # ivbox.pack_start(self.btnRepos, False, False, 0)
         # ivbox.pack_start(btnQuitSofi, False, False, 0)
 
         vbox1.pack_start(hbox0, False, False, 0)
@@ -296,11 +296,11 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         pb_panel = GdkPixbuf.Pixbuf().new_from_file(base_dir + "/images/panel.png")
         panel = Gtk.Image().new_from_pixbuf(pb_panel)
 
-        overlayFrame = Gtk.Overlay()
-        overlayFrame.add(panel)
-        overlayFrame.add_overlay(self.notification_label)
+        overlay_frame = Gtk.Overlay()
+        overlay_frame.add(panel)
+        overlay_frame.add_overlay(self.notification_label)
 
-        self.notification_revealer.add(overlayFrame)
+        self.notification_revealer.add(overlay_frame)
 
         hbox0.pack_start(self.notification_revealer, True, False, 0)
 
@@ -344,7 +344,7 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         stack.set_transition_duration(350)
 
-        vboxStack = []
+        vbox_stack = []
         stack_item = 0
 
         # Max Threads
@@ -366,9 +366,9 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
             # NOTE: IF the yaml file name standard changes, be sure to update this, or weirdness will follow.
 
             # this is the side stack listing all categories
-            vboxStack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
+            vbox_stack.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10))
             stack.add_titled(
-                vboxStack[stack_item], str("stack" + str(len(vboxStack))), category
+                vbox_stack[stack_item], str("stack" + str(len(vbox_stack))), category
             )
 
             packages_lst = self.packages[category]
@@ -378,7 +378,7 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
                 (
                     self,
                     Gtk,
-                    vboxStack[stack_item],
+                    vbox_stack[stack_item],
                     category,
                     packages_lst,
                 )
@@ -434,14 +434,14 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         # =====================================================
         #               SEARCH BOX
         # =====================================================
-        self.searchEntry = Gtk.SearchEntry()
-        self.searchEntry.set_placeholder_text("Search...")
-        self.searchEntry.connect("activate", self.on_search_activated)
-        self.searchEntry.connect("icon-release", self.on_search_cleared)
+        self.searchentry = Gtk.SearchEntry()
+        self.searchentry.set_placeholder_text("Search...")
+        self.searchentry.connect("activate", self.on_search_activated)
+        self.searchentry.connect("icon-release", self.on_search_cleared)
 
         ivSearchbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
-        ivSearchbox.pack_start(self.searchEntry, False, False, 0)
+        ivSearchbox.pack_start(self.searchentry, False, False, 0)
 
         ivbox.pack_start(image, False, False, 0)
         ivbox.pack_start(ivSearchbox, False, False, 0)
@@ -468,6 +468,7 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         fn.logger.error("Exception in GUI(): %s" % e)
 
 
+# setup headerbar including popover settings
 def setup_headerbar(self, Gtk):
     try:
         header_bar_title = "Sofirem"
@@ -498,25 +499,25 @@ def setup_headerbar(self, Gtk):
         # button to open the pacman log monitoring dialog
         self.btn_pacmanlog = Gtk.ModelButton(label="Open Pacman Log File")
         self.btn_pacmanlog.connect("clicked", self.on_pacman_log_clicked)
-        # self.btn_pacmanlog.set_size_request(100, 30)
+
         self.btn_pacmanlog.set_halign(Gtk.Align.START)
 
         # button to export list of installed packages to disk
         btn_packages_export = Gtk.ModelButton(label="Show Installed Packages")
         btn_packages_export.connect("clicked", self.on_packages_export_clicked)
-        # btn_packages_export.set_size_request(100, 30)
+
         btn_packages_export.set_halign(Gtk.Align.START)
 
         # quit button
-        btn_quit_app = Gtk.ModelButton(label="Quit")
-        # btn_quit_app.set_size_request(100, 30)
+        btn_quit_app = Gtk.ModelButton(label="Quit Sofirem")
+
         btn_quit_app.connect("clicked", self.on_close, "delete-event")
         btn_quit_app.set_halign(Gtk.Align.START)
 
         # button to show about dialog
-        btn_about_app = Gtk.ModelButton(label="About")
+        btn_about_app = Gtk.ModelButton(label="About Sofirem")
         btn_about_app.connect("clicked", self.on_about_app_clicked)
-        # btn_about_app.set_size_request(100, 30)
+
         btn_about_app.set_halign(Gtk.Align.START)
 
         if self.display_versions == True:
@@ -531,25 +532,21 @@ def setup_headerbar(self, Gtk):
 
         self.lbl_arco_repo = Gtk.Label(xalign=0, yalign=0)
 
-        if not (
-            fn.check_package_installed("arcolinux-keyring")
-            or fn.check_package_installed("arcolinux-mirrorlist-git")
+        if (
+            fn.check_package_installed("arcolinux-keyring") is False
+            or fn.check_package_installed("arcolinux-mirrorlist-git") is False
+            or fn.os.path.exists(fn.arcolinux_mirrorlist) is False
         ):
             self.btn_repos = Gtk.ModelButton(label="Add ArcoLinux Repos")
-            self.btn_repos._value = 1
-
             self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+            self.switch_arco_repo.set_state(False)
 
-            self.switch_arco_repo.set_active(False)
         else:
             self.btn_repos = Gtk.ModelButton(label="Remove ArcoLinux Repos")
-            self.btn_repos._value = 2
-
             self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+            self.switch_arco_repo.set_state(True)
 
-            self.switch_arco_repo.set_active(True)
-
-        self.switch_arco_repo.connect("notify::active", self.arco_repo_toggle)
+        self.switch_arco_repo.connect("state-set", self.arco_repo_toggle)
 
         lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
         lbl_pkg_version.set_text("Display package version ")

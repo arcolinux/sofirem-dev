@@ -1,4 +1,4 @@
-# This class is used to create a dialog window showing detailed information about an event
+# This class is used to create a modal dialog window showing detailed information about an event
 
 import os
 import gi
@@ -19,8 +19,6 @@ class MessageDialog(Gtk.Dialog):
         headerbar = Gtk.HeaderBar()
         headerbar.set_title(title)
         headerbar.set_show_close_button(True)
-
-        # 800,600 for textview
 
         self.set_resizable(False)
         self.set_modal(True)
@@ -54,9 +52,10 @@ class MessageDialog(Gtk.Dialog):
         lbl_padding1 = Gtk.Label(xalign=0, yalign=0)
         lbl_padding1.set_text("")
 
+        lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding2.set_text("")
+
         grid_message = Gtk.Grid()
-        # grid_message.set_column_homogeneous(True)
-        # grid_message.set_row_homogeneous(True)
 
         grid_message.attach(infobar, 0, 0, 1, 1)
         grid_message.attach(lbl_padding1, 0, 1, 1, 1)
@@ -81,6 +80,7 @@ class MessageDialog(Gtk.Dialog):
             scrolled_window.add(textview)
 
             grid_message.attach(scrolled_window, 0, 2, 1, 1)
+            grid_message.attach(lbl_padding2, 0, 3, 1, 1)
 
             self.set_default_size(800, 600)
 
@@ -95,7 +95,7 @@ class MessageDialog(Gtk.Dialog):
             grid_message.attach(lbl_first_message, 0, 2, 1, 1)
             grid_message.attach(lbl_second_message, 0, 3, 1, 1)
 
-            self.set_default_size(50, 100)
+            self.set_default_size(600, 100)
 
         vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         vbox_close.pack_start(btn_ok, True, True, 1)

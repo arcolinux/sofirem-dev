@@ -1,20 +1,26 @@
-# This class is used to create a dialog window to list currently installed packages
+# This class is used to create a modal dialog window to display currently installed packages
+
 import os
 import gi
 import Functions as fn
+from MessageDialog import MessageDialog
+
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
+filename = "%s/sofirem-export.txt" % fn.home
 
 
 class PackageListDialog(Gtk.Dialog):
     def __init__(self):
         Gtk.Dialog.__init__(self)
-        self.set_resizable(False)
+
+        self.set_resizable(True)
         self.set_size_request(800, 700)
         self.set_modal(True)
+
         self.set_border_width(10)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
@@ -29,13 +35,17 @@ class PackageListDialog(Gtk.Dialog):
         grid_packageslst = Gtk.Grid()
         grid_packageslst.set_column_homogeneous(True)
 
+        lbl_info = Gtk.Label(xalign=0, yalign=0)
+        lbl_info.set_text("Exported package list will be saved to %s" % filename)
+
         # get a list of installed packages on the system
 
-        packages_lst = fn.get_installed_package_data()
+        installed_packages_lst = fn.get_installed_package_data()
 
-        if len(packages_lst) > 0:
-            self.set_title("Showing %s installed packages" % len(packages_lst))
-            fn.logger.debug("List of installed packages obtained")
+        if len(installed_packages_lst) > 0:
+            self.set_title(
+                "Showing %s installed packages" % len(installed_packages_lst)
+            )
 
             search_entry = Gtk.SearchEntry()
             search_entry.set_placeholder_text("Search...")
@@ -44,8 +54,8 @@ class PackageListDialog(Gtk.Dialog):
             headerbar.set_property("can-focus", True)
             Gtk.Window.grab_focus(headerbar)
 
-            treestore_packages = Gtk.TreeStore(str, str, str, str)
-            for item in packages_lst:
+            treestore_packages = Gtk.TreeStore(str, str, str, str, str)
+            for item in installed_packages_lst:
                 treestore_packages.append(None, list(item))
 
             treeview_packages = Gtk.TreeView()
@@ -54,7 +64,13 @@ class PackageListDialog(Gtk.Dialog):
             treeview_packages.set_model(treestore_packages)
 
             for i, col_title in enumerate(
-                ["Name", "Version", "Installed Date", "Installed Size"]
+                [
+                    "Name",
+                    "Installed Version",
+                    "Latest Version",
+                    "Installed Size",
+                    "Installed Date",
+                ]
             ):
                 renderer = Gtk.CellRendererText()
                 col = Gtk.TreeViewColumn(col_title, renderer, text=i)
@@ -83,7 +99,7 @@ class PackageListDialog(Gtk.Dialog):
 
             btn_dialog_export = Gtk.Button(label="Export")
             btn_dialog_export.connect(
-                "clicked", self.on_dialog_export_clicked, packages_lst
+                "clicked", self.on_dialog_export_clicked, installed_packages_lst
             )
             btn_dialog_export.set_size_request(100, 30)
             btn_dialog_export.set_halign(Gtk.Align.END)
@@ -114,24 +130,27 @@ class PackageListDialog(Gtk.Dialog):
             vbox_btn = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
             vbox_btn.pack_start(grid_btn, True, True, 1)
 
+            lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
+            lbl_padding3.set_text("")
+
             self.vbox.add(search_entry)
+            self.vbox.add(lbl_padding3)
             self.vbox.add(grid_packageslst)
+            self.vbox.add(lbl_info)
             self.vbox.add(vbox_btn)
 
     def on_close(self, dialog, event):
         self.hide()
         self.destroy()
 
-    def on_dialog_export_clicked(self, dialog, packages_lst):
+    def on_dialog_export_clicked(self, dialog, installed_packages_lst):
         try:
-            filename = "%s/sofirem-export.txt" % fn.home
-
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(
                     "# Created by Sofirem on %s\n"
                     % fn.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 )
-                for package in packages_lst:
+                for package in installed_packages_lst:
                     f.write("%s\n" % (package[0]))
 
             if os.path.exists(filename):
@@ -140,19 +159,32 @@ class PackageListDialog(Gtk.Dialog):
                 # fix permissions, file is owned by root
                 fn.permissions(filename)
 
-                fn.messageBox(
-                    self,
+                message_dialog = MessageDialog(
                     "Package export complete",
                     "Package list exported to %s" % filename,
+                    "",
+                    "info",
+                    False,
                 )
+
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
             else:
                 fn.logger.error("Export failed")
-                fn.messageBox(
-                    self,
+
+                message_dialog = MessageDialog(
                     "Package export failed",
                     "Failed to export package list to %s." % filename,
+                    "",
+                    "error",
+                    False,
                 )
+
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
         except Exception as e:
             fn.logger.error("Exception in on_dialog_export_clicked(): %s" % e)

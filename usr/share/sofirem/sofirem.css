@@ -22,7 +22,7 @@ label#title {
     font-weight: 600;
 }
 
-label#lbl_pkg_version {
+label#lbl_package_version {
 	color: white;
 	background-color: #3584e4;
 	border: 3px solid #3584e4;
@@ -44,6 +44,6 @@ infobar#infobar_error {
 }
 
 infobar#infobar_warning{
-  background-color:yellow;
-  color:white;
+  background-color:#ffcc00;
+  color:black;
 }

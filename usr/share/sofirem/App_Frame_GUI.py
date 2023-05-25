@@ -6,7 +6,7 @@ from urllib.parse import scheme_chars
 import Functions as fn
 
 
-def GUI(self, Gtk, vboxStack1, category, packages_lst):
+def GUI(self, Gtk, vbox_stack, category, packages_lst):
     try:
         # Lets set some variables that we know we will need later
         # hboxes and items to make the page look sensible
@@ -36,14 +36,14 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
 
         # create scroller for when/if these items go "off the page"
-        scrolledSwitch = Gtk.ScrolledWindow()
-        scrolledSwitch.add(stack_switcher)
+        scrolled_switch = Gtk.ScrolledWindow()
+        scrolled_switch.add(stack_switcher)
 
         # These lists will ensure that we can keep track of the individual windows and their names
         # stack of vboxes
-        vboxStacks = []
+        vbox_stacks = []
         # name of each vbox - derived from the sub category name
-        vboxStackNames = []
+        vbox_stacknames = []
         sep_text = "     "
         subcats = {}
         # index for the grid
@@ -60,7 +60,6 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
         """
 
         sub_catlabels = []
-        page_descs = []
 
         # store unique subcategory names into a dictionary
 
@@ -71,40 +70,44 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
         # each Stack has an associated subcategory
 
         for subcat in subcats.keys():
-            vboxStacks.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0))
+            vbox_stacks.append(Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0))
             # for the sub-cat page title
             sub_catlabels.append(Gtk.Label(xalign=0))
 
-            vboxStackNames.append(subcat)
+            vbox_stacknames.append(subcat)
             # iterate across a list of packages
 
             for package in packages_lst:
                 if package.subcategory == subcat:
-                    page = vboxStacks.pop()
+                    page = vbox_stacks.pop()
 
                     if len(sub_catlabels) > 0:
-                        lblTitle = sub_catlabels.pop()
-                        lblDesc = Gtk.Label(xalign=0)
-                        lblDesc.set_markup(
-                            "Description: <i>"
+                        lbl_title = sub_catlabels.pop()
+                        lbl_desc = Gtk.Label(xalign=0)
+                        lbl_desc.set_markup(
+                            "Description: <i><b>"
                             + package.subcategory_description
-                            + "</i>"
+                            + "</b></i>"
                         )
-                        lblTitle.set_markup("<b>" + package.subcategory + "</b>")
+                        lbl_title.set_markup("<b>" + package.subcategory + "</b>")
 
-                        page.pack_start(lblTitle, False, False, 0)
-                        page.pack_start(lblDesc, False, False, 0)
+                        lbl_padding_page1 = Gtk.Label(xalign=0)
+                        lbl_padding_page1.set_text("")
+
+                        page.pack_start(lbl_title, False, False, 0)
+                        page.pack_start(lbl_desc, False, False, 0)
+                        page.pack_start(lbl_padding_page1, False, False, 0)
 
                     grid = Gtk.Grid()
 
                     grid.insert_row(index)
 
-                    lblSep1 = Gtk.Label(xalign=0, yalign=0)
-                    lblSep1.set_text(sep_text)
-                    grid.attach(lblSep1, 0, index, 1, 1)
-                    lblPkg = Gtk.Label(xalign=0, yalign=0)  # was in for loop
+                    lbl_sep1 = Gtk.Label(xalign=0, yalign=0)
+                    lbl_sep1.set_text(sep_text)
+                    grid.attach(lbl_sep1, 0, index, 1, 1)
+                    lbl_package = Gtk.Label(xalign=0, yalign=0)  # was in for loop
 
-                    lblPkg.set_markup("<b>%s</b>" % package.name)
+                    lbl_package.set_markup("<b>%s</b>" % package.name)
 
                     ###### switch widget starts ######
 
@@ -132,80 +135,88 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
 
                     # attach_next_to(child, sibling, side, width, height)
 
-                    grid.attach_next_to(switch, lblSep1, Gtk.PositionType.LEFT, 1, 1)
+                    grid.attach_next_to(switch, lbl_sep1, Gtk.PositionType.LEFT, 1, 1)
 
                     # add space seperator next to switch
 
-                    lblSepSwitch = Gtk.Label(xalign=0, yalign=0)
-                    lblSepSwitch.set_text(sep_text)
+                    lbl_sep_switch = Gtk.Label(xalign=0, yalign=0)
+                    lbl_sep_switch.set_text(sep_text)
 
                     grid.attach_next_to(
-                        lblSepSwitch, switch, Gtk.PositionType.LEFT, 1, 1
+                        lbl_sep_switch, switch, Gtk.PositionType.LEFT, 1, 1
                     )
 
                     ###### switch widget ends ######
 
                     ###### pkg name label widget starts ######
 
-                    lblSepPkg1 = Gtk.Label(xalign=0, yalign=0)
-                    lblSepPkg1.set_text(sep_text)
+                    lbl_sep_package1 = Gtk.Label(xalign=0, yalign=0)
+                    lbl_sep_package1.set_text(sep_text)
 
                     # add space seperator next to switch for extra padding
 
                     grid.attach_next_to(
-                        lblSepPkg1, switch, Gtk.PositionType.RIGHT, 1, 1
+                        lbl_sep_package1, switch, Gtk.PositionType.RIGHT, 1, 1
                     )
 
-                    lblSepPkg2 = Gtk.Label(xalign=0, yalign=0)
-                    lblSepPkg2.set_text(sep_text)
+                    lbl_sep_package2 = Gtk.Label(xalign=0, yalign=0)
+                    lbl_sep_package2.set_text(sep_text)
 
                     # add pkg name label widget to grid
 
                     grid.attach_next_to(
-                        lblPkg, lblSepPkg1, Gtk.PositionType.RIGHT, 1, 1
+                        lbl_package, lbl_sep_package1, Gtk.PositionType.RIGHT, 1, 1
                     )
 
                     ###### pkg name label widget ends
 
                     ###### pkg desc label widget starts ######
 
-                    lblSepPkgDesc = Gtk.Label(xalign=0, yalign=0)
-                    lblSepPkgDesc.set_text(sep_text)
+                    lbl_sep_package_desc = Gtk.Label(xalign=0, yalign=0)
+                    lbl_sep_package_desc.set_text(sep_text)
 
                     # add space seperator next to pkg name for extra padding
 
                     grid.attach_next_to(
-                        lblSepPkgDesc, lblPkg, Gtk.PositionType.RIGHT, 1, 1
+                        lbl_sep_package_desc, lbl_package, Gtk.PositionType.RIGHT, 1, 1
                     )
 
-                    lblPkgDesc = Gtk.Label(xalign=0, yalign=0)
-                    lblPkgDesc.set_text(package.description)
+                    lbl_package_desc = Gtk.Label(xalign=0, yalign=0)
+                    lbl_package_desc.set_text(package.description)
 
                     # add pkg desc label widget to grid
 
                     grid.attach_next_to(
-                        lblPkgDesc, lblSepPkgDesc, Gtk.PositionType.RIGHT, 1, 1
+                        lbl_package_desc,
+                        lbl_sep_package_desc,
+                        Gtk.PositionType.RIGHT,
+                        1,
+                        1,
                     )
 
                     ###### pkg desc label widget ends
 
-                    ##### add pkg version label widet starts #####
+                    ##### add pkg version label widget starts #####
 
                     if self.display_versions is True:
-                        lbl_pkg_version = Gtk.Label(xalign=0, yalign=0)
-                        lbl_pkg_version.set_text(package.version)
-                        lbl_pkg_version.set_name("lbl_pkg_version")
+                        lbl_package_version = Gtk.Label(xalign=0, yalign=0)
+                        lbl_package_version.set_text(package.version)
+                        lbl_package_version.set_name("lbl_package_version")
 
-                        lblSepPkgVersion = Gtk.Label(xalign=0, yalign=0)
-                        lblSepPkgVersion.set_text(sep_text)
+                        lbl_sep_package_version = Gtk.Label(xalign=0, yalign=0)
+                        lbl_sep_package_version.set_text(sep_text)
 
                         grid.attach_next_to(
-                            lblSepPkgVersion, lblPkgDesc, Gtk.PositionType.RIGHT, 1, 1
+                            lbl_sep_package_version,
+                            lbl_package_desc,
+                            Gtk.PositionType.RIGHT,
+                            1,
+                            1,
                         )
 
                         grid.attach_next_to(
-                            lbl_pkg_version,
-                            lblSepPkgVersion,
+                            lbl_package_version,
+                            lbl_sep_package_version,
                             Gtk.PositionType.RIGHT,
                             1,
                             1,
@@ -229,7 +240,7 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
                         Comment out the references to grid_sc
                         Then just have page.pack_start(grid,True, True, 0)
                     """
-                    vboxStacks.append(page)
+                    vbox_stacks.append(page)
 
                     # reset the things that we need to.
                     # packages.clear()
@@ -240,26 +251,26 @@ def GUI(self, Gtk, vboxStack1, category, packages_lst):
         # Now we pack the stack
         item_num = 0
 
-        for item in vboxStacks:
+        for item in vbox_stacks:
             stack.add_titled(
                 item,
                 "stack" + str(item_num),
-                vboxStackNames[item_num],
+                vbox_stacknames[item_num],
             )
             item_num += 1
 
         # Place the stack switcher and the stack together into a vbox
-        vbox.pack_start(scrolledSwitch, False, False, 0)
+        vbox.pack_start(scrolled_switch, False, False, 0)
 
-        scrolledWindow = Gtk.ScrolledWindow()
-        scrolledWindow.set_propagate_natural_height(True)
-        scrolledWindow.add(stack)
-        vbox.pack_start(scrolledWindow, True, True, 0)
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_propagate_natural_height(True)
+        scrolled_window.add(stack)
+        vbox.pack_start(scrolled_window, True, True, 0)
 
         # Stuff the vbox with the title and seperator to create the page
-        vboxStack1.pack_start(cat_name, False, False, 0)
-        vboxStack1.pack_start(seperator, False, False, 0)
-        vboxStack1.pack_start(vbox, False, False, 0)
+        vbox_stack.pack_start(cat_name, False, False, 0)
+        vbox_stack.pack_start(seperator, False, False, 0)
+        vbox_stack.pack_start(vbox, False, False, 0)
 
     except Exception as e:
         fn.logger.error("Exception in App_Frame_GUI.GUI(): %s" % e)
@@ -494,6 +505,5 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
 
     except Exception as e:
         print("Exception in App_Frame_GUI.GUI(): %s" % e)
-
-########## PREVIOUS GUI CODE END ##########
 """
+########## PREVIOUS GUI CODE END ##########

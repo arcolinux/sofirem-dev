@@ -33,7 +33,7 @@ class AboutDialog(Gtk.Dialog):
         app_image = Gtk.Image().new_from_pixbuf(pixbuf)
 
         self.set_resizable(False)
-        self.set_size_request(560, 400)
+        self.set_size_request(560, 350)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
         headerbar = Gtk.HeaderBar()
@@ -70,9 +70,15 @@ class AboutDialog(Gtk.Dialog):
             "                                %s" % app_secondary_description
         )
 
+        lbl_version = Gtk.Label(xalign=0, yalign=0)
+        lbl_version.set_markup(
+            "                                <b>Version:</b> %s" % app_version
+        )
+
         ivbox_about = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         ivbox_about.pack_start(app_image, True, True, 0)
         ivbox_about.pack_start(lbl_main_description, True, True, 0)
+        ivbox_about.pack_start(lbl_version, True, True, 0)
         ivbox_about.pack_start(lbl_secondary_message, True, True, 0)
         ivbox_about.pack_start(lbl_secondary_description, True, True, 0)
 
@@ -122,15 +128,24 @@ class AboutDialog(Gtk.Dialog):
         stack.add_titled(grid_support, "Support", "Support")
 
         box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        box_outer.set_border_width(10)
 
-        listbox = Gtk.ListBox()
-        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
-        box_outer.pack_start(listbox, True, True, 0)
+        lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding2.set_text(" ")
+
+        lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
+        lbl_padding3.set_text(" ")
 
         lbl_authors_title = Gtk.Label(xalign=0, yalign=0)
         lbl_authors_title.set_text(
-            "The following people have contributed to developing %s" % app_name
+            "The following people have contributed to the development of %s" % app_name
         )
+
+        listbox = Gtk.ListBox()
+        listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+
+        box_outer.pack_start(lbl_authors_title, True, True, 0)
+        box_outer.pack_start(listbox, True, True, 0)
 
         treestore_authors = Gtk.TreeStore(str, str)
         for item in app_authors:
@@ -155,12 +170,7 @@ class AboutDialog(Gtk.Dialog):
         row_authors = Gtk.ListBoxRow()
         vbox_authors = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         row_authors.add(vbox_authors)
-        lbl_credits = Gtk.Label(xalign=0)
-        lbl_credits.set_markup(
-            "<b>The following people have helped develop %s</b>" % app_name
-        )
 
-        vbox_authors.pack_start(lbl_credits, True, True, 0)
         vbox_authors.pack_start(treeview_authors, True, True, 0)
 
         listbox.add(row_authors)

@@ -1,7 +1,9 @@
-# This class is used to create a dialog window showing progress of a package install/uninstall and general information
+# This class is used to create a modal dialog window showing progress of a package install/uninstall and general package information
+
 import os
 import gi
 import Functions as fn
+from MessageDialog import MessageDialog
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
@@ -14,9 +16,11 @@ class ProgressDialog(Gtk.Dialog):
         Gtk.Dialog.__init__(self)
 
         self.package_found = True
-        # this gets package information using pacman -Sii or pacman -Qii depending on if this is an install / uninstall
-        package_metadata = fn.get_package_information(self, pkg.name)
+        # this gets package information using pacman -Si or pacman -Qi whichever returns output
+        package_metadata = fn.get_package_information(pkg.name)
 
+        # if a mirrorlist isn't configured properly, pacman will not be able to query its repository
+        # so the following is a condition to make sure the data returned isn't an error
         if (
             type(package_metadata) is str
             and package_metadata.strip()
@@ -29,11 +33,18 @@ class ProgressDialog(Gtk.Dialog):
             )
             fn.logger.warning("Package %s cannot continue" % action)
 
-            fn.messageBox(
-                self,
+            message_dialog = MessageDialog(
                 "Pacman repository error: package '%s' was not found" % pkg.name,
-                "<b>Sofirem cannot process the request</b>",
+                "Sofirem cannot process the request",
+                "Are the correct pacman mirrorlists configured ?",
+                "error",
+                False,
             )
+
+            message_dialog.run()
+            message_dialog.hide()
+            message_dialog.destroy()
+
         elif type(package_metadata) is dict:
             # package_progress_dialog = Gtk.Dialog(self)
 
@@ -60,7 +71,7 @@ class ProgressDialog(Gtk.Dialog):
             self.btn_package_progress_close.set_halign(Gtk.Align.END)
 
             self.set_resizable(False)
-            self.set_size_request(750, 700)
+            self.set_size_request(850, 700)
             self.set_modal(True)
             self.set_border_width(10)
             self.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
@@ -106,6 +117,10 @@ class ProgressDialog(Gtk.Dialog):
             lbl_padding1 = Gtk.Label(xalign=0, yalign=0)
             lbl_padding1.set_text("")
 
+            lbl_padding2 = Gtk.Label(xalign=0, yalign=0)
+            lbl_padding2.set_text("")
+            lbl_padding2.set_halign(Gtk.Align.END)
+
             package_progress_grid.attach(lbl_padding1, 0, 3, 1, 1)
 
             package_progress_scrolled_window = Gtk.ScrolledWindow()
@@ -118,16 +133,20 @@ class ProgressDialog(Gtk.Dialog):
             buffer = self.package_progress_textview.get_buffer()
             self.package_progress_textview.set_buffer(buffer)
 
+            package_progress_scrolled_window.set_size_request(700, 430)
+
             package_progress_scrolled_window.add(self.package_progress_textview)
             package_progress_grid.attach(package_progress_scrolled_window, 0, 4, 1, 1)
 
-            vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
-            vbox_close.pack_start(self.btn_package_progress_close, True, True, 1)
+            vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+
+            vbox_close.pack_start(lbl_padding2, True, True, 0)
+            vbox_close.pack_start(self.btn_package_progress_close, True, True, 0)
 
             stack.add_titled(package_progress_grid, "Progress", "Package Progress")
 
             # package information
-            box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+            box_outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
 
             listbox = Gtk.ListBox()
             listbox.set_selection_mode(Gtk.SelectionMode.NONE)
@@ -299,13 +318,17 @@ class ProgressDialog(Gtk.Dialog):
 
             # depends on
 
+            expander_depends_on = Gtk.Expander()
+            expander_depends_on.set_use_markup(True)
+            expander_depends_on.set_resize_toplevel(True)
+            expander_depends_on.set_label("<b>Depends on</b>")
+
             row_package_depends_on = Gtk.ListBoxRow()
+            expander_depends_on.add(row_package_depends_on)
             vbox_package_depends_on = Gtk.Box(
                 orientation=Gtk.Orientation.VERTICAL, spacing=0
             )
             row_package_depends_on.add(vbox_package_depends_on)
-            lbl_package_depends_on_title = Gtk.Label(xalign=0)
-            lbl_package_depends_on_title.set_markup("<b>Depends on</b>")
 
             if len(package_metadata["depends_on"]) > 0:
                 treestore_depends = Gtk.TreeStore(str, str)
@@ -320,10 +343,6 @@ class ProgressDialog(Gtk.Dialog):
 
                 treeview_depends.append_column(column)
 
-                vbox_package_depends_on.pack_start(
-                    lbl_package_depends_on_title, True, True, 0
-                )
-
                 vbox_package_depends_on.pack_start(treeview_depends, True, True, 0)
 
             else:
@@ -331,24 +350,24 @@ class ProgressDialog(Gtk.Dialog):
                 lbl_package_depends_value.set_text("None")
 
                 vbox_package_depends_on.pack_start(
-                    lbl_package_depends_on_title, True, True, 0
-                )
-
-                vbox_package_depends_on.pack_start(
                     lbl_package_depends_value, True, True, 0
                 )
 
-            listbox.add(row_package_depends_on)
+            listbox.add(expander_depends_on)
 
             # conflicts with
 
+            expander_conflicts_with = Gtk.Expander()
+            expander_conflicts_with.set_use_markup(True)
+            expander_conflicts_with.set_resize_toplevel(True)
+            expander_conflicts_with.set_label("<b>Conflicts with</b>")
+
             row_package_conflicts_with = Gtk.ListBoxRow()
+            expander_conflicts_with.add(row_package_conflicts_with)
             vbox_package_conflicts_with = Gtk.Box(
                 orientation=Gtk.Orientation.VERTICAL, spacing=0
             )
             row_package_conflicts_with.add(vbox_package_conflicts_with)
-            lbl_package_conflicts_with_title = Gtk.Label(xalign=0)
-            lbl_package_conflicts_with_title.set_markup("<b>Conflicts with</b>")
 
             if len(package_metadata["conflicts_with"]) > 0:
                 treestore_conflicts = Gtk.TreeStore(str, str)
@@ -364,10 +383,6 @@ class ProgressDialog(Gtk.Dialog):
                 treeview_conflicts.append_column(column)
 
                 vbox_package_conflicts_with.pack_start(
-                    lbl_package_conflicts_with_title, True, True, 0
-                )
-
-                vbox_package_conflicts_with.pack_start(
                     treeview_conflicts, True, True, 0
                 )
 
@@ -376,14 +391,10 @@ class ProgressDialog(Gtk.Dialog):
                 lbl_package_conflicts_with_value.set_text("None")
 
                 vbox_package_conflicts_with.pack_start(
-                    lbl_package_conflicts_with_title, True, True, 0
-                )
-
-                vbox_package_conflicts_with.pack_start(
                     lbl_package_conflicts_with_value, True, True, 0
                 )
 
-            listbox.add(row_package_conflicts_with)
+            listbox.add(expander_conflicts_with)
 
             package_metadata_scrolled_window = Gtk.ScrolledWindow()
 
