@@ -13,10 +13,9 @@ from queue import Queue
 import App_Frame_GUI
 from AboutDialog import AboutDialog
 from MessageDialog import MessageDialog
-from PacmanLogDialog import PacmanLogDialog
+from PacmanLogWindow import PacmanLogWindow
 from PackageListDialog import PackageListDialog
 from ProgressDialog import ProgressDialog
-from Package import Package
 from time import sleep
 from datetime import datetime
 import sys
@@ -130,8 +129,8 @@ class Main(Gtk.Window):
                         fn.shutil.copytree(
                             fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
                         )
-                except Exception as error:
-                    print(error)
+                except Exception as e:
+                    fn.logger.error("GTK config error: %s" % e)
 
             if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
                 try:
@@ -142,8 +141,8 @@ class Main(Gtk.Window):
                                 fn.home + "/.config/xsettingsd/",
                                 "/root/.config/xsettingsd/",
                             )
-                except Exception as error:
-                    print(error)
+                except Exception as e:
+                    fn.logger.error("xsettingsd config error: %s" % e)
 
             # test there is no pacman lock file on the system
             if fn.check_pacman_lockfile():
@@ -164,6 +163,7 @@ class Main(Gtk.Window):
             fn.logger.info("Storing package metadata started")
 
             self.packages = fn.store_packages()
+            fn.logger.info("Storing package metadata completed")
 
             fn.logger.info("Categories = %s" % len(self.packages.keys()))
 
@@ -173,8 +173,6 @@ class Main(Gtk.Window):
                 total_packages += len(self.packages[category])
 
             fn.logger.info("Total packages = %s" % total_packages)
-
-            fn.logger.info("Storing package metadata completed")
 
             splScr = Splash.splashScreen()
 
@@ -197,7 +195,7 @@ class Main(Gtk.Window):
             sync_err = fn.sync_package_db()
 
             if sync_err is not None:
-                fn.logger.error("[ERROR] Synchronising failed")
+                fn.logger.error("Synchronising pacman db failed")
 
                 print(
                     "---------------------------------------------------------------------------"
@@ -214,7 +212,6 @@ class Main(Gtk.Window):
                 message_dialog.run()
                 message_dialog.hide()
                 message_dialog.destroy()
-                sys.exit(1)
 
             else:
                 fn.logger.info("Pacman databases synchronising complete")
@@ -253,7 +250,7 @@ class Main(Gtk.Window):
         # if the string is completely whitespace ignore searching
         if not search_term.isspace():
             try:
-                if len(search_term) > 0:
+                if len(search_term.rstrip().lstrip()) > 0:
                     # test if the string entered by the user is in the package name
                     # results is a dictionary, which holds a list of packages
                     # results[category]=pkg_list
@@ -265,7 +262,7 @@ class Main(Gtk.Window):
                         target=fn.search,
                         args=(
                             self,
-                            search_term.rstrip(),
+                            search_term.rstrip().lstrip(),
                         ),
                     )
                     fn.logger.info("Starting search")
@@ -705,14 +702,14 @@ class Main(Gtk.Window):
         sync_err = fn.sync_package_db()
 
         if sync_err is not None:
-            fn.logger.error("[ERROR] Synchronising failed")
+            fn.logger.error("Pacman db synchronisation failed")
 
             print(
                 "---------------------------------------------------------------------------"
             )
 
             message_dialog = MessageDialog(
-                "Pacman synchronisation failed",
+                "Pacman db synchronisation failed",
                 "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
                 sync_err,
                 "error",
@@ -777,13 +774,13 @@ class Main(Gtk.Window):
                 # use the reference to the text buffer initialized before the logtimer thread started
                 self.textview_pacmanlog.set_buffer(self.textbuffer_pacmanlog)
 
-                dialog_pacmanlog = PacmanLogDialog(
+                window_pacmanlog = PacmanLogWindow(
                     self.textview_pacmanlog,
                     self.btn_pacmanlog,
                 )
-                dialog_pacmanlog.show_all()
+                window_pacmanlog.show_all()
 
-                self.start_logtimer = dialog_pacmanlog.start_logtimer
+                self.start_logtimer = window_pacmanlog.start_logtimer
 
             else:
                 # keep a handle on the textbuffer, this is needed again later, if the pacman log file dialog is closed
@@ -801,11 +798,11 @@ class Main(Gtk.Window):
 
                 self.textview_pacmanlog.set_buffer(self.textbuffer_pacmanlog)
 
-                dialog_pacmanlog = PacmanLogDialog(
+                window_pacmanlog = PacmanLogWindow(
                     self.textview_pacmanlog,
                     self.btn_pacmanlog,
                 )
-                dialog_pacmanlog.show_all()
+                window_pacmanlog.show_all()
 
             thread_logtimer = "thread_startLogTimer"
             thread_logtimer_alive = False
@@ -819,7 +816,7 @@ class Main(Gtk.Window):
                 th_logtimer = fn.threading.Thread(
                     name=thread_logtimer,
                     target=fn.start_log_timer,
-                    args=(self, dialog_pacmanlog),
+                    args=(self, window_pacmanlog),
                     daemon=True,
                 )
                 th_logtimer.start()

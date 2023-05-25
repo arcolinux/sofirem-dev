@@ -1,4 +1,4 @@
-# This class is used to create a dialog window showing detailed information about an event
+# This class is used to create a modal dialog window showing detailed information about an event
 
 import os
 import gi
@@ -19,8 +19,6 @@ class MessageDialog(Gtk.Dialog):
         headerbar = Gtk.HeaderBar()
         headerbar.set_title(title)
         headerbar.set_show_close_button(True)
-
-        # 800,600 for textview
 
         self.set_resizable(False)
         self.set_modal(True)

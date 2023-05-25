@@ -33,7 +33,7 @@ class AboutDialog(Gtk.Dialog):
         app_image = Gtk.Image().new_from_pixbuf(pixbuf)
 
         self.set_resizable(False)
-        self.set_size_request(560, 400)
+        self.set_size_request(560, 350)
         self.set_icon_from_file(os.path.join(base_dir, "images/sofirem.png"))
 
         headerbar = Gtk.HeaderBar()
@@ -138,7 +138,7 @@ class AboutDialog(Gtk.Dialog):
 
         lbl_authors_title = Gtk.Label(xalign=0, yalign=0)
         lbl_authors_title.set_text(
-            "The following people have contributed to developing %s" % app_name
+            "The following people have contributed to the development of %s" % app_name
         )
 
         listbox = Gtk.ListBox()

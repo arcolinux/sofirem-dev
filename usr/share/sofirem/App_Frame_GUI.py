@@ -60,7 +60,6 @@ def GUI(self, Gtk, vbox_stack, category, packages_lst):
         """
 
         sub_catlabels = []
-        page_descs = []
 
         # store unique subcategory names into a dictionary
 
@@ -86,14 +85,18 @@ def GUI(self, Gtk, vbox_stack, category, packages_lst):
                         lbl_title = sub_catlabels.pop()
                         lbl_desc = Gtk.Label(xalign=0)
                         lbl_desc.set_markup(
-                            "Description: <i>"
+                            "Description: <i><b>"
                             + package.subcategory_description
-                            + "</i>"
+                            + "</b></i>"
                         )
                         lbl_title.set_markup("<b>" + package.subcategory + "</b>")
 
+                        lbl_padding_page1 = Gtk.Label(xalign=0)
+                        lbl_padding_page1.set_text("")
+
                         page.pack_start(lbl_title, False, False, 0)
                         page.pack_start(lbl_desc, False, False, 0)
+                        page.pack_start(lbl_padding_page1, False, False, 0)
 
                     grid = Gtk.Grid()
 
@@ -502,6 +505,5 @@ def GUI(self, Gtk, vboxStack1, category, package_file):
 
     except Exception as e:
         print("Exception in App_Frame_GUI.GUI(): %s" % e)
-
-########## PREVIOUS GUI CODE END ##########
 """
+########## PREVIOUS GUI CODE END ##########

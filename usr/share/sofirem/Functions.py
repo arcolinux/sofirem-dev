@@ -39,7 +39,6 @@ debug = False
 distr = id()
 sofirem_lockfile = "/tmp/sofirem.lock"
 sofirem_pidfile = "/tmp/sofirem.pid"
-# this timeout is for the pacman sync, pacman lock file, install/uninstall processes
 # 10m timeout
 process_timeout = 600
 
@@ -252,7 +251,6 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
                 priority=GLib.PRIORITY_DEFAULT,
             )
 
-            # process.wait(process_timeout)
             logger.debug("Pacman is now processing the request")
 
             # poll for the process to complete
@@ -590,7 +588,7 @@ def store_packages():
     category_dict = {}
 
     try:
-        # get package version info
+        # get latest package version info
 
         package_metadata = get_all_package_info()
 
@@ -755,6 +753,9 @@ def get_all_package_info():
 
 
 def get_installed_package_data():
+    # to capture the latest package version
+    latest_package_data = get_all_package_info()
+
     query_str = ["pacman", "-Qi"]
 
     try:
@@ -763,6 +764,7 @@ def get_installed_package_data():
         pkg_version = None
         pkg_install_date = None
         pkg_installed_size = None
+        pkg_latest_version = None
 
         with subprocess.Popen(
             query_str,
@@ -784,8 +786,24 @@ def get_installed_package_data():
                 if "Install Date    :" in line.strip():
                     pkg_install_date = line.split("Install Date    :")[1].strip()
 
+                    # get the latest version lookup dictionary
+
+                    found = False
+                    pkg_latest_version = None
+
+                    for i in latest_package_data:
+                        if i["name"] == pkg_name:
+                            pkg_latest_version = i["version"]
+                            break
+
                     installed_packages_lst.append(
-                        (pkg_name, pkg_version, pkg_install_date, pkg_installed_size)
+                        (
+                            pkg_name,
+                            pkg_version,
+                            pkg_latest_version,
+                            pkg_installed_size,
+                            pkg_install_date,
+                        )
                     )
 
         return installed_packages_lst
@@ -1208,9 +1226,9 @@ def add_pacmanlog_queue(self):
 
 
 # update the textview called from a non-blocking thread
-def start_log_timer(self, dialog_pacmanlog):
+def start_log_timer(self, window_pacmanlog):
     while True:
-        if dialog_pacmanlog.start_logtimer is False:
+        if window_pacmanlog.start_logtimer is False:
             logger.debug("Stopping Pacman log monitoring timer")
             return False
 
@@ -1223,13 +1241,12 @@ def update_textview_pacmanlog(self):
     lines = self.pacmanlog_queue.get()
 
     try:
+        buffer = self.textbuffer_pacmanlog
         if len(lines) > 0:
-            end_iter = self.textbuffer_pacmanlog.get_end_iter()
+            end_iter = buffer.get_end_iter()
 
             for line in lines:
-                self.textbuffer_pacmanlog.insert(
-                    end_iter, "  %s" % line, len("  %s" % line)
-                )
+                buffer.insert(end_iter, "  %s" % line, len("  %s" % line))
 
     except Exception as e:
         logger.error("Exception in update_textview_pacmanlog() : %s" % e)
@@ -1237,29 +1254,12 @@ def update_textview_pacmanlog(self):
         self.pacmanlog_queue.task_done()
 
         if len(lines) > 0:
-            text_mark_end = self.textbuffer_pacmanlog.create_mark(
-                "end", self.textbuffer_pacmanlog.get_end_iter(), False
-            )
+            text_mark_end = buffer.create_mark("end", buffer.get_end_iter(), False)
             # auto-scroll the textview to the bottom as new content is added
 
             self.textview_pacmanlog.scroll_mark_onscreen(text_mark_end)
 
         lines.clear()
-
-
-# this gets info on the pacman process currently running
-def get_pacman_process():
-    try:
-        for proc in psutil.process_iter():
-            try:
-                pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
-                if pinfo["name"] == "pacman":
-                    return " ".join(proc.cmdline())
-
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-    except Exception as e:
-        logger.error("Exception in get_pacman_process() : %s" % e)
 
 
 # =====================================================
@@ -1673,6 +1673,9 @@ def reveal_infobar(self, progress_dialog):
     The pacman process spawned by the install/uninstall threads, needs to be terminated too.
     Otherwise the app may hang waiting for pacman to complete its transaction.
 """
+# =====================================================
+#              PACMAN
+# =====================================================
 
 
 def terminate_pacman():
@@ -1717,6 +1720,21 @@ def check_pacman_lockfile():
             return False
     except Exception as e:
         logger.error("Exception in check_pacman_lockfile() : %s" % e)
+
+
+# this gets info on the pacman process currently running
+def get_pacman_process():
+    try:
+        for proc in psutil.process_iter():
+            try:
+                pinfo = proc.as_dict(attrs=["pid", "name", "create_time"])
+                if pinfo["name"] == "pacman":
+                    return " ".join(proc.cmdline())
+
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+    except Exception as e:
+        logger.error("Exception in get_pacman_process() : %s" % e)
 
 
 # ANYTHING UNDER THIS LINE IS CURRENTLY UNUSED!
