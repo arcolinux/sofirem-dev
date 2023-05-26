@@ -277,7 +277,7 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
                     time.sleep(0.3)
                 else:
                     # increase wait time to reduce cpu load, no textview updates required since dialog is closed
-
+                    # since the progress dialog window is closed, capture errors and then later display it
                     for line in process.stdout:
                         process_stdout_lst.append(line)
                     time.sleep(1)
@@ -1447,7 +1447,7 @@ def setup_arcolinux_config(self, action, config):
                     output.append(line)
 
                 if process.returncode == 0:
-                    return True
+                    return 0
 
                 else:
                     if len(output) == 0:
@@ -1486,25 +1486,31 @@ def add_repos():
 
                 # check for existing ArcoLinux entries
                 if len(lines) > 0:
+                    index = None
+                    # add arco repo testing line just below the default arch #[testing] or #[core-testing] entries
                     if "#[arcolinux_repo_testing]\n" not in lines:
-                        if lines.index("#[testing]\n") > 0:
+                        # check for old pacman conf #[testing]
+                        if "#[testing]\n" in lines:
                             index = lines.index("#[testing]\n")
+                        # check for new pacman conf #[core-testing]
+                        elif "#[core-testing]\n" in lines:
+                            index = lines.index("#[core-testing]\n")
+
+                        if index is not None:
+                            lines.insert(index + 1, "\n")
                             for x in arco_test_repo:
                                 lines.insert(index + 1, "%s\n" % x)
-
-                            lines.append("\n")
+                        else:
+                            for x in arco_test_repo:
+                                lines.append("%s\n" % x)
 
                     if "[arcolinux_repo]\n" not in lines:
                         for x in arco_repo:
                             lines.append("%s\n" % x)
 
-                        lines.append("\n")
-
                     if "[arcolinux_repo_3party]\n" not in lines:
                         for x in arco_3rd_party_repo:
                             lines.append("%s\n" % x)
-
-                        lines.append("\n")
 
                     if "[arcolinux_repo_xlarge]\n" not in lines:
                         for x in arco_xlrepo:
@@ -1518,6 +1524,8 @@ def add_repos():
 
                             w.flush()
 
+                        return 0
+
                     else:
                         logger.error("Failed to process %s" % pacman_conf)
 
@@ -1526,6 +1534,7 @@ def add_repos():
 
         except Exception as e:
             logger.error("Exception in add_repos(): %s" % e)
+            return e
 
 
 def remove_repos():
@@ -1566,8 +1575,8 @@ def remove_repos():
                     if "%s\n" % arco_xlrepo_line in lines and len(arco_xlrepo_line) > 0:
                         lines.remove("%s\n" % arco_xlrepo_line)
 
-                for i in range(1, 4):
-                    lines[-i] = lines[-i].strip()
+                # for i in range(1, 4):
+                #     lines[-i] = lines[-i].strip()
 
                 logger.debug("[Remove Repos] Writing to %s" % pacman_conf)
 
@@ -1577,6 +1586,8 @@ def remove_repos():
 
                         w.flush()
 
+                    return 0
+
                 else:
                     logger.error("Failed to process %s" % pacman_conf)
 
@@ -1585,6 +1596,7 @@ def remove_repos():
 
     except Exception as e:
         logger.error("Exception in remove_repos(): %s" % e)
+        return e
 
 
 # =====================================================

@@ -159,65 +159,73 @@ class Main(Gtk.Window):
                 message_dialog.destroy()
                 sys.exit(1)
 
-            # store package information into memory, and use the dictionary returned to search in for quicker retrieval
-            fn.logger.info("Storing package metadata started")
-
-            self.packages = fn.store_packages()
-            fn.logger.info("Storing package metadata completed")
-
-            fn.logger.info("Categories = %s" % len(self.packages.keys()))
-
-            total_packages = 0
-
-            for category in self.packages:
-                total_packages += len(self.packages[category])
-
-            fn.logger.info("Total packages = %s" % total_packages)
-
-            splScr = Splash.splashScreen()
-
-            while Gtk.events_pending():
-                Gtk.main_iteration()
-
-            sleep(2)
-            splScr.destroy()
-
-            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-
             if not os.path.isfile(fn.sofirem_lockfile):
                 with open(fn.sofirem_lockfile, "w") as f:
                     f.write("")
+
+                # store package information into memory, and use the dictionary returned to search in for quicker retrieval
+                fn.logger.info("Storing package metadata started")
+
+                self.packages = fn.store_packages()
+                fn.logger.info("Storing package metadata completed")
+
+                fn.logger.info("Categories = %s" % len(self.packages.keys()))
+
+                total_packages = 0
+
+                for category in self.packages:
+                    total_packages += len(self.packages[category])
+
+                fn.logger.info("Total packages = %s" % total_packages)
+
+                splScr = Splash.splashScreen()
+
+                while Gtk.events_pending():
+                    Gtk.main_iteration()
+
+                sleep(3)
+                splScr.destroy()
+
+                fn.logger.info("Setting up GUI")
+
+                GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+
+                # pacman sync db and also tests network connectivity
+
+                self.pacman_db_sync()
             else:
                 fn.logger.error("Sofirem lock file found in %s" % fn.sofirem_lockfile)
 
-            # pacman sync db and also tests network connectivity
-
-            sync_err = fn.sync_package_db()
-
-            if sync_err is not None:
-                fn.logger.error("Synchronising pacman db failed")
-
-                print(
-                    "---------------------------------------------------------------------------"
-                )
-
-                message_dialog = MessageDialog(
-                    "Pacman synchronisation failed",
-                    "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
-                    sync_err,
-                    "error",
-                    True,
-                )
-
-                message_dialog.run()
-                message_dialog.hide()
-                message_dialog.destroy()
-
-            else:
-                fn.logger.info("Pacman databases synchronising complete")
-
         except Exception as e:
             fn.logger.error("Exception in Main() : %s" % e)
+
+    # =====================================================
+    #               PACMAN DB SYNC
+    # =====================================================
+
+    def pacman_db_sync(self):
+        sync_err = fn.sync_package_db()
+
+        if sync_err is not None:
+            fn.logger.error("Pacman db synchronisation failed")
+
+            print(
+                "---------------------------------------------------------------------------"
+            )
+
+            message_dialog = MessageDialog(
+                "Pacman db synchronisation failed",
+                "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
+                sync_err,
+                "error",
+                True,
+            )
+
+            message_dialog.run()
+            message_dialog.hide()
+            message_dialog.destroy()
+        else:
+            fn.logger.info("Pacman synchronisation completed")
 
     # =====================================================
     #               WINDOW KEY EVENT CTRL + F
@@ -560,167 +568,207 @@ class Main(Gtk.Window):
     def arco_repo_toggle(self, widget, data):
         # self.toggle_popover()
 
+        # toggle is currently off
         if widget.get_state() == False and widget.get_active() == True:
             widget.set_active(True)
             widget.set_state(True)
 
-            fn.logger.info("Let's install the ArcoLinux keys and mirrors")
+            fn.logger.info("Enabling ArcoLinux keys and mirrors")
 
-            install_keyring = False
-            install_mirrorlist = False
+            install_keyring = None
+            install_mirrorlist = None
 
+            fn.logger.info("Installing ArcoLinux keyring")
             install_keyring = fn.setup_arcolinux_config(self, "install", "keyring")
 
-            install_mirrorlist = fn.setup_arcolinux_config(
-                self, "install", "mirrorlist"
-            )
+            if install_keyring == 0:
+                fn.logger.info("Installing ArcoLinux keyring OK")
 
-            if install_keyring is True and install_mirrorlist is True:
-                # write to pacman.conf file
+                fn.logger.info("Installing ArcoLinux mirrorlist")
+                install_mirrorlist = fn.setup_arcolinux_config(
+                    self, "install", "mirrorlist"
+                )
 
-                fn.logger.info("Adding ArcoLinux repos into /etc/pacman.conf")
+                if install_mirrorlist == 0:
+                    fn.logger.info("Installing ArcoLinux mirrorlist OK")
 
-                fn.add_repos()
+                else:
+                    fn.logger.error("Failed to install ArcoLinux mirrorlist")
+                    widget.set_active(False)
+                    widget.set_state(False)
 
-                self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+                    message_dialog = MessageDialog(
+                        "Failed to install ArcoLinux mirrorlist",
+                        "Errors occurred during install of the ArcoLinux mirrorlist",
+                        "Command run = %s\n\n Error = %s"
+                        % (install_mirrorlist["cmd_str"], install_mirrorlist["output"]),
+                        "error",
+                        True,
+                    )
 
-                # message_dialog = MessageDialog(
-                #     "ArcoLinux keys and mirrorlist setup OK",
-                #     "Installation of ArcoLinux keys and mirrorlist completed",
-                #     "",
-                #     "info",
-                #     False,
-                # )
-                #
-                # message_dialog.run()
-                # message_dialog.hide()
-                # message_dialog.destroy()
+                    message_dialog.run()
+                    message_dialog.hide()
+                    message_dialog.destroy()
             else:
-                # install failed reset switch
-                widget.set_state(False)
+                fn.logger.error("Failed to install ArcoLinux keyring")
                 widget.set_active(False)
+                widget.set_state(False)
 
-                self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+                message_dialog = MessageDialog(
+                    "Failed to install ArcoLinux keyring",
+                    "Errors occurred during install of the ArcoLinux keyring",
+                    "Command run = %s\n\n Error = %s"
+                    % (install_keyring["cmd_str"], install_keyring["output"]),
+                    "error",
+                    True,
+                )
 
-                fn.logger.error("Failed to install ArcoLinux keys/mirrors")
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
-                if install_keyring is not True:
-                    message_dialog = MessageDialog(
-                        "Error: ArcoLinux keys setup failed",
-                        "%s\n" % " ".join(install_keyring["cmd_str"]),
-                        " ".join(install_keyring["output"]),
-                        "error",
-                        True,
+            if install_keyring == 0 and install_mirrorlist == 0:
+                fn.logger.info(
+                    "Updating pacman configuration file = %s" % fn.pacman_conf
+                )
+                rc = fn.add_repos()
+
+                if rc == 0:
+                    fn.logger.info("Pacman configuration file update OK")
+
+                    fn.logger.info(
+                        "Running pacman db synchronisation, due to change in pacman configuration"
                     )
 
-                    message_dialog.run()
-                    message_dialog.hide()
-                    message_dialog.destroy()
+                    self.pacman_db_sync()
 
-                if install_mirrorlist is not True:
-                    message_dialog = MessageDialog(
-                        "Error: ArcoLinux mirrorlist setup failed",
-                        "%s\n" % " ".join(install_mirrorlist["cmd_str"]),
-                        " ".join(install_mirrorlist["output"]),
-                        "error",
-                        True,
-                    )
+                else:
+                    fn.logger.error("Failed to update pacman configuration file")
 
-                    message_dialog.run()
-                    message_dialog.hide()
-                    message_dialog.destroy()
+                    widget.set_active(False)
+                    widget.set_state(False)
 
+                    if rc:
+                        message_dialog = MessageDialog(
+                            "Failed to update pacman configuration file",
+                            "Errors occurred during update of the pacman configuration file %s"
+                            % fn.pacman_conf,
+                            rc,
+                            "error",
+                            True,
+                        )
+
+                        message_dialog.run()
+                        message_dialog.hide()
+                        message_dialog.destroy()
+
+        # toggle is currently on
         if widget.get_state() == True and widget.get_active() == False:
-            fn.logger.info("Let's remove the ArcoLinux keys and mirrors")
+            widget.set_active(False)
+            widget.set_state(False)
 
-            remove_keyring = False
-            remove_mirrorlist = False
+            fn.logger.info("Disabling ArcoLinux keys and mirrors")
+
+            remove_keyring = None
+            remove_mirrorlist = None
 
             remove_keyring = fn.setup_arcolinux_config(self, "remove", "keyring")
 
-            remove_mirrorlist = fn.setup_arcolinux_config(self, "remove", "mirrorlist")
+            if remove_keyring == 0:
+                fn.logger.info("Removing ArcoLinux keyring OK")
 
-            if remove_keyring is True and remove_mirrorlist is True:
-                fn.logger.info("Removing the ArcoLinux repos from /etc/pacman.conf")
+                fn.logger.info("Removing ArcoLinux mirrorlist")
 
-                # write to pacman.conf file
-                fn.remove_repos()
+                remove_mirrorlist = fn.setup_arcolinux_config(
+                    self, "remove", "mirrorlist"
+                )
 
-                self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
+                if remove_mirrorlist == 0:
+                    fn.logger.info("Removing ArcoLinux mirrorlist OK")
+                else:
+                    fn.logger.error("Failed to remove ArcoLinux mirrorlist")
+                    widget.set_active(True)
+                    widget.set_state(True)
 
-                # message_dialog = MessageDialog(
-                #     "ArcoLinux keys and mirrorlist removal OK",
-                #     "Removal of ArcoLinux keys and mirrorlist completed",
-                #     "",
-                #     "info",
-                #     False,
-                # )
-                #
-                # message_dialog.run()
-                # message_dialog.hide()
-                # message_dialog.destroy()
+                    message_dialog = MessageDialog(
+                        "Failed to remove ArcoLinux mirrorlist",
+                        "Errors occurred during removal of the ArcoLinux mirrorlist",
+                        "Command run = %s\n\n Error = %s"
+                        % (remove_mirrorlist["cmd_str"], remove_mirrorlist["output"]),
+                        "error",
+                        True,
+                    )
 
+                    message_dialog.run()
+                    message_dialog.hide()
+                    message_dialog.destroy()
             else:
-                # removal failed reset switch
+                fn.logger.error("Failed to remove ArcoLinux keyring")
                 widget.set_active(True)
                 widget.set_state(True)
 
-                self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
+                message_dialog = MessageDialog(
+                    "Failed to remove ArcoLinux keyring",
+                    "Errors occurred during removal of the ArcoLinux keyring",
+                    "Command run = %s\n\n Error = %s"
+                    % (remove_keyring["cmd_str"], remove_keyring["output"]),
+                    "error",
+                    True,
+                )
 
-                fn.logger.error("Failed to remove ArcoLinux Repos")
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
-                if remove_keyring is not True:
-                    message_dialog = MessageDialog(
-                        "Error: ArcoLinux keys removal failed",
-                        "%s\n" % " ".join(remove_keyring["cmd_str"]),
-                        " ".join(remove_keyring["output"]),
-                        "error",
-                        True,
+            if remove_keyring == 0 and remove_mirrorlist == 0:
+                fn.logger.info(
+                    "Updating pacman configuration file = %s" % fn.pacman_conf
+                )
+                rc = fn.remove_repos()
+
+                if rc == 0:
+                    fn.logger.info("Pacman configuration file update OK")
+
+                    fn.logger.info(
+                        "Running pacman db synchronisation, due to change in pacman configuration"
                     )
 
-                    message_dialog.run()
-                    message_dialog.hide()
-                    message_dialog.destroy()
+                    self.pacman_db_sync()
 
-                if remove_mirrorlist is not True:
-                    message_dialog = MessageDialog(
-                        "Error: ArcoLinux mirrorlist setup failed",
-                        "%s\n" % " ".join(remove_mirrorlist["cmd_str"]),
-                        " ".join(remove_mirrorlist["output"]),
-                        "error",
-                        True,
-                    )
+                else:
+                    fn.logger.error("Failed to update pacman configuration file")
 
-                    message_dialog.run()
-                    message_dialog.hide()
-                    message_dialog.destroy()
+                    widget.set_active(True)
+                    widget.set_state(True)
 
-        fn.logger.info(
-            "Pacman configuration files have changed, running a Pacman db sync"
-        )
+                    if rc:
+                        message_dialog = MessageDialog(
+                            "Failed to update pacman configuration file",
+                            "Errors occurred during update of the pacman configuration file %s"
+                            % fn.pacman_conf,
+                            rc,
+                            "error",
+                            True,
+                        )
 
-        sync_err = fn.sync_package_db()
+                        message_dialog.run()
+                        message_dialog.hide()
+                        message_dialog.destroy()
+            else:
+                message_dialog = MessageDialog(
+                    "Failed to remove ArcoLinux keyring/mirrorlist",
+                    "Errors occurred during removal of the ArcoLinux keyring/mirrorlist",
+                    "",
+                    "error",
+                    False,
+                )
 
-        if sync_err is not None:
-            fn.logger.error("Pacman db synchronisation failed")
+                message_dialog.run()
+                message_dialog.hide()
+                message_dialog.destroy()
 
-            print(
-                "---------------------------------------------------------------------------"
-            )
-
-            message_dialog = MessageDialog(
-                "Pacman db synchronisation failed",
-                "Failed to run command = pacman -Sy\nPacman db synchronisation failed\nCheck the synchronisation logs, and verify you can connect to the appropriate mirrors\n\n",
-                sync_err,
-                "error",
-                True,
-            )
-
-            message_dialog.run()
-            message_dialog.hide()
-            message_dialog.destroy()
-        else:
-            fn.logger.info("Pacman synchronisation completed")
+        # return True to prevent the default handler from running
+        return True
 
     def version_toggle(self, widget, data):
         if widget.get_active() == True:
@@ -908,5 +956,8 @@ if __name__ == "__main__":
                     fn.logger.info("You first need to close the existing application")
                 else:
                     os.unlink("/tmp/sofirem.lock")
+                    sys.exit(1)
+            else:
+                sys.exit(1)
     except Exception as e:
         fn.logger.error("Exception in __main__: %s" % e)
