@@ -8,7 +8,8 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class ProgressDialog(Gtk.Dialog):
@@ -32,18 +33,6 @@ class ProgressDialog(Gtk.Dialog):
                 % pkg.name
             )
             fn.logger.warning("Package %s cannot continue" % action)
-
-            message_dialog = MessageDialog(
-                "Pacman repository error: package '%s' was not found" % pkg.name,
-                "Sofirem cannot process the request",
-                "Are the correct pacman mirrorlists configured ?",
-                "error",
-                False,
-            )
-
-            message_dialog.run()
-            message_dialog.hide()
-            message_dialog.destroy()
 
         elif type(package_metadata) is dict:
             # package_progress_dialog = Gtk.Dialog(self)
@@ -70,7 +59,7 @@ class ProgressDialog(Gtk.Dialog):
             self.btn_package_progress_close.set_size_request(100, 30)
             self.btn_package_progress_close.set_halign(Gtk.Align.END)
 
-            self.set_resizable(False)
+            self.set_resizable(True)
             self.set_size_request(850, 700)
             self.set_modal(True)
             self.set_border_width(10)

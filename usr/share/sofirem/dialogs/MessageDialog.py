@@ -6,7 +6,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class MessageDialog(Gtk.Dialog):
@@ -102,8 +103,6 @@ class MessageDialog(Gtk.Dialog):
 
         self.vbox.add(grid_message)
         self.vbox.add(vbox_close)
-
-        self.show_all()
 
 
 def on_message_dialog_ok_response(self, widget):

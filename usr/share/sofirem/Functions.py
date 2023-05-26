@@ -400,7 +400,9 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
                 True,
             )
 
+            message_dialog.show_all()
             message_dialog.run()
+            message_dialog.hide()
             message_dialog.destroy()
 
     if installed is False and action == "uninstall":
@@ -469,7 +471,9 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
                 True,
             )
 
+            message_dialog.show_all()
             message_dialog.run()
+            message_dialog.hide()
             message_dialog.destroy()
 
 
@@ -1420,7 +1424,6 @@ def setup_arcolinux_config(self, action, config):
                 keyring + str(file).strip("[]'"),
                 "--noconfirm",
             ]
-            logger.info("Installing ArcoLinux keyring")
 
             logger.debug("%s" % " ".join(cmd_str))
 
@@ -1468,73 +1471,88 @@ def setup_arcolinux_config(self, action, config):
 
 def add_repos():
     # add ArcoLinux repos in /etc/pacman.conf
-    if distr == "arcolinux":
-        logger.info("Adding ArcoLinux repos on %s" % distr)
-        try:
-            # take backup of existing pacman.conf file
-            if os.path.exists(pacman_conf):
-                shutil.copy(pacman_conf, pacman_conf_backup)
+    # if distr == "arcolinux":
+    logger.info("Adding ArcoLinux repos on %s" % distr)
+    try:
+        # take backup of existing pacman.conf file
+        if os.path.exists(pacman_conf):
+            shutil.copy(pacman_conf, pacman_conf_backup)
 
-                # read existing contents from pacman.conf file
+            # read existing contents from pacman.conf file
 
-                logger.debug("Reading from %s" % pacman_conf)
+            logger.debug("Reading from %s" % pacman_conf)
 
-                lines = []
+            lines = []
 
-                with open(pacman_conf, "r", encoding="utf-8") as r:
-                    lines = r.readlines()
+            with open(pacman_conf, "r", encoding="utf-8") as r:
+                lines = r.readlines()
 
-                # check for existing ArcoLinux entries
-                if len(lines) > 0:
-                    index = None
-                    # add arco repo testing line just below the default arch #[testing] or #[core-testing] entries
-                    if "#[arcolinux_repo_testing]\n" not in lines:
-                        # check for old pacman conf #[testing]
-                        if "#[testing]\n" in lines:
-                            index = lines.index("#[testing]\n")
-                        # check for new pacman conf #[core-testing]
-                        elif "#[core-testing]\n" in lines:
-                            index = lines.index("#[core-testing]\n")
+            # check for existing ArcoLinux entries
+            if len(lines) > 0:
+                index = None
+                # add arco repo testing line just below the default arch #[testing] or #[core-testing] entries
+                if "#[arcolinux_repo_testing]\n" not in lines:
+                    i = 0
 
-                        if index is not None:
-                            lines.insert(index + 1, "\n")
-                            for x in arco_test_repo:
-                                lines.insert(index + 1, "%s\n" % x)
+                    for x in arco_test_repo:
+                        if i == 0:
+                            lines.append("\n%s\n" % x)
                         else:
-                            for x in arco_test_repo:
-                                lines.append("%s\n" % x)
+                            lines.append("%s\n" % x)
+                        i += 1
 
-                    if "[arcolinux_repo]\n" not in lines:
-                        for x in arco_repo:
+                if "[arcolinux_repo]\n" not in lines:
+                    i = 0
+                    for x in arco_repo:
+                        if i == 0:
+                            # add new line only at the start of the very first line
+                            lines.append("\n%s\n" % x)
+                        else:
                             lines.append("%s\n" % x)
 
-                    if "[arcolinux_repo_3party]\n" not in lines:
-                        for x in arco_3rd_party_repo:
+                        i += 1
+
+                if "[arcolinux_repo_3party]\n" not in lines:
+                    i = 0
+                    for x in arco_3rd_party_repo:
+                        if i == 0:
+                            # add new line only at the start of the very first line
+                            lines.append("\n%s\n" % x)
+                        else:
                             lines.append("%s\n" % x)
 
-                    if "[arcolinux_repo_xlarge]\n" not in lines:
-                        for x in arco_xlrepo:
+                        i += 1
+
+                if "[arcolinux_repo_xlarge]\n" not in lines:
+                    i = 0
+                    for x in arco_xlrepo:
+                        if i == 0:
+                            # add new line only at the start of the very first line
+                            lines.append("\n%s\n" % x)
+                        else:
                             lines.append("%s\n" % x)
 
-                    logger.debug("[Add repos] Writing to %s" % pacman_conf)
+                        i += 1
 
-                    if len(lines) > 0:
-                        with open(pacman_conf, "w", encoding="utf-8") as w:
-                            w.writelines(lines)
+                logger.debug("[Add repos] Writing to %s" % pacman_conf)
 
-                            w.flush()
+                if len(lines) > 0:
+                    with open(pacman_conf, "w", encoding="utf-8") as w:
+                        w.writelines(lines)
 
-                        return 0
+                        w.flush()
 
-                    else:
-                        logger.error("Failed to process %s" % pacman_conf)
+                    return 0
 
                 else:
-                    logger.error("Failed to read %s" % pacman_conf)
+                    logger.error("Failed to process %s" % pacman_conf)
 
-        except Exception as e:
-            logger.error("Exception in add_repos(): %s" % e)
-            return e
+            else:
+                logger.error("Failed to read %s" % pacman_conf)
+
+    except Exception as e:
+        logger.error("Exception in add_repos(): %s" % e)
+        return e
 
 
 def remove_repos():
