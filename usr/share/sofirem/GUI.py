@@ -22,6 +22,7 @@ class GUI_Worker(Thread):
         while True:
             # pull what we need from the queue so we can process properly.
             items = self.queue.get()
+
             try:
                 # make sure we have the required number of items on the queue
                 if items is not None:
@@ -128,7 +129,7 @@ def setup_gui_search(
         search_worker = GUI_Worker(self.queue)
         search_worker.name = "thread_GUI_search_worker"
         # Set the worker to be True to allow processing, and avoid Blocking
-        search_worker.daemon = True
+        # search_worker.daemon = True
         search_worker.start()
 
         # This code section might look a little weird. It is because it was
@@ -359,7 +360,7 @@ def setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango):  # noqa
         worker = GUI_Worker(self.queue)
         worker.name = "thread_GUI_Worker"
         # Set the worker to be True to allow processing, and avoid Blocking
-        worker.daemon = True
+        # worker.daemon = True
         worker.start()
 
         for category in self.packages:
@@ -499,26 +500,22 @@ def setup_headerbar(self, Gtk):
         # button to open the pacman log monitoring dialog
         self.btn_pacmanlog = Gtk.ModelButton(label="Open Pacman Log File")
         self.btn_pacmanlog.connect("clicked", self.on_pacman_log_clicked)
-
-        self.btn_pacmanlog.set_halign(Gtk.Align.START)
+        self.btn_pacmanlog.set_alignment(xalign=0, yalign=0)
 
         # button to export list of installed packages to disk
         btn_packages_export = Gtk.ModelButton(label="Show Installed Packages")
         btn_packages_export.connect("clicked", self.on_packages_export_clicked)
-
-        btn_packages_export.set_halign(Gtk.Align.START)
+        btn_packages_export.set_alignment(xalign=0, yalign=0)
 
         # quit button
         btn_quit_app = Gtk.ModelButton(label="Quit Sofirem")
-
         btn_quit_app.connect("clicked", self.on_close, "delete-event")
-        btn_quit_app.set_halign(Gtk.Align.START)
+        btn_quit_app.set_alignment(xalign=0, yalign=0)
 
         # button to show about dialog
         btn_about_app = Gtk.ModelButton(label="About Sofirem")
         btn_about_app.connect("clicked", self.on_about_app_clicked)
-
-        btn_about_app.set_halign(Gtk.Align.START)
+        btn_about_app.set_alignment(xalign=0, yalign=0)
 
         if self.display_versions == True:
             self.switch_pkg_version.set_active(True)
@@ -531,19 +528,16 @@ def setup_headerbar(self, Gtk):
         self.switch_arco_repo.set_halign(Gtk.Align(1))
 
         self.lbl_arco_repo = Gtk.Label(xalign=0, yalign=0)
+        self.lbl_arco_repo.set_text("Enable ArcoLinux Repos")
 
         if (
             fn.check_package_installed("arcolinux-keyring") is False
             or fn.check_package_installed("arcolinux-mirrorlist-git") is False
             or fn.os.path.exists(fn.arcolinux_mirrorlist) is False
         ):
-            self.btn_repos = Gtk.ModelButton(label="Add ArcoLinux Repos")
-            self.lbl_arco_repo.set_text("Add ArcoLinux Repos")
             self.switch_arco_repo.set_state(False)
 
         else:
-            self.btn_repos = Gtk.ModelButton(label="Remove ArcoLinux Repos")
-            self.lbl_arco_repo.set_text("Remove ArcoLinux Repos")
             self.switch_arco_repo.set_state(True)
 
         self.switch_arco_repo.connect("state-set", self.arco_repo_toggle)

@@ -20,7 +20,7 @@ class MessageDialog(Gtk.Dialog):
         headerbar.set_title(title)
         headerbar.set_show_close_button(True)
 
-        self.set_resizable(False)
+        self.set_resizable(True)
         self.set_modal(True)
         self.set_border_width(10)
 
