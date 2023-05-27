@@ -484,6 +484,7 @@ class Main(Gtk.Window):
                     widget.set_active(False)
                     widget.set_state(False)
                     fn.logger.info("Package to remove : %s" % package.name)
+                    package_metadata = fn.get_package_information(package.name)
 
                     uninst_str = ["pacman", "-Rs", package.name, "--noconfirm"]
 
@@ -491,6 +492,7 @@ class Main(Gtk.Window):
                         "uninstall",
                         package,
                         " ".join(uninst_str),
+                        package_metadata,
                     )
 
                     progress_dialog.show_all()
