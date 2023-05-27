@@ -72,7 +72,6 @@ git commit -m "$input"
 if grep -q main .git/config; then
 	echo "Using main"
 		git push -u origin main
-		git push -u origin DeltaCopy-main
 fi
 
 if grep -q master .git/config; then
