@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-import Splash
+
 import gi
 import os
 import Functions as fn
-from ProgressBarWindow import ProgressBarWindow
 import signal
 import datetime
-import GUI
+
 import subprocess
 from Functions import os
 from queue import Queue
-import App_Frame_GUI
-from AboutDialog import AboutDialog
-from MessageDialog import MessageDialog
-from PacmanLogWindow import PacmanLogWindow
-from PackageListDialog import PackageListDialog
-from ProgressDialog import ProgressDialog
 from time import sleep
 from datetime import datetime
 import sys
 import time
+
+# UI modules
+from ui.GUI import GUI
+from ui.SplashScreen import SplashScreen
+from ui.ProgressBarWindow import ProgressBarWindow
+from ui.AppFrameGUI import AppFrameGUI
+from ui.AboutDialog import AboutDialog
+from ui.MessageDialog import MessageDialog
+from ui.PacmanLogWindow import PacmanLogWindow
+from ui.PackageListDialog import PackageListDialog
+from ui.ProgressDialog import ProgressDialog
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
@@ -107,61 +111,69 @@ class Main(Gtk.Window):
             # Fetch list of packages already installed before the app makes changes
             fn.create_packages_log()
 
-            fn.logger.info("pkgver = pkgversion")
-            fn.logger.info("pkgrel = pkgrelease")
-            print(
-                "---------------------------------------------------------------------------"
-            )
-            fn.logger.info("Distro = " + fn.distr)
-            print(
-                "---------------------------------------------------------------------------"
-            )
-
-            # Create installed.lst file for first time
-            fn.get_current_installed()
-            fn.logger.info("Created installed.lst")
-
-            # start making sure sofirem starts next time with dark or light theme
-            if os.path.isdir(fn.home + "/.config/gtk-3.0"):
-                try:
-                    if not os.path.islink("/root/.config/gtk-3.0"):
-                        fn.shutil.rmtree("/root/.config/gtk-3.0")
-                        fn.shutil.copytree(
-                            fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
-                        )
-                except Exception as e:
-                    fn.logger.error("GTK config error: %s" % e)
-
-            if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
-                try:
-                    if not os.path.islink("/root/.config/xsettingsd/"):
-                        fn.shutil.rmtree("/root/.config/xsettingsd/")
-                        if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
-                            fn.shutil.copytree(
-                                fn.home + "/.config/xsettingsd/",
-                                "/root/.config/xsettingsd/",
-                            )
-                except Exception as e:
-                    fn.logger.error("xsettingsd config error: %s" % e)
-
-            # test there is no pacman lock file on the system
-            if fn.check_pacman_lockfile():
-                message_dialog = MessageDialog(
-                    "Sofirem cannot proceed pacman lockfile found",
-                    "Pacman cannot lock the db, a lockfile is found inside %s"
-                    % fn.pacman_lockfile,
-                    "Is there another Pacman process running ?",
-                    "error",
-                    False,
-                )
-                message_dialog.run()
-                message_dialog.hide()
-                message_dialog.destroy()
-                sys.exit(1)
-
             if not os.path.isfile(fn.sofirem_lockfile):
                 with open(fn.sofirem_lockfile, "w") as f:
                     f.write("")
+
+                # test there is no pacman lock file on the system
+                if fn.check_pacman_lockfile():
+                    message_dialog = MessageDialog(
+                        "Sofirem cannot proceed pacman lockfile found",
+                        "Pacman cannot lock the db, a lockfile is found inside %s"
+                        % fn.pacman_lockfile,
+                        "Is there another Pacman process running ?",
+                        "error",
+                        False,
+                    )
+                    message_dialog.show_all()
+                    message_dialog.run()
+                    message_dialog.hide()
+
+                    sys.exit(1)
+
+                fn.logger.info("pkgver = pkgversion")
+                fn.logger.info("pkgrel = pkgrelease")
+                print(
+                    "---------------------------------------------------------------------------"
+                )
+                fn.logger.info("Distro = " + fn.distr)
+                print(
+                    "---------------------------------------------------------------------------"
+                )
+
+                # Create installed.lst file for first time
+                fn.get_current_installed()
+                fn.logger.info("Created installed.lst")
+
+                # start making sure sofirem starts next time with dark or light theme
+                if os.path.isdir(fn.home + "/.config/gtk-3.0"):
+                    try:
+                        if not os.path.islink("/root/.config/gtk-3.0"):
+                            if os.path.exists("/root/.config/gtk-3.0"):
+                                fn.shutil.rmtree("/root/.config/gtk-3.0")
+
+                            fn.shutil.copytree(
+                                fn.home + "/.config/gtk-3.0", "/root/.config/gtk-3.0"
+                            )
+                    except Exception as e:
+                        fn.logger.warning("GTK config: %s" % e)
+
+                if os.path.isdir("/root/.config/xsettingsd/xsettingsd.conf"):
+                    try:
+                        if not os.path.islink("/root/.config/xsettingsd/"):
+                            if os.path.exists("/root/.config/xsettingsd/"):
+                                fn.shutil.rmtree("/root/.config/xsettingsd/")
+                            if fn.path.isdir(fn.home + "/.config/xsettingsd/"):
+                                fn.shutil.copytree(
+                                    fn.home + "/.config/xsettingsd/",
+                                    "/root/.config/xsettingsd/",
+                                )
+                    except Exception as e:
+                        fn.logger.warning("xsettingsd config: %s" % e)
+
+                # pacman sync db and also tests network connectivity
+
+                self.pacman_db_sync()
 
                 # store package information into memory, and use the dictionary returned to search in for quicker retrieval
                 fn.logger.info("Storing package metadata started")
@@ -178,21 +190,18 @@ class Main(Gtk.Window):
 
                 fn.logger.info("Total packages = %s" % total_packages)
 
-                splScr = Splash.splashScreen()
+                splash_screen = SplashScreen()
 
                 while Gtk.events_pending():
                     Gtk.main_iteration()
 
                 sleep(3)
-                splScr.destroy()
+                splash_screen.destroy()
 
                 fn.logger.info("Setting up GUI")
 
                 GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
 
-                # pacman sync db and also tests network connectivity
-
-                self.pacman_db_sync()
             else:
                 fn.logger.error("Sofirem lock file found in %s" % fn.sofirem_lockfile)
 
@@ -221,9 +230,10 @@ class Main(Gtk.Window):
                 True,
             )
 
+            message_dialog.show_all()
             message_dialog.run()
             message_dialog.hide()
-            message_dialog.destroy()
+
         else:
             fn.logger.info("Pacman synchronisation completed")
 
@@ -316,9 +326,9 @@ class Main(Gtk.Window):
                             False,
                         )
 
+                        message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
 
                 elif self.search_activated == True:
                     GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
@@ -378,42 +388,63 @@ class Main(Gtk.Window):
             if len(package.name) > 0:
                 # check there is no pacman lockfile before continuing
                 if fn.check_pacman_lockfile() is False:
-                    widget.set_active(True)
-                    widget.set_state(True)
+                    package_metadata = fn.get_package_information(package.name)
 
-                    fn.logger.info("Package to install : %s" % package.name)
+                    if (
+                        type(package_metadata) is str
+                        and package_metadata.strip()
+                        == "error: package '%s' was not found" % package.name
+                    ):
+                        self.package_found = False
+                        fn.logger.warning(
+                            "The package %s was not found in any configured Pacman repositories"
+                            % package.name
+                        )
+                        fn.logger.warning("Package install cannot continue")
 
-                    inst_str = [
-                        "pacman",
-                        "-S",
-                        package.name,
-                        "--needed",
-                        "--noconfirm",
-                    ]
+                        message_dialog = MessageDialog(
+                            "Pacman repository error: package '%s' was not found"
+                            % package.name,
+                            "Sofirem cannot process the request",
+                            "Are the correct pacman mirrorlists configured ?",
+                            "error",
+                            False,
+                        )
+                        message_dialog.show_all()
+                        message_dialog.run()
+                        message_dialog.hide()
 
-                    dialog = ProgressDialog(
-                        "install",
-                        package,
-                        " ".join(inst_str),
-                    )
-
-                    if dialog.package_found is False:
-                        fn.logger.debug("Install aborted, toggling switch to False")
                         widget.set_state(False)
                         widget.set_active(False)
-                        fn.logger.warning(
-                            "Cannot proceed with install, package not found in the repository"
+                    else:
+                        widget.set_active(True)
+                        widget.set_state(True)
+
+                        fn.logger.info("Package to install : %s" % package.name)
+
+                        inst_str = [
+                            "pacman",
+                            "-S",
+                            package.name,
+                            "--needed",
+                            "--noconfirm",
+                        ]
+
+                        progress_dialog = ProgressDialog(
+                            "install",
+                            package,
+                            " ".join(inst_str),
+                            package_metadata,
                         )
 
-                    else:
-                        dialog.show_all()
+                        progress_dialog.show_all()
                         self.pkg_queue.put(
                             (
                                 package,
                                 "install",
                                 widget,
                                 inst_str,
-                                dialog,
+                                progress_dialog,
                             ),
                         )
 
@@ -439,9 +470,9 @@ class Main(Gtk.Window):
                         False,
                     )
 
+                    message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
@@ -456,29 +487,20 @@ class Main(Gtk.Window):
 
                     uninst_str = ["pacman", "-Rs", package.name, "--noconfirm"]
 
-                    dialog = ProgressDialog(
+                    progress_dialog = ProgressDialog(
                         "uninstall",
                         package,
                         " ".join(uninst_str),
                     )
 
-                    # if dialog.package_found is False:
-                    #     fn.logger.debug("Uninstall aborted, toggling switch to True")
-                    #     widget.set_state(True)
-                    #     widget.set_active(True)
-                    #     fn.logger.warning(
-                    #         "Cannot proceed with uninstall, package not found in the repository"
-                    #     )
-                    #
-                    # else:
-                    dialog.show_all()
+                    progress_dialog.show_all()
                     self.pkg_queue.put(
                         (
                             package,
                             "uninstall",
                             widget,
                             uninst_str,
-                            dialog,
+                            progress_dialog,
                         ),
                     )
 
@@ -502,9 +524,9 @@ class Main(Gtk.Window):
                         "warning",
                         False,
                     )
+                    message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
         # fn.get_current_installed()
         # fn.print_threads_alive()
@@ -582,20 +604,18 @@ class Main(Gtk.Window):
             install_keyring = fn.setup_arcolinux_config(self, "install", "keyring")
 
             if install_keyring == 0:
-                fn.logger.info("Installing ArcoLinux keyring OK")
+                fn.logger.info("Installation of ArcoLinux keyring = OK")
 
-                fn.logger.info("Installing ArcoLinux mirrorlist")
+                fn.logger.info("Now installing ArcoLinux mirrorlist")
                 install_mirrorlist = fn.setup_arcolinux_config(
                     self, "install", "mirrorlist"
                 )
 
                 if install_mirrorlist == 0:
-                    fn.logger.info("Installing ArcoLinux mirrorlist OK")
+                    fn.logger.info("Installation of ArcoLinux mirrorlist = OK")
 
                 else:
                     fn.logger.error("Failed to install ArcoLinux mirrorlist")
-                    widget.set_active(False)
-                    widget.set_state(False)
 
                     message_dialog = MessageDialog(
                         "Failed to install ArcoLinux mirrorlist",
@@ -605,14 +625,16 @@ class Main(Gtk.Window):
                         "error",
                         True,
                     )
-
+                    message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
+
+                    widget.set_active(False)
+                    widget.set_state(False)
+
+                    return True
             else:
                 fn.logger.error("Failed to install ArcoLinux keyring")
-                widget.set_active(False)
-                widget.set_state(False)
 
                 message_dialog = MessageDialog(
                     "Failed to install ArcoLinux keyring",
@@ -623,9 +645,14 @@ class Main(Gtk.Window):
                     True,
                 )
 
+                message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
+
+                widget.set_active(False)
+                widget.set_state(False)
+
+                return True
 
             if install_keyring == 0 and install_mirrorlist == 0:
                 fn.logger.info(
@@ -642,11 +669,12 @@ class Main(Gtk.Window):
 
                     self.pacman_db_sync()
 
+                    # pacman db refreshed, also update reference to packages
+
+                    self.packages = fn.store_packages()
+
                 else:
                     fn.logger.error("Failed to update pacman configuration file")
-
-                    widget.set_active(False)
-                    widget.set_state(False)
 
                     if rc:
                         message_dialog = MessageDialog(
@@ -658,9 +686,14 @@ class Main(Gtk.Window):
                             True,
                         )
 
+                        message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
+
+                        widget.set_active(False)
+                        widget.set_state(False)
+
+                        return True
 
         # toggle is currently on
         if widget.get_state() == True and widget.get_active() == False:
@@ -687,8 +720,6 @@ class Main(Gtk.Window):
                     fn.logger.info("Removing ArcoLinux mirrorlist OK")
                 else:
                     fn.logger.error("Failed to remove ArcoLinux mirrorlist")
-                    widget.set_active(True)
-                    widget.set_state(True)
 
                     message_dialog = MessageDialog(
                         "Failed to remove ArcoLinux mirrorlist",
@@ -699,13 +730,16 @@ class Main(Gtk.Window):
                         True,
                     )
 
+                    message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
+
+                    widget.set_active(True)
+                    widget.set_state(True)
+
+                    return True
             else:
                 fn.logger.error("Failed to remove ArcoLinux keyring")
-                widget.set_active(True)
-                widget.set_state(True)
 
                 message_dialog = MessageDialog(
                     "Failed to remove ArcoLinux keyring",
@@ -716,9 +750,14 @@ class Main(Gtk.Window):
                     True,
                 )
 
+                message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
+
+                widget.set_active(True)
+                widget.set_state(True)
+
+                return True
 
             if remove_keyring == 0 and remove_mirrorlist == 0:
                 fn.logger.info(
@@ -735,11 +774,12 @@ class Main(Gtk.Window):
 
                     self.pacman_db_sync()
 
+                    # pacman db refreshed, also update reference to packages
+
+                    self.packages = fn.store_packages()
+
                 else:
                     fn.logger.error("Failed to update pacman configuration file")
-
-                    widget.set_active(True)
-                    widget.set_state(True)
 
                     if rc:
                         message_dialog = MessageDialog(
@@ -751,9 +791,14 @@ class Main(Gtk.Window):
                             True,
                         )
 
+                        message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
+
+                        widget.set_active(True)
+                        widget.set_state(True)
+
+                        return True
             else:
                 message_dialog = MessageDialog(
                     "Failed to remove ArcoLinux keyring/mirrorlist",
@@ -763,9 +808,14 @@ class Main(Gtk.Window):
                     False,
                 )
 
+                message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
+
+                widget.set_active(True)
+                widget.set_state(True)
+
+                return True
 
         # return True to prevent the default handler from running
         return True
@@ -934,27 +984,34 @@ if __name__ == "__main__":
 
             if result in (Gtk.ResponseType.OK, Gtk.ResponseType.YES):
                 pid = ""
-                with open("/tmp/sofirem.pid", "r") as f:
-                    line = f.read()
-                    pid = line.rstrip().lstrip()
+                if os.path.exists(fn.sofirem_pidfile):
+                    with open("/tmp/sofirem.pid", "r") as f:
+                        line = f.read()
+                        pid = line.rstrip().lstrip()
 
-                if fn.check_if_process_running(int(pid)):
-                    # needs to be fixed - todo
+                    if fn.check_if_process_running(int(pid)):
+                        # needs to be fixed - todo
 
-                    # md2 = Gtk.MessageDialog(
-                    #     parent=Main,
-                    #     flags=0,
-                    #     message_type=Gtk.MessageType.INFO,
-                    #     buttons=Gtk.ButtonsType.OK,
-                    #     title="Application Running!",
-                    #     text="You first need to close the existing application",
-                    # )
-                    # md2.format_secondary_markup(
-                    #     "You first need to close the existing application"
-                    # )
-                    # md2.run()
-                    fn.logger.info("You first need to close the existing application")
+                        # md2 = Gtk.MessageDialog(
+                        #     parent=Main,
+                        #     flags=0,
+                        #     message_type=Gtk.MessageType.INFO,
+                        #     buttons=Gtk.ButtonsType.OK,
+                        #     title="Application Running!",
+                        #     text="You first need to close the existing application",
+                        # )
+                        # md2.format_secondary_markup(
+                        #     "You first need to close the existing application"
+                        # )
+                        # md2.run()
+                        fn.logger.info(
+                            "You first need to close the existing application"
+                        )
+                    else:
+                        os.unlink("/tmp/sofirem.lock")
+                        sys.exit(1)
                 else:
+                    # in the rare event that the lock file is present, but the pid isn't
                     os.unlink("/tmp/sofirem.lock")
                     sys.exit(1)
             else:

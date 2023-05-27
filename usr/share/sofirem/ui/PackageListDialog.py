@@ -3,13 +3,14 @@
 import os
 import gi
 import Functions as fn
-from MessageDialog import MessageDialog
+from ui.MessageDialog import MessageDialog
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# base_dir = os.path.dirname(os.path.realpath(__file__))
 filename = "%s/sofirem-export.txt" % fn.home
 
 
@@ -167,6 +168,7 @@ class PackageListDialog(Gtk.Dialog):
                     False,
                 )
 
+                message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
                 message_dialog.destroy()
@@ -182,6 +184,7 @@ class PackageListDialog(Gtk.Dialog):
                     False,
                 )
 
+                message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
                 message_dialog.destroy()

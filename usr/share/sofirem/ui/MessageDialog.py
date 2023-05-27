@@ -6,7 +6,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class MessageDialog(Gtk.Dialog):
@@ -25,7 +26,7 @@ class MessageDialog(Gtk.Dialog):
         self.set_border_width(10)
 
         self.set_titlebar(headerbar)
-        self.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+        # self.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         btn_ok = Gtk.Button(label="OK")
         btn_ok.set_size_request(100, 30)
@@ -96,14 +97,13 @@ class MessageDialog(Gtk.Dialog):
             grid_message.attach(lbl_second_message, 0, 3, 1, 1)
 
             self.set_default_size(600, 100)
+            self.set_resizable(False)
 
         vbox_close = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         vbox_close.pack_start(btn_ok, True, True, 1)
 
         self.vbox.add(grid_message)
         self.vbox.add(vbox_close)
-
-        self.show_all()
 
 
 def on_message_dialog_ok_response(self, widget):
