@@ -7,7 +7,8 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# base_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class PacmanLogWindow(Gtk.Window):

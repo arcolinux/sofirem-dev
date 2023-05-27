@@ -15,7 +15,7 @@ import logging
 import shutil
 from threading import Thread
 from Package import Package
-from MessageDialog import MessageDialog
+from ui.MessageDialog import MessageDialog
 from distro import id
 from os import makedirs
 
@@ -221,6 +221,12 @@ def sync_package_db():
         logger.error("Exception in sync(): %s" % e)
 
 
+# =====================================================
+#               PACMAN INSTALL/UNINSTALL PROCESS
+# =====================================================
+
+
+# this is run inside a separate thread
 def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
     try:
         # store process std out into a list, if there are errors display to user once the process completes

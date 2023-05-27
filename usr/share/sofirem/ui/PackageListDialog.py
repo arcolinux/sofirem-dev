@@ -3,7 +3,7 @@
 import os
 import gi
 import Functions as fn
-from MessageDialog import MessageDialog
+from ui.MessageDialog import MessageDialog
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 

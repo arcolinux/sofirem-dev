@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-import Splash
+
 import gi
 import os
 import Functions as fn
-from ProgressBarWindow import ProgressBarWindow
 import signal
 import datetime
-import GUI
+
 import subprocess
 from Functions import os
 from queue import Queue
-import App_Frame_GUI
-from AboutDialog import AboutDialog
-from MessageDialog import MessageDialog
-from PacmanLogWindow import PacmanLogWindow
-from PackageListDialog import PackageListDialog
-from ProgressDialog import ProgressDialog
 from time import sleep
 from datetime import datetime
 import sys
 import time
+
+# UI modules
+from ui.GUI import GUI
+from ui.SplashScreen import SplashScreen
+from ui.ProgressBarWindow import ProgressBarWindow
+from ui.AppFrameGUI import AppFrameGUI
+from ui.AboutDialog import AboutDialog
+from ui.MessageDialog import MessageDialog
+from ui.PacmanLogWindow import PacmanLogWindow
+from ui.PackageListDialog import PackageListDialog
+from ui.ProgressDialog import ProgressDialog
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
@@ -124,7 +128,7 @@ class Main(Gtk.Window):
                     message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
+
                     sys.exit(1)
 
                 fn.logger.info("pkgver = pkgversion")
@@ -186,13 +190,13 @@ class Main(Gtk.Window):
 
                 fn.logger.info("Total packages = %s" % total_packages)
 
-                splScr = Splash.splashScreen()
+                splash_screen = SplashScreen()
 
                 while Gtk.events_pending():
                     Gtk.main_iteration()
 
                 sleep(3)
-                splScr.destroy()
+                splash_screen.destroy()
 
                 fn.logger.info("Setting up GUI")
 
@@ -229,7 +233,7 @@ class Main(Gtk.Window):
             message_dialog.show_all()
             message_dialog.run()
             message_dialog.hide()
-            message_dialog.destroy()
+
         else:
             fn.logger.info("Pacman synchronisation completed")
 
@@ -325,7 +329,6 @@ class Main(Gtk.Window):
                         message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
 
                 elif self.search_activated == True:
                     GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
@@ -385,32 +388,19 @@ class Main(Gtk.Window):
             if len(package.name) > 0:
                 # check there is no pacman lockfile before continuing
                 if fn.check_pacman_lockfile() is False:
-                    widget.set_active(True)
-                    widget.set_state(True)
+                    package_metadata = fn.get_package_information(package.name)
 
-                    fn.logger.info("Package to install : %s" % package.name)
-
-                    inst_str = [
-                        "pacman",
-                        "-S",
-                        package.name,
-                        "--needed",
-                        "--noconfirm",
-                    ]
-
-                    dialog = ProgressDialog(
-                        "install",
-                        package,
-                        " ".join(inst_str),
-                    )
-
-                    if dialog.package_found is False:
-                        fn.logger.debug("Install aborted, toggling switch to False")
-                        widget.set_state(False)
-                        widget.set_active(False)
+                    if (
+                        type(package_metadata) is str
+                        and package_metadata.strip()
+                        == "error: package '%s' was not found" % package.name
+                    ):
+                        self.package_found = False
                         fn.logger.warning(
-                            "Cannot proceed with install, package not found in the repository"
+                            "The package %s was not found in any configured Pacman repositories"
+                            % package.name
                         )
+                        fn.logger.warning("Package install cannot continue")
 
                         message_dialog = MessageDialog(
                             "Pacman repository error: package '%s' was not found"
@@ -423,17 +413,38 @@ class Main(Gtk.Window):
                         message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
 
+                        widget.set_state(False)
+                        widget.set_active(False)
                     else:
-                        dialog.show_all()
+                        widget.set_active(True)
+                        widget.set_state(True)
+
+                        fn.logger.info("Package to install : %s" % package.name)
+
+                        inst_str = [
+                            "pacman",
+                            "-S",
+                            package.name,
+                            "--needed",
+                            "--noconfirm",
+                        ]
+
+                        progress_dialog = ProgressDialog(
+                            "install",
+                            package,
+                            " ".join(inst_str),
+                            package_metadata,
+                        )
+
+                        progress_dialog.show_all()
                         self.pkg_queue.put(
                             (
                                 package,
                                 "install",
                                 widget,
                                 inst_str,
-                                dialog,
+                                progress_dialog,
                             ),
                         )
 
@@ -462,7 +473,6 @@ class Main(Gtk.Window):
                     message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
         # switch widget is currently toggled on
         if widget.get_state() == True and widget.get_active() == False:
@@ -477,20 +487,20 @@ class Main(Gtk.Window):
 
                     uninst_str = ["pacman", "-Rs", package.name, "--noconfirm"]
 
-                    dialog = ProgressDialog(
+                    progress_dialog = ProgressDialog(
                         "uninstall",
                         package,
                         " ".join(uninst_str),
                     )
 
-                    dialog.show_all()
+                    progress_dialog.show_all()
                     self.pkg_queue.put(
                         (
                             package,
                             "uninstall",
                             widget,
                             uninst_str,
-                            dialog,
+                            progress_dialog,
                         ),
                     )
 
@@ -517,7 +527,6 @@ class Main(Gtk.Window):
                     message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
         # fn.get_current_installed()
         # fn.print_threads_alive()
@@ -619,7 +628,6 @@ class Main(Gtk.Window):
                     message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
                     widget.set_active(False)
                     widget.set_state(False)
@@ -640,7 +648,6 @@ class Main(Gtk.Window):
                 message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
 
                 widget.set_active(False)
                 widget.set_state(False)
@@ -662,6 +669,10 @@ class Main(Gtk.Window):
 
                     self.pacman_db_sync()
 
+                    # pacman db refreshed, also update reference to packages
+
+                    self.packages = fn.store_packages()
+
                 else:
                     fn.logger.error("Failed to update pacman configuration file")
 
@@ -678,7 +689,6 @@ class Main(Gtk.Window):
                         message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
 
                         widget.set_active(False)
                         widget.set_state(False)
@@ -723,7 +733,6 @@ class Main(Gtk.Window):
                     message_dialog.show_all()
                     message_dialog.run()
                     message_dialog.hide()
-                    message_dialog.destroy()
 
                     widget.set_active(True)
                     widget.set_state(True)
@@ -744,7 +753,6 @@ class Main(Gtk.Window):
                 message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
 
                 widget.set_active(True)
                 widget.set_state(True)
@@ -766,6 +774,10 @@ class Main(Gtk.Window):
 
                     self.pacman_db_sync()
 
+                    # pacman db refreshed, also update reference to packages
+
+                    self.packages = fn.store_packages()
+
                 else:
                     fn.logger.error("Failed to update pacman configuration file")
 
@@ -782,7 +794,6 @@ class Main(Gtk.Window):
                         message_dialog.show_all()
                         message_dialog.run()
                         message_dialog.hide()
-                        message_dialog.destroy()
 
                         widget.set_active(True)
                         widget.set_state(True)
@@ -800,7 +811,6 @@ class Main(Gtk.Window):
                 message_dialog.show_all()
                 message_dialog.run()
                 message_dialog.hide()
-                message_dialog.destroy()
 
                 widget.set_active(True)
                 widget.set_state(True)

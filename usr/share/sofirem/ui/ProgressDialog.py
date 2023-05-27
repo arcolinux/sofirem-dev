@@ -3,7 +3,7 @@
 import os
 import gi
 import Functions as fn
-from MessageDialog import MessageDialog
+from ui.MessageDialog import MessageDialog
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
 gi.require_version("Gtk", "3.0")
@@ -13,28 +13,17 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 class ProgressDialog(Gtk.Dialog):
-    def __init__(self, action, pkg, command):
+    def __init__(self, action, package, command, package_metadata):
         Gtk.Dialog.__init__(self)
 
         self.package_found = True
         # this gets package information using pacman -Si or pacman -Qi whichever returns output
-        package_metadata = fn.get_package_information(pkg.name)
+        # package_metadata = fn.get_package_information(pkg.name)
 
         # if a mirrorlist isn't configured properly, pacman will not be able to query its repository
         # so the following is a condition to make sure the data returned isn't an error
-        if (
-            type(package_metadata) is str
-            and package_metadata.strip()
-            == "error: package '%s' was not found" % pkg.name
-        ):
-            self.package_found = False
-            fn.logger.warning(
-                "The package %s was not found in any configured Pacman repositories"
-                % pkg.name
-            )
-            fn.logger.warning("Package %s cannot continue" % action)
 
-        elif type(package_metadata) is dict:
+        if type(package_metadata) is dict:
             # package_progress_dialog = Gtk.Dialog(self)
 
             package_progress_dialog_headerbar = Gtk.HeaderBar()
@@ -44,10 +33,10 @@ class ProgressDialog(Gtk.Dialog):
             self.connect("delete-event", package_progress_dialog_on_close, self, action)
 
             if action == "install":
-                self.set_title("Sofirem - installing package %s" % pkg.name)
+                self.set_title("Sofirem - installing package %s" % package.name)
 
             elif action == "uninstall":
-                self.set_title("Sofirem - removing package %s" % pkg.name)
+                self.set_title("Sofirem - removing package %s" % package.name)
 
             self.btn_package_progress_close = Gtk.Button(label="OK")
             self.btn_package_progress_close.connect(
