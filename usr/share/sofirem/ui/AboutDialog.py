@@ -22,12 +22,12 @@ class AboutDialog(Gtk.Dialog):
         app_secondary_description = "Report issues to make it even better"
         app_version = "pkgversion-pkgrelease"
         app_discord = "https://discord.gg/stBhS4taje"
-        app_website = "https://arcolinux.com"
+        app_website = "https://arcolinux.info"
         app_github = "https://github.com/arcolinux/sofirem-dev"
         app_authors = []
-        app_authors.append(("Erik Dubois", None))
         app_authors.append(("Cameron Percival", None))
         app_authors.append(("Fennec", None))
+        app_authors.append(("Erik Dubois", None))
 
         pixbuf = GdkPixbuf.Pixbuf().new_from_file_at_size(
             os.path.join(base_dir, "images/sofirem.png"), 100, 100
