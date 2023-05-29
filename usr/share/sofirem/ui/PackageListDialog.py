@@ -77,6 +77,13 @@ class PackageListDialog(Gtk.Dialog):
                 col = Gtk.TreeViewColumn(col_title, renderer, text=i)
                 treeview_packages.append_column(col)
 
+            # allow sorting by installed date
+
+            col_installed_date = treeview_packages.get_column(4)
+            col_installed_date.set_sort_column_id(4)
+
+            treestore_packages.set_sort_func(4, self.compare_install_date, None)
+
             path = Gtk.TreePath.new_from_indices([0])
 
             selection = treeview_packages.get_selection()
@@ -191,3 +198,22 @@ class PackageListDialog(Gtk.Dialog):
 
         except Exception as e:
             fn.logger.error("Exception in on_dialog_export_clicked(): %s" % e)
+
+    def compare_install_date(self, model, row1, row2, user_data):
+        try:
+            sort_column, _ = model.get_sort_column_id()
+            value1 = model.get_value(row1, sort_column)
+            value2 = model.get_value(row2, sort_column)
+
+            datetime_val1 = fn.datetime.strptime(value1, "%a %d %b %Y %H:%M:%S %Z")
+
+            datetime_val2 = fn.datetime.strptime(value2, "%a %d %b %Y %H:%M:%S %Z")
+
+            if datetime_val1 < datetime_val2:
+                return -1
+            elif datetime_val1 == datetime_val2:
+                return 0
+            else:
+                return 1
+        except Exception as e:
+            fn.logger.error("Exception in compare_install_date: %s" % e)
