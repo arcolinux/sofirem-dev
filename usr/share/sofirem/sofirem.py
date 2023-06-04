@@ -716,23 +716,24 @@ class Main(Gtk.Window):
 
             # before installing the mirrorlist make sure the pacman.conf file does not have any references to /etc/pacman.d/arcolinux-mirrorlist
             # otherwise the mirrorlist package will not install
-            rc = fn.remove_arco_repos()
-            if rc == 0:
+            rc_remove = fn.remove_arco_repos()
+            if rc_remove == 0:
                 install_mirrorlist = fn.install_arco_mirrorlist()
 
                 if install_mirrorlist == 0:
                     fn.logger.info("Installation of ArcoLinux mirrorlist = OK")
 
-                    rc = fn.add_arco_repos()
-                    if rc == 0:
+                    rc_add = fn.add_arco_repos()
+                    if rc_add == 0:
                         fn.logger.info("ArcoLinux repos added into %s" % fn.pacman_conf)
+                        self.pacman_db_sync()
 
                     else:
                         message_dialog = MessageDialog(
                             "Error",
                             "Failed to update pacman conf",
                             "Errors occurred during update of the pacman config file",
-                            rc,
+                            rc_add,
                             "error",
                             True,
                         )
@@ -845,6 +846,7 @@ class Main(Gtk.Window):
     def version_toggle(self, widget, data):
         if widget.get_active() == True:
             fn.logger.debug("Showing package versions")
+
             self.display_versions = True
             GLib.idle_add(
                 self.refresh_main_gui,

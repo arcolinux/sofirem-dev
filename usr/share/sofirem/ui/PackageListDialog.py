@@ -201,6 +201,7 @@ class PackageListDialog(Gtk.Dialog):
         except Exception as e:
             fn.logger.error("Exception in on_dialog_export_clicked(): %s" % e)
 
+    # noqa: any locales other than en_GB.UTF-8 / en_US.UTF-8 are untested
     def compare_install_date(self, model, row1, row2, user_data):
         try:
             sort_column, _ = model.get_sort_column_id()
@@ -236,6 +237,8 @@ class PackageListDialog(Gtk.Dialog):
                 else:
                     return 1
         except ValueError as ve:
-            fn.logger.error("ValueError in compare_install_date: %s" % ve)
+            # fn.logger.error("ValueError in compare_install_date: %s" % ve)
+            # compare fails due to the format of the datetime string, which hasn't been tested
+            pass
         except Exception as e:
             fn.logger.error("Exception in compare_install_date: %s" % e)

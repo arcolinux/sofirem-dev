@@ -199,7 +199,7 @@ def permissions(dst):
 def sync_package_db():
     try:
         sync_str = ["pacman", "-Sy"]
-        logger.info("Synchronising pacman package databases")
+        logger.info("Synchronizing pacman package databases")
         process_sync = subprocess.run(
             sync_str,
             shell=False,
