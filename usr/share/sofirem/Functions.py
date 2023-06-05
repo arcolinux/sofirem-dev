@@ -2051,8 +2051,8 @@ def terminate_pacman():
                 continue
 
         if process_found is True:
-            check_pacman_lockfile()
-            os.unlink(pacman_lockfile)
+            if check_pacman_lockfile():
+                os.unlink(pacman_lockfile)
     except Exception as e:
         logger.error("Exception in terminate_pacman() : %s" % e)
 
