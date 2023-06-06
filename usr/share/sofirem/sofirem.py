@@ -399,6 +399,12 @@ class Main(Gtk.Window):
             if len(package.name) > 0:
                 # check there is no pacman lockfile before continuing
                 if fn.check_pacman_lockfile() is False:
+                    widget.set_sensitive(False)
+
+                    self.switch_pkg_version.set_sensitive(False)
+                    self.switch_arco_keyring.set_sensitive(False)
+                    self.switch_arco_mirrorlist.set_sensitive(False)
+
                     package_metadata = fn.get_package_information(package.name)
 
                     if (
@@ -496,6 +502,12 @@ class Main(Gtk.Window):
                 if fn.check_pacman_lockfile() is False:
                     widget.set_active(False)
                     widget.set_state(False)
+                    widget.set_sensitive(False)
+
+                    self.switch_pkg_version.set_sensitive(False)
+                    self.switch_arco_keyring.set_sensitive(False)
+                    self.switch_arco_mirrorlist.set_sensitive(False)
+
                     fn.logger.info("Package to remove : %s" % package.name)
                     package_metadata = fn.get_package_information(package.name)
 
