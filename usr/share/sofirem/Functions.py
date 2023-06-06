@@ -243,11 +243,6 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
             else:
                 progress_dialog.pkg_dialog_closed = True
             self.in_progress = True
-            widget.set_sensitive(False)
-
-            self.switch_pkg_version.set_sensitive(False)
-            self.switch_arco_keyring.set_sensitive(False)
-            self.switch_arco_mirrorlist.set_sensitive(False)
 
             line = (
                 "Pacman is processing the %s of package %s \n\n  Command running = %s\n\n"
@@ -418,7 +413,6 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
             message_dialog.show_all()
             message_dialog.run()
             message_dialog.hide()
-            message_dialog.destroy()
 
     if installed is False and action == "uninstall":
         logger.debug("Toggle switch state = False")
@@ -490,7 +484,6 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
             message_dialog.show_all()
             message_dialog.run()
             message_dialog.hide()
-            message_dialog.destroy()
 
 
 # update progress textview using stdout from the pacman process running
