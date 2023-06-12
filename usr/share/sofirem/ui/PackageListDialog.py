@@ -11,7 +11,10 @@ gi.require_version("Gtk", "3.0")
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # base_dir = os.path.dirname(os.path.realpath(__file__))
-filename = "%s/sofirem-export.txt" % fn.home
+filename = "%s/%s-installed-packages.x86_64.txt" % (
+    fn.export_dir,
+    fn.datetime.now().strftime("%Y-%m-%d"),
+)
 
 
 class PackageListDialog(Gtk.Dialog):

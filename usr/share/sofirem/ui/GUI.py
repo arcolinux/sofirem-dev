@@ -519,6 +519,11 @@ def setup_headerbar(self, Gtk):
         btn_about_app.connect("clicked", self.on_about_app_clicked)
         btn_about_app.set_alignment(xalign=0, yalign=0)
 
+        # button to show iso package lists window
+        btn_iso_packages_list = Gtk.ModelButton(label="Show ArcoLinux ISO Packages")
+        btn_iso_packages_list.connect("clicked", self.on_arcolinux_iso_packages_clicked)
+        btn_iso_packages_list.set_alignment(xalign=0, yalign=0)
+
         if self.display_versions == True:
             self.switch_pkg_version.set_active(True)
         else:
@@ -606,7 +611,11 @@ def setup_headerbar(self, Gtk):
 
         hbox7 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.HORIZONTAL)
         hbox7.set_border_width(5)
-        hbox7.pack_start(btn_about_app, True, True, 1)
+        hbox7.pack_start(btn_iso_packages_list, True, True, 1)
+
+        hbox8 = Gtk.Box(spacing=10, orientation=Gtk.Orientation.HORIZONTAL)
+        hbox8.set_border_width(5)
+        hbox8.pack_start(btn_about_app, True, True, 1)
 
         vbox.pack_start(hbox1, True, True, 1)
         vbox.pack_start(hbox2, True, True, 1)
@@ -615,6 +624,7 @@ def setup_headerbar(self, Gtk):
         vbox.pack_start(hbox5, True, True, 1)
         vbox.pack_start(hbox6, True, True, 1)
         vbox.pack_start(hbox7, True, True, 1)
+        vbox.pack_start(hbox8, True, True, 1)
 
         self.popover.add(vbox)
         self.popover.set_position(Gtk.PositionType.BOTTOM)
