@@ -116,6 +116,7 @@ class ISOPackagesWindow(Gtk.Window):
 
             r = requests.get(url, headers=headers, allow_redirects=True)
 
+            # read the package list ignore any commented lines
             if r.status_code == 200:
                 if len(r.text) > 0:
                     for line in r.text.splitlines():
@@ -198,7 +199,7 @@ class ISOPackagesWindow(Gtk.Window):
 
                     treestore_packages_explorer = Gtk.TreeStore(str, str)
 
-                    for item in self.package_list:
+                    for item in sorted(self.package_list):
                         treestore_packages_explorer.append(None, list(item))
 
                     treeview_packages_explorer = Gtk.TreeView()
@@ -294,7 +295,7 @@ class ISOPackagesWindow(Gtk.Window):
                         % fn.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     )
                     f.write("# %s\n" % self.github_source)
-                    for line in self.package_list:
+                    for line in sorted(self.package_list):
                         f.write("%s\n" % line[0])
 
                 if os.path.exists(self.filename):
@@ -349,7 +350,7 @@ class ISOPackagesWindow(Gtk.Window):
         for arco_iso in arcolinux_isos:
             self.combo_iso.append_text(arco_iso)
 
-        for arco_isob in arcolinuxb_isos:
+        for arco_isob in sorted(arcolinuxb_isos):
             self.combo_iso.append_text(arco_isob)
 
     def build_gui(self):

@@ -113,6 +113,14 @@ class Main(Gtk.Window):
                 "---------------------------------------------------------------------------"
             )
 
+            splash_screen = SplashScreen()
+
+            while Gtk.events_pending():
+                Gtk.main_iteration()
+
+            sleep(3)
+            splash_screen.destroy()
+
             # Fetch list of packages already installed before the app makes changes
             fn.create_packages_log()
 
@@ -194,14 +202,6 @@ class Main(Gtk.Window):
                         total_packages += len(self.packages[category])
 
                     fn.logger.info("Total packages = %s" % total_packages)
-
-                    splash_screen = SplashScreen()
-
-                    while Gtk.events_pending():
-                        Gtk.main_iteration()
-
-                    sleep(3)
-                    splash_screen.destroy()
 
                     fn.logger.info("Setting up GUI")
 

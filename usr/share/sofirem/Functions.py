@@ -309,7 +309,7 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
 
             returncode = process.poll()
 
-            logger.debug("Pacman process return code = %s" % returncode)
+            # logger.debug("Pacman process return code = %s" % returncode)
 
             logger.info(
                 "Pacman process completed for package = %s and action = %s"
@@ -2253,7 +2253,7 @@ def check_holding_queue(self):
         ) = self.pkg_holding_queue.get()
 
         try:
-            logger.debug("Enqueued package = %s" % package.name)
+            # logger.debug("Enqueued package = %s" % package.name)
 
             while check_pacman_lockfile() is True:
                 # logger.debug("Pacman is processing a transaction")
@@ -2278,21 +2278,6 @@ def check_holding_queue(self):
 
         finally:
             self.pkg_holding_queue.task_done()
-
-
-# wait for pacman transaction to complete based on whether the lockfile exists
-def waitfor_pacman_process():
-    while True:
-        proc = get_pacman_process()
-
-        if proc is None:
-            return False
-        if len(proc) == 0:
-            return False
-        else:
-            logger.debug("Process running = %s" % proc)
-
-        time.sleep(0.2)
 
 
 # check if pacman lock file exists
