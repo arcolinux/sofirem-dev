@@ -597,7 +597,7 @@ class Main(Gtk.Window):
                 th.start()
                 fn.logger.debug("Package-uninstall thread started")
 
-        fn.print_running_threads()
+        # fn.print_running_threads()
 
         # return True to prevent the default handler from running
         return True
