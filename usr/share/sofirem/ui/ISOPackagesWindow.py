@@ -396,7 +396,7 @@ class ISOPackagesWindow(Gtk.Window):
             grid_bottom.attach(btn_ok, 0, 1, 1, 1)
 
             lbl_padding3 = Gtk.Label(xalign=0, yalign=0)
-            lbl_padding3.set_text(" ")
+            lbl_padding3.set_text("     ")
 
             grid_bottom.attach_next_to(
                 lbl_padding3, btn_ok, Gtk.PositionType.RIGHT, 1, 1
