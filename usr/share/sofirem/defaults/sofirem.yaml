@@ -1,0 +1,7 @@
+- name: "Display Package Versions"
+  description: "Show package version labels alongside the package description"
+  enabled: False
+
+- name: "Display Package Progress"
+  description: "Show the package install/uninstall progress window"
+  enabled: False

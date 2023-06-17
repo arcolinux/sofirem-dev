@@ -48,6 +48,7 @@ pacman_conf_backup = "/etc/pacman.conf.bak"
 pacman_logfile = "/var/log/pacman.log"
 pacman_lockfile = "/var/lib/pacman/db.lck"
 
+
 arco_test_repo = [
     "#[arcolinux_repo_testing]",
     "#SigLevel = Optional TrustedOnly",
@@ -74,6 +75,10 @@ arco_xlrepo = [
 
 
 log_dir = "/var/log/sofirem/%s/" % datetime.now().strftime("%Y-%m-%d")
+config_dir = "%s/.config/sofirem" % home
+config_file = "%s/sofirem.yaml" % config_dir
+
+
 event_log_file = "%s/%s-event.log" % (
     log_dir,
     datetime.now().strftime("%H-%M-%S"),
@@ -105,7 +110,7 @@ def permissions(dst):
         logger.error(e)
 
 
-# Create log directory and export directory
+# Create log, export, conf directory
 try:
     if not os.path.exists(log_dir):
         makedirs(log_dir)
@@ -113,10 +118,15 @@ try:
     if not os.path.exists(export_dir):
         makedirs(export_dir)
 
+    if not os.path.exists(config_dir):
+        makedirs(config_dir)
+
     permissions(export_dir)
+    permissions(config_dir)
 
     print("[INFO] Log directory = %s" % log_dir)
     print("[INFO] Export directory = %s" % export_dir)
+    print("[INFO] Config directory = %s" % config_dir)
 
 
 except os.error as oe:
@@ -239,7 +249,7 @@ def sync_package_db():
 # this is run inside a separate thread
 def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
     try:
-        self.switch_pkg_version.set_sensitive(False)
+        self.switch_package_version.set_sensitive(False)
         self.switch_arco_keyring.set_sensitive(False)
         self.switch_arco_mirrorlist.set_sensitive(False)
 
@@ -259,12 +269,14 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
 
             self.in_progress = True
 
-            line = (
-                "Pacman is processing the %s of package %s \n\nCommand running = %s\n\n"
-                % (action, pkg.name, " ".join(cmd))
-            )
-
-            if progress_dialog is not None:
+            if (
+                progress_dialog is not None
+                and progress_dialog.pkg_dialog_closed is False
+            ):
+                line = (
+                    "Pacman is processing the %s of package %s \n\nCommand running = %s\n\n"
+                    % (action, pkg.name, " ".join(cmd))
+                )
                 GLib.idle_add(
                     update_progress_textview,
                     self,
@@ -307,32 +319,34 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
                         process_stdout_lst.append(line)
                     time.sleep(1)
 
+            returncode = None
             returncode = process.poll()
 
             # logger.debug("Pacman process return code = %s" % returncode)
 
-            logger.info(
-                "Pacman process completed for package = %s and action = %s"
-                % (pkg.name, action)
-            )
+            if returncode is not None:
+                logger.info("Pacman process completed running = %s" % cmd)
 
-            GLib.idle_add(
-                refresh_ui,
-                self,
-                action,
-                widget,
-                pkg,
-                progress_dialog,
-                process_stdout_lst,
-                priority=GLib.PRIORITY_DEFAULT,
-            )
+                GLib.idle_add(
+                    refresh_ui,
+                    self,
+                    action,
+                    widget,
+                    pkg,
+                    progress_dialog,
+                    process_stdout_lst,
+                    priority=GLib.PRIORITY_DEFAULT,
+                )
+            else:
+                # an error happened during the pacman transaction
+                logger.error("Pacman process failed when running %s" % cmd)
 
     except TimeoutError as t:
         logger.error("TimeoutError in %s start_subprocess(): %s" % (action, t))
         process.terminate()
         if progress_dialog is not None:
             progress_dialog.btn_package_progress_close.set_sensitive(True)
-        self.switch_pkg_version.set_sensitive(True)
+        self.switch_package_version.set_sensitive(True)
         self.switch_arco_keyring.set_sensitive(True)
         self.switch_arco_mirrorlist.set_sensitive(True)
 
@@ -341,7 +355,7 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
         process.terminate()
         if progress_dialog is not None:
             progress_dialog.btn_package_progress_close.set_sensitive(True)
-        self.switch_pkg_version.set_sensitive(True)
+        self.switch_package_version.set_sensitive(True)
         self.switch_arco_keyring.set_sensitive(True)
         self.switch_arco_mirrorlist.set_sensitive(True)
 
@@ -349,7 +363,7 @@ def start_subprocess(self, cmd, progress_dialog, action, pkg, widget):
 # refresh ui components, once the process completes
 # show notification dialog to user if errors are encountered during package install/uninstall
 def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
-    self.switch_pkg_version.set_sensitive(True)
+    self.switch_package_version.set_sensitive(True)
     self.switch_arco_keyring.set_sensitive(True)
     self.switch_arco_mirrorlist.set_sensitive(True)
 
@@ -450,7 +464,7 @@ def refresh_ui(self, action, switch, pkg, progress_dialog, process_stdout_lst):
 
                 if progress_dialog is None:
                     logger.debug("Adding package to holding queue")
-                    if self.show_progress_dialog is False:
+                    if self.display_package_progress is False:
                         inst_str = [
                             "pacman",
                             "-S",

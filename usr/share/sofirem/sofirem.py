@@ -24,6 +24,9 @@ from ui.PackageListDialog import PackageListDialog
 from ui.ProgressDialog import ProgressDialog
 from ui.ISOPackagesWindow import ISOPackagesWindow
 
+# Configuration module
+from Settings import Settings
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkPixbuf, Pango, GLib
 
@@ -81,7 +84,7 @@ class Main(Gtk.Window):
             self.search_activated = False
 
             # initial app load show the progress dialog window when a package is installed/uninstalled
-            self.show_progress_dialog = True
+            self.display_package_progress = False
 
             print(
                 "---------------------------------------------------------------------------"
@@ -118,11 +121,8 @@ class Main(Gtk.Window):
             while Gtk.events_pending():
                 Gtk.main_iteration()
 
-            sleep(3)
+            sleep(2)
             splash_screen.destroy()
-
-            # Fetch list of packages already installed before the app makes changes
-            fn.create_packages_log()
 
             if not os.path.isfile(fn.sofirem_lockfile):
                 with open(fn.sofirem_lockfile, "w") as f:
@@ -155,10 +155,6 @@ class Main(Gtk.Window):
                     "---------------------------------------------------------------------------"
                 )
 
-                # Create installed.lst file for first time
-                fn.get_current_installed()
-                fn.logger.info("Created installed.lst")
-
                 # start making sure sofirem starts next time with dark or light theme
                 if os.path.isdir(fn.home + "/.config/gtk-3.0"):
                     try:
@@ -185,29 +181,52 @@ class Main(Gtk.Window):
                     except Exception as e:
                         fn.logger.warning("xsettingsd config: %s" % e)
 
+                # settings read into memory or copy from default directory
+
+                self.settings = Settings(
+                    self.display_versions,
+                    self.display_package_progress,
+                )
+                self.settings.read_config_file()
+
+                # store package information into memory, and use the dictionary returned to search in for quicker retrieval
+                fn.logger.info("Storing package metadata started")
+
+                self.packages = fn.store_packages()
+                fn.logger.info("Storing package metadata completed")
+
+                fn.logger.info("Categories = %s" % len(self.packages.keys()))
+
+                total_packages = 0
+
+                for category in self.packages:
+                    total_packages += len(self.packages[category])
+
+                fn.logger.info("Total packages = %s" % total_packages)
+
+                fn.logger.info("Setting up GUI")
+
+                GUI.setup_gui(
+                    self,
+                    Gtk,
+                    Gdk,
+                    GdkPixbuf,
+                    base_dir,
+                    os,
+                    Pango,
+                    self.settings.conf_settings,
+                )
+
+                # Create installed.lst file for first time
+                fn.get_current_installed()
+                fn.logger.info("Created installed.lst")
+
+                # Fetch list of packages already installed before the app makes changes
+                fn.create_packages_log()
+
                 # pacman sync db and also tests network connectivity
 
-                if self.pacman_db_sync() is True:
-                    # store package information into memory, and use the dictionary returned to search in for quicker retrieval
-                    fn.logger.info("Storing package metadata started")
-
-                    self.packages = fn.store_packages()
-                    fn.logger.info("Storing package metadata completed")
-
-                    fn.logger.info("Categories = %s" % len(self.packages.keys()))
-
-                    total_packages = 0
-
-                    for category in self.packages:
-                        total_packages += len(self.packages[category])
-
-                    fn.logger.info("Total packages = %s" % total_packages)
-
-                    fn.logger.info("Setting up GUI")
-
-                    GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
-
-                else:
+                if self.pacman_db_sync() is False:
                     sys.exit(1)
 
             else:
@@ -271,7 +290,16 @@ class Main(Gtk.Window):
 
     def on_search_activated(self, searchentry):
         if searchentry.get_text_length() == 0 and self.search_activated:
-            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.setup_gui(
+                self,
+                Gtk,
+                Gdk,
+                GdkPixbuf,
+                base_dir,
+                os,
+                Pango,
+                self.settings.conf_settings,
+            )
             self.search_activated = False
 
         if searchentry.get_text_length() == 0:
@@ -324,6 +352,7 @@ class Main(Gtk.Window):
                                 Pango,
                                 results,
                                 search_term,
+                                None,
                             )
 
                             self.search_activated = True
@@ -345,7 +374,16 @@ class Main(Gtk.Window):
                         message_dialog.hide()
 
                 elif self.search_activated == True:
-                    GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+                    GUI.setup_gui(
+                        self,
+                        Gtk,
+                        Gdk,
+                        GdkPixbuf,
+                        base_dir,
+                        os,
+                        Pango,
+                        None,
+                    )
                     self.search_activated = False
             except Exception as err:
                 fn.logger.error("Exception in on_search_activated(): %s" % err)
@@ -356,7 +394,16 @@ class Main(Gtk.Window):
 
     def on_search_cleared(self, searchentry, icon_pos, event):
         if self.search_activated:
-            GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+            GUI.setup_gui(
+                self,
+                Gtk,
+                Gdk,
+                GdkPixbuf,
+                base_dir,
+                os,
+                Pango,
+                None,
+            )
 
         self.searchentry.set_placeholder_text("Search...")
 
@@ -367,6 +414,11 @@ class Main(Gtk.Window):
     # =====================================================
 
     def on_close(self, widget, data):
+        # to preserve settings, save current options to conf file inside $HOME/.config/sofirem/sofirem.yaml
+
+        settings = Settings(self.display_versions, self.display_package_progress)
+        settings.write_config_file()
+
         # make a final installed packages file inside /var/log/sofirem/$DATE
         # this allows a before/after comparison
         fn.create_packages_log()
@@ -412,7 +464,7 @@ class Main(Gtk.Window):
                     "--noconfirm",
                 ]
 
-                if self.show_progress_dialog is True:
+                if self.display_package_progress is True:
                     if fn.check_pacman_lockfile():
                         widget.set_state(False)
                         widget.set_active(False)
@@ -509,7 +561,7 @@ class Main(Gtk.Window):
                 # another pacman transaction is running, add items to the holding queue
                 if (
                     fn.check_pacman_lockfile() is True
-                    and self.show_progress_dialog is False
+                    and self.display_package_progress is False
                 ):
                     self.pkg_holding_queue.put(
                         (
@@ -531,7 +583,7 @@ class Main(Gtk.Window):
 
                         th.start()
                         fn.logger.debug("Check-holding-queue thread started")
-                elif self.show_progress_dialog is False:
+                elif self.display_package_progress is False:
                     self.pkg_queue.put(
                         (
                             package,
@@ -563,7 +615,7 @@ class Main(Gtk.Window):
 
                 fn.logger.info("Package to remove : %s" % package.name)
 
-                if self.show_progress_dialog is True:
+                if self.display_package_progress is True:
                     package_metadata = fn.get_package_information(package.name)
 
                     progress_dialog = ProgressDialog(
@@ -918,7 +970,7 @@ class Main(Gtk.Window):
 
     def refresh_main_gui(self):
         self.remove(self.vbox)
-        GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango)
+        GUI.setup_gui(self, Gtk, Gdk, GdkPixbuf, base_dir, os, Pango, None)
         self.show_all()
 
     def on_pacman_log_clicked(self, widget):
@@ -954,7 +1006,7 @@ class Main(Gtk.Window):
 
                 window_pacmanlog = PacmanLogWindow(
                     self.textview_pacmanlog,
-                    self.btn_pacmanlog,
+                    self.modelbtn_pacmanlog,
                 )
                 window_pacmanlog.show_all()
 
@@ -978,7 +1030,7 @@ class Main(Gtk.Window):
 
                 window_pacmanlog = PacmanLogWindow(
                     self.textview_pacmanlog,
-                    self.btn_pacmanlog,
+                    self.modelbtn_pacmanlog,
                 )
                 window_pacmanlog.show_all()
 
@@ -1000,16 +1052,16 @@ class Main(Gtk.Window):
                 th_logtimer.start()
 
             self.thread_add_pacmanlog_alive = True
-            self.btn_pacmanlog.set_sensitive(False)
+            self.modelbtn_pacmanlog.set_sensitive(False)
 
         except Exception as e:
             fn.logger.error("Exception in on_pacman_log_clicked() : %s" % e)
 
     def package_progress_toggle(self, widget, data):
         if widget.get_active() is True:
-            self.show_progress_dialog = True
+            self.display_package_progress = True
         if widget.get_active() is False:
-            self.show_progress_dialog = False
+            self.display_package_progress = False
 
 
 # ====================================================================
