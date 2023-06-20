@@ -5,7 +5,7 @@ import Functions as fn
 from string import Template
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
-# a default configuration file if one doesn't exist copy this over to $HOME/.config/sofirem
+# a default configuration file if one doesn't exist is copied over from /usr/share/sofirem/defaults to $HOME/.config
 default_file = "%s/defaults/sofirem.yaml" % base_dir
 
 
@@ -23,13 +23,13 @@ class Settings(object):
             if len(contents) > 0:
                 self.read(contents)
 
-                if self.conf_settings:
-                    self.conf_settings[
-                        "Display Package Versions"
-                    ] = self.display_versions
-                    self.conf_settings[
-                        "Display Package Progress"
-                    ] = self.display_package_progress
+                conf_settings = {}
+
+                conf_settings["Display Package Versions"] = self.display_versions
+
+                conf_settings[
+                    "Display Package Progress"
+                ] = self.display_package_progress
 
                 index = 0
                 for line in contents:
@@ -51,7 +51,7 @@ class Settings(object):
                                 contents.insert(
                                     index,
                                     "  enabled: %s\n"
-                                    % self.conf_settings["Display Package Versions"],
+                                    % conf_settings["Display Package Versions"],
                                 )
 
                         if (
@@ -68,7 +68,7 @@ class Settings(object):
                                 contents.insert(
                                     index,
                                     "  enabled: %s\n"
-                                    % self.conf_settings["Display Package Progress"],
+                                    % conf_settings["Display Package Progress"],
                                 )
 
             if len(contents) > 0:
@@ -92,7 +92,7 @@ class Settings(object):
                     fn.shutil.copy(default_file, fn.config_file)
                     fn.permissions(fn.config_dir)
                 else:
-                    self.read(contents)
+                    return self.read(contents)
 
             else:
                 # config file doesn't exist, string replace template file
@@ -102,15 +102,15 @@ class Settings(object):
                 with open(fn.config_file, "r", encoding="UTF-8") as f:
                     contents = f.readlines()
 
-                self.read(contents)
+                return self.read(contents)
 
         except Exception as e:
-            fn.logger.error("Exception in read_config_file(): %s" % e)
+            print("Exception in read_config_file(): %s" % e)
 
     def read(self, contents):
         setting_name = None
         setting_value_enabled = None
-        self.conf_settings = {}
+        conf_settings = {}
         for line in contents:
             if line.startswith("- name:"):
                 setting_name = (
@@ -122,9 +122,11 @@ class Settings(object):
                 )
 
                 if setting_value_enabled == "False":
-                    self.conf_settings[setting_name] = False
+                    conf_settings[setting_name] = False
                 else:
-                    self.conf_settings[setting_name] = True
+                    conf_settings[setting_name] = True
 
-        if len(self.conf_settings) > 0:
-            fn.logger.info("Settings read into memory")
+        if len(conf_settings) > 0:
+            return conf_settings
+        else:
+            print("[ERROR] Failed to read settings into memory")

@@ -599,6 +599,13 @@ def setup_headerbar(self, Gtk, settings):
         modelbtn_iso_packages_list.props.centered = False
         modelbtn_iso_packages_list.props.text = "Explore ArcoLinux ISO Packages"
 
+        # button to show package search window
+        modelbtn_package_search = Gtk.ModelButton()
+        modelbtn_package_search.connect("clicked", self.on_package_search_clicked)
+        modelbtn_package_search.set_name("modelbtn_popover")
+        modelbtn_package_search.props.centered = False
+        modelbtn_package_search.props.text = "Open Package Search"
+
         # grid for the switch options
         grid_switches = Gtk.Grid()
         grid_switches.set_row_homogeneous(True)
@@ -699,6 +706,7 @@ def setup_headerbar(self, Gtk, settings):
         vbox_buttons.pack_start(self.modelbtn_pacmanlog, False, True, 0)
         vbox_buttons.pack_start(modelbtn_packages_export, False, True, 0)
         vbox_buttons.pack_start(modelbtn_iso_packages_list, False, True, 0)
+        vbox_buttons.pack_start(modelbtn_package_search, False, True, 0)
         vbox_buttons.pack_start(modelbtn_about_app, False, True, 0)
 
         vbox.pack_start(grid_switches, False, False, 0)
