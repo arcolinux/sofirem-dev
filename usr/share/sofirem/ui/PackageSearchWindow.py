@@ -530,7 +530,7 @@ class PackageSearchWindow(Gtk.Window):
                             "Info",
                             "Search returned 0 results",
                             "Failed to find package name",
-                            "Try to search again using the exact package name",
+                            "Are the correct pacman mirrorlists configured ?\nOr try to search again using the exact package name",
                             "info",
                             False,
                         )
