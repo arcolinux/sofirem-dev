@@ -40,8 +40,8 @@
     - duf
     - edid-decode-git
     - fancontrol-gui-git
-	- fastfetch
-	- fastfetch-git
+    - fastfetch
+    - fastfetch-git
     - find-the-command-git
     - fingerprint-gui
     - flatpak
@@ -121,8 +121,8 @@
     - systemd-manager-git
     - tlp
     - topgrade
-	- topgrade-bin
-	- topgrade-git
+    - topgrade-bin
+    - topgrade-git
     - trizen
     - tuxboot
     - tuxboot-git
