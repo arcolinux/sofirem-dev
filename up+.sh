@@ -43,7 +43,7 @@ if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.
 	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst
 fi
 
-if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst ]; then
+if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst ]; then
 	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst
 fi
 
