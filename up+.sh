@@ -44,7 +44,7 @@ if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.
 fi
 
 if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst ]; then
-	sudo rm -v //home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst
+	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst
 fi
 
 echo "getting ASA script"
