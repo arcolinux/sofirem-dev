@@ -2776,7 +2776,7 @@ def log_package_status(self):
 # open sofirem log directory
 def open_log_dir():
     try:
-        subprocess.run(
+        subprocess.Popen(
             ["sudo", "-u", sudo_username, "xdg-open", log_dir],
             shell=False,
             stdout=subprocess.PIPE,
