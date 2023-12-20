@@ -38,9 +38,15 @@ git pull
 if [ -d /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/__pycache__/ ]; then
 	sudo rm -rv /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/__pycache__/
 fi
+
 if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst ]; then
 	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/installed.lst
 fi
+
+if [ -f /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst ]; then
+	sudo rm -v /home/erik/ARCO/ARCOLINUX/sofirem-dev/usr/share/sofirem/cache/yaml-packages.lst
+fi
+
 echo "getting ASA script"
 wget https://raw.githubusercontent.com/arcolinux/arcolinux-spices/master/usr/share/arcolinux-spices/scripts/get-the-keys-and-repos.sh -O $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
 chmod +x $workdir/usr/share/sofirem/scripts/get-the-keys-and-repos.sh
